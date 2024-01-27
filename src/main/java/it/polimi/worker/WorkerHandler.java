@@ -1,5 +1,6 @@
 package it.polimi.worker;
 
+import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
@@ -22,38 +23,52 @@ class WorkerHandler extends Thread {
 
     @Override
     public void run() {
+        // Create input and output streams for communication
+        ObjectInputStream inputStream = null;
+        ObjectOutputStream outputStream = null;
         try {
-            // Create input and output streams for communication
-            ObjectInputStream inputStream = new ObjectInputStream(clientSocket.getInputStream());
-            ObjectOutputStream outputStream = new ObjectOutputStream(clientSocket.getOutputStream());
+            
+            inputStream = new ObjectInputStream(clientSocket.getInputStream());
+            outputStream = new ObjectOutputStream(clientSocket.getOutputStream());
+            while(true){
+                
+                // Read the object from the coordinator
+                Object object = inputStream.readObject();
 
-            // Read the object from the coordinator
-            Object object = inputStream.readObject();
-
-            if (object instanceof Task) {
-                Task task = (Task) object;
-                // Process the Task
-                List<KeyValuePair> result = processTask(task);
-                // Send the result back to the coordinator
-                outputStream.writeObject(result);
-            } else if (object instanceof Heartbeat) {
-                System.out.println("Heartbeat received");
-                // Send the result back to the coordinator
-                outputStream.writeObject(new Heartbeat());
-            } else {
-                // Handle other types or unexpected objects
-                 System.out.println("Received unexpected object type");
+                if (object instanceof Task) {
+                    Task task = (Task) object;
+                    // Process the Task
+                    List<KeyValuePair> result = processTask(task);
+                    // Send the result back to the coordinator
+                    outputStream.writeObject(result);
+                } else if (object instanceof Heartbeat) {
+                    System.out.println("Heartbeat received");
+                    // Send the result back to the coordinator
+                    outputStream.writeObject(new Heartbeat());
+                } else {
+                    // Handle other types or unexpected objects
+                    System.out.println("Received unexpected object type");
+                }
             }
-        
-            // Close the streams and socket when done
-            inputStream.close();
-            outputStream.close();
-            clientSocket.close();
         } catch (Exception e) {
-            System.out.println("I can read");
-
-            e.printStackTrace();
+            System.out.println("Connection closed");
+        }finally {
+                try {
+                    // Close the streams and socket when done
+                if (inputStream != null) {
+                    inputStream.close();
+                }
+                if (outputStream != null) {
+                    outputStream.close();
+                }
+                if (clientSocket != null && !clientSocket.isClosed()) {
+                    clientSocket.close();
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
+        
     }
 
     private List<Operator> handleOperators(List<MutablePair<String,String>> dataFunctions){

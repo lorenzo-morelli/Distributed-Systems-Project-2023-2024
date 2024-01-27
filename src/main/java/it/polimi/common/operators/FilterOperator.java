@@ -1,7 +1,9 @@
-package it.polimi.common;
+package it.polimi.common.Operators;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Predicate;
+
+import it.polimi.common.KeyValuePair;
 
 public class FilterOperator implements Operator {
     private Predicate<Integer> filterFunction;

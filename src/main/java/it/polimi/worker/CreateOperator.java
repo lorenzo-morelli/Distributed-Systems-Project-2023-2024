@@ -1,12 +1,14 @@
-package it.polimi.coordinator;
+package it.polimi.worker;
 
-import it.polimi.common.ChangeKeyOperator;
-import it.polimi.common.FilterOperator;
-import it.polimi.common.MapOperator;
-import it.polimi.common.Operator;
-import it.polimi.common.ReduceOperator;
+import java.io.Serializable;
 
-public class CreateOperator {
+import it.polimi.common.Operators.ChangeKeyOperator;
+import it.polimi.common.Operators.FilterOperator;
+import it.polimi.common.Operators.MapOperator;
+import it.polimi.common.Operators.Operator;
+import it.polimi.common.Operators.ReduceOperator;
+
+public class CreateOperator implements Serializable{
 
     private static MapOperator createMapOperator(String functionName) {
         switch (functionName) {
@@ -61,19 +63,19 @@ public class CreateOperator {
 
     public static Operator createOperator(String operator, String function){
         switch (operator) {
-            case "map":
+            case "MAP":
                 // Instantiate and return MapOperator based on the function name
                 return CreateOperator.createMapOperator(function);
 
-            case "filter":
+            case "FILTER":
                 // Instantiate and return FilterOperator based on the predicate name
                 return CreateOperator.createFilterOperator(function);
 
-            case "changeKey":
+            case "CHANGEKEY":
                 // Instantiate and return ChangeKeyOperator based on the function name
                 return CreateOperator.createChangeKeyOperator(function);
 
-            case "reduce":
+            case "REDUCE":
                 // Instantiate and return ReduceOperator based on the function name
                 return CreateOperator.createReduceOperator(function);
 

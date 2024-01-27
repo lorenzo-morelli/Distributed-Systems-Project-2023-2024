@@ -1,12 +1,14 @@
-package it.polimi.common;
+package it.polimi.common.Operators;
 
 import java.util.List;
 import java.util.function.IntUnaryOperator;
 import java.util.stream.Collectors;
 
+import it.polimi.common.KeyValuePair;
+
 // Map operator implementation
 
-public class MapOperator implements Operator {
+public class MapOperator implements Operator{
     private final IntUnaryOperator function;
 
     public MapOperator(IntUnaryOperator function) {
@@ -17,7 +19,7 @@ public class MapOperator implements Operator {
     public List<KeyValuePair> execute(List<KeyValuePair> input) {
         // Implementation of the map operator
         return input.stream()
-                .map(kv -> new KeyValuePair(kv.key,function.applyAsInt(kv.value)))
+                .map(kv -> new KeyValuePair(kv.getKey(),function.applyAsInt(kv.getValue())))
                 .collect(Collectors.toList());
     }
 }

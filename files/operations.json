@@ -1,13 +1,13 @@
 {
   "operations": [
     {
-      "operator": "map",
-      "function": "double"
+      "operator": "MAP",
+      "function": "ADD"
     },
     {
-      "operator": "reduce",
-      "function": "sum"
+      "operator": "REDUCE",
+      "function": "SUM"
     }
   ],
-  "partitions": 2
+  "partitions": 4
 }

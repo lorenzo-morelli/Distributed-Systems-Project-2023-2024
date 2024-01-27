@@ -3,12 +3,15 @@ package it.polimi.worker;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
+import java.util.ArrayList;
 import java.util.List;
 
-import it.polimi.common.Heartbeat;
+import org.apache.commons.lang3.tuple.MutablePair;
+
 import it.polimi.common.KeyValuePair;
-import it.polimi.common.Operator;
-import it.polimi.common.Task;
+import it.polimi.common.Messages.Heartbeat;
+import it.polimi.common.Messages.Task;
+import it.polimi.common.Operators.Operator;
 
 class WorkerHandler extends Thread {
     private Socket clientSocket;
@@ -47,19 +50,34 @@ class WorkerHandler extends Thread {
             outputStream.close();
             clientSocket.close();
         } catch (Exception e) {
+            System.out.println("I can read");
+
             e.printStackTrace();
         }
     }
+
+    private List<Operator> handleOperators(List<MutablePair<String,String>> dataFunctions){
+        List<Operator> operators = new ArrayList<>();
+        for (MutablePair<String,String> df: dataFunctions) {
+            String op = df.getLeft(); 
+            String fun = df.getRight();
+            operators.add(CreateOperator.createOperator(op, fun));
+        }
+        return operators;
+    }
+    
+
     private List<KeyValuePair> processTask(Task task){        
+        List<Operator> operators = handleOperators(task.getOperators());
         
-        List<KeyValuePair> result = task.getOperators().get(0).execute(task.getData());
-        task.getOperators().remove(0);
+        List<KeyValuePair> result = operators.get(0).execute(task.getData());
+        operators.remove(0);
             
-        for(Operator o: task.getOperators()){
+        for(Operator o: operators){
             result = o.execute(result);
         }
 
-        return result; 
+        return result;
     }   
     
 

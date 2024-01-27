@@ -1,9 +1,11 @@
 package it.polimi.common;
 
+import java.io.Serializable;
+
 // Representation of a key-value pair
-public class KeyValuePair {
-    Integer key;
-    Integer value;
+public class KeyValuePair implements Serializable{
+    private Integer key;
+    private Integer value;
 
     public KeyValuePair(Integer key, Integer value) {
         this.key = key;

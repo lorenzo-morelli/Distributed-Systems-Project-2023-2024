@@ -1,4 +1,4 @@
-package it.polimi.common;
+package it.polimi.common.Messages;
 
 import java.io.Serializable;
 

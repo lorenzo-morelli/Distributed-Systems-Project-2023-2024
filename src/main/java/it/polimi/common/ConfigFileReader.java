@@ -13,8 +13,6 @@ import org.apache.commons.lang3.tuple.Pair;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import it.polimi.worker.Worker;
-
 public class ConfigFileReader {
 
     public static Pair<Integer, Object[]> readOperations(File file) throws Exception {
@@ -39,27 +37,26 @@ public class ConfigFileReader {
         return new MutablePair<>(partitions, objects);
     }
 
-    public static List<Worker> readConfigurations(File file) throws Exception {
+    public static List<Address> readConfigurations(File file) throws Exception {
         int numWorkers = 0;
-        List<Worker> workers = new ArrayList<>();
+        List<Address> addresses = new ArrayList<>();
 
         try {
             ObjectMapper objectMapper = new ObjectMapper();
             Map<String, Object> jsonData = objectMapper.readValue(file, new TypeReference<Map<String, Object>>(){});
-            numWorkers = (int) jsonData.get("workers");
-            ArrayList<?> servers = (ArrayList<?>) jsonData.get("servers");  
+            numWorkers = (int) jsonData.get("numberWorkers");
+            ArrayList<?> servers = (ArrayList<?>) jsonData.get("workers");  
             for (int i = 0; i < numWorkers; i++) {
                 String server = servers.get(i).toString();
                 String[] parts = server.split(":");
                 String host = parts[0];
                 int port = Integer.parseInt(parts[1]);
-                Worker worker = new Worker(i, host, port);
-                workers.add(worker);
+                addresses.add(new Address(host, port));
             }
         } catch (Exception e) {
             throw new Exception("Not possible to read the configuration file:\n"+file.getAbsolutePath().toString()+"\nCheck the path and the format of the file!");
         }
-        return new ArrayList<>(workers);
+        return new ArrayList<>(addresses);
     }
 
     public static List<KeyValuePair> readData(File file) throws Exception {

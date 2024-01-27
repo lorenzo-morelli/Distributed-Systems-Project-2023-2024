@@ -4,6 +4,8 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
+
+import it.polimi.common.Address;
 import it.polimi.common.ConfigFileReader;
 
 public class WorkerMain {
@@ -14,14 +16,16 @@ public class WorkerMain {
         
         Scanner scanner = new Scanner(System.in);
         boolean exit = false;
-        
+        List<Address> addresses = new ArrayList<>();
+
         try{
-            workers = ConfigFileReader.readConfigurations(new File("files/conf.json"));
+            addresses = ConfigFileReader.readConfigurations(new File("files/conf.json"));
         }catch(Exception e){
             System.out.println(e);
             scanner.close(); // Close the scanner to avoid resource leak
             return;
         }
+        initializeWorkers(addresses);
         startAll();
 
         try{
@@ -56,6 +60,14 @@ public class WorkerMain {
         scanner.close(); // Close the scanner to avoid resource leak
     }
 
+    private static void initializeWorkers(List<Address> addresses) {
+        int i = 0;
+        for(Address a: addresses){
+            workers.add(new Worker(i, a.getHostname(), a.getPort()));
+            i++;
+        }
+    }
+
     private static void startServer(int k) {
         for (Worker w: workers) {
             if (w.getWorkerId() == k) {
@@ -80,7 +92,6 @@ public class WorkerMain {
             System.out.println("Server " + w.getWorkerId() + " started.");           
         }
     }
-
 
     private static void stopServer(int k) {
         for (Worker w: workers) {

@@ -5,6 +5,7 @@ import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.util.List;
 
+import it.polimi.common.Heartbeat;
 import it.polimi.common.KeyValuePair;
 import it.polimi.common.Operator;
 import it.polimi.common.Task;
@@ -23,14 +24,24 @@ class WorkerHandler extends Thread {
             ObjectInputStream inputStream = new ObjectInputStream(clientSocket.getInputStream());
             ObjectOutputStream outputStream = new ObjectOutputStream(clientSocket.getOutputStream());
 
-            // Read the Task object from the coordinator
-            Task task = (Task) inputStream.readObject();
-            // Read and process data from the coordinator
-            List<KeyValuePair> result = processTask(task);
-            
-            // Send the result back to the coordinator
-            outputStream.writeObject(result);
+            // Read the object from the coordinator
+            Object object = inputStream.readObject();
 
+            if (object instanceof Task) {
+                Task task = (Task) object;
+                // Process the Task
+                List<KeyValuePair> result = processTask(task);
+                // Send the result back to the coordinator
+                outputStream.writeObject(result);
+            } else if (object instanceof Heartbeat) {
+                System.out.println("Heartbeat received");
+                // Send the result back to the coordinator
+                outputStream.writeObject(new Heartbeat());
+            } else {
+                // Handle other types or unexpected objects
+                 System.out.println("Received unexpected object type");
+            }
+        
             // Close the streams and socket when done
             inputStream.close();
             outputStream.close();

@@ -1,4 +1,4 @@
-package common;
+package it.polimi.common;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -13,7 +13,7 @@ import org.apache.commons.lang3.tuple.Pair;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import worker.Worker;
+import it.polimi.worker.Worker;
 
 public class ConfigFileReader {
 

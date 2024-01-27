@@ -1,4 +1,4 @@
-package common;
+package it.polimi.common;
 
 // Representation of a key-value pair
 public class KeyValuePair {

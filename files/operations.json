@@ -1,0 +1,13 @@
+{
+  "operations": [
+    {
+      "operator": "map",
+      "function": "double"
+    },
+    {
+      "operator": "reduce",
+      "function": "sum"
+    }
+  ],
+  "partitions": 2
+}

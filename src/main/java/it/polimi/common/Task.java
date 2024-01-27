@@ -1,4 +1,4 @@
-package common;
+package it.polimi.common;
 
 import java.io.Serializable;
 import java.util.List;

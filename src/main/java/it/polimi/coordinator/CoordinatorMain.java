@@ -5,7 +5,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import it.polimi.common.ConfigFileReader;
-import it.polimi.common.Messages.Task;
+import it.polimi.common.messages.Task;
 
 public class CoordinatorMain {
     public static void main(String[] args) {

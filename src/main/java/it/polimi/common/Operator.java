@@ -1,8 +1,6 @@
-package it.polimi.common.Operators;
+package it.polimi.common;
 
 import java.util.List;
-
-import it.polimi.common.KeyValuePair;
 
 // Operator interface
 public interface Operator{

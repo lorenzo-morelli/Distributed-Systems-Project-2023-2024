@@ -4,7 +4,7 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
 
-import it.polimi.common.Messages.Task;
+import it.polimi.common.messages.Task;
 
 public class SocketHandler implements Runnable {
     private Socket clientSocket;

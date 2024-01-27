@@ -2,11 +2,11 @@ package it.polimi.worker;
 
 import java.io.Serializable;
 
-import it.polimi.common.Operators.ChangeKeyOperator;
-import it.polimi.common.Operators.FilterOperator;
-import it.polimi.common.Operators.MapOperator;
-import it.polimi.common.Operators.Operator;
-import it.polimi.common.Operators.ReduceOperator;
+import it.polimi.common.Operator;
+import it.polimi.common.operators.ChangeKeyOperator;
+import it.polimi.common.operators.FilterOperator;
+import it.polimi.common.operators.MapOperator;
+import it.polimi.common.operators.ReduceOperator;
 
 public class CreateOperator implements Serializable{
 

@@ -9,9 +9,9 @@ import java.util.List;
 import org.apache.commons.lang3.tuple.MutablePair;
 
 import it.polimi.common.KeyValuePair;
-import it.polimi.common.Messages.Heartbeat;
-import it.polimi.common.Messages.Task;
-import it.polimi.common.Operators.Operator;
+import it.polimi.common.Operator;
+import it.polimi.common.messages.Heartbeat;
+import it.polimi.common.messages.Task;
 
 class WorkerHandler extends Thread {
     private Socket clientSocket;

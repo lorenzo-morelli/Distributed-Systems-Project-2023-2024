@@ -8,33 +8,34 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.lang3.tuple.MutablePair;
-import org.apache.commons.lang3.tuple.Pair;
-
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class ConfigFileReader {
 
-    public static Pair<Integer, Object[]> readOperations(File file) throws Exception {
+    public static MutablePair<Integer, List<MutablePair<String, String>>> readOperations(File file) throws Exception {
         int partitions = 0;
-        Object[] objects = null;
+        List<MutablePair<String, String>> dataFunctions = new ArrayList<>();
     
         try {
             ObjectMapper objectMapper = new ObjectMapper();
             Map<String, Object> jsonData = objectMapper.readValue(file, new TypeReference<Map<String, Object>>() {});
             partitions = (int) jsonData.get("partitions");
     
-            objects = (Object[]) jsonData.get("operations");
+            List<Map<String, String>> operations = objectMapper.convertValue(jsonData.get("operations"), new TypeReference<List<Map<String, String>>>() {});
     
-            for (int i = 0; i < objects.length; i++) {
-                System.out.println((String) objects[i]); 
+            for (Map<String, String> operation : operations) {
+                String operator = operation.get("operator");
+                String function = operation.get("function");
+                dataFunctions.add(new MutablePair<>(operator, function));
             }
     
         } catch (Exception e) {
-            throw new Exception("Not possible to read the operations file:\n"+file.getAbsolutePath().toString() + "\nCheck the path and the format of the file!");
+            e.printStackTrace();
+            throw new Exception("Not possible to read the operations file:\n" + file.getAbsolutePath() + "\nCheck the path and the format of the file!");
         }
     
-        return new MutablePair<>(partitions, objects);
+        return new MutablePair<>(partitions, dataFunctions);
     }
 
     public static List<Address> readConfigurations(File file) throws Exception {

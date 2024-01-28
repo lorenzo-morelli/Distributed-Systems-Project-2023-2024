@@ -16,14 +16,12 @@ public class FilterOperator implements Operator {
     @Override
     public List<KeyValuePair> execute(List<KeyValuePair> input) {
         List<KeyValuePair> output = new ArrayList<>();
-
+        
         for (KeyValuePair pair : input) {
-            // Apply the filter function to the value
             if (filterFunction.test(pair.getValue())) {
                 output.add(pair);
             }
         }
-
         return output;
     }
 }

@@ -4,8 +4,10 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
+import java.util.List;
 import java.util.concurrent.BlockingQueue;
 
+import it.polimi.common.messages.ErrorMessage;
 import it.polimi.common.messages.Task;
 
 public class SocketHandler implements Runnable {
@@ -39,7 +41,20 @@ public class SocketHandler implements Runnable {
                 System.out.println("Sent task to server");
 
                 Object object = inputStream.readObject();
-                System.out.println(object);
+                
+                if (object != null) {
+                    if (object instanceof List<?>) {
+                        // Assuming KeyValuePair is a parameterized type
+                        List<?> list = (List<?>) object;
+                        // Process or print the list
+                        System.out.println(list);
+                    } else if (object instanceof ErrorMessage) {
+                        System.out.println("Not valid format operations file");
+                    }
+                } else {
+                    // Handle the case where the end of the stream is reached
+                    System.out.println("End of stream reached");
+                }
             }
             inputStream.close();
             outputStream.close();

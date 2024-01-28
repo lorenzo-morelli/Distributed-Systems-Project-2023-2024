@@ -11,6 +11,7 @@ import org.apache.commons.lang3.tuple.MutablePair;
 
 import it.polimi.common.KeyValuePair;
 import it.polimi.common.Operator;
+import it.polimi.common.messages.ErrorMessage;
 import it.polimi.common.messages.Heartbeat;
 import it.polimi.common.messages.Task;
 
@@ -37,10 +38,17 @@ class WorkerHandler extends Thread {
 
                 if (object instanceof Task) {
                     Task task = (Task) object;
+
                     // Process the Task
                     List<KeyValuePair> result = processTask(task);
-                    // Send the result back to the coordinator
-                    outputStream.writeObject(result);
+                    
+                    if(result != null){
+                        // Send the result back to the coordinator
+                        outputStream.writeObject(result);
+                    }else{
+                        outputStream.writeObject(new ErrorMessage());
+                    }
+
                 } else if (object instanceof Heartbeat) {
                     System.out.println("Heartbeat received");
                     // Send the result back to the coordinator
@@ -73,25 +81,32 @@ class WorkerHandler extends Thread {
 
     private List<Operator> handleOperators(List<MutablePair<String,String>> dataFunctions){
         List<Operator> operators = new ArrayList<>();
+
         for (MutablePair<String,String> df: dataFunctions) {
             String op = df.getLeft(); 
             String fun = df.getRight();
             operators.add(CreateOperator.createOperator(op, fun));
         }
+        
+
         return operators;
     }
     
 
     private List<KeyValuePair> processTask(Task task){        
-        List<Operator> operators = handleOperators(task.getOperators());
-        
-        List<KeyValuePair> result = operators.get(0).execute(task.getData());
-        operators.remove(0);
+        List<KeyValuePair> result = null;
+        try{
+            List<Operator> operators = handleOperators(task.getOperators());
             
-        for(Operator o: operators){
-            result = o.execute(result);
+            result = operators.get(0).execute(task.getData());
+            operators.remove(0);
+                
+            for(Operator o: operators){
+                result = o.execute(result);
+            }
+        }catch(Exception e){
+            System.out.println(e.getMessage());
         }
-
         return result;
     }   
     

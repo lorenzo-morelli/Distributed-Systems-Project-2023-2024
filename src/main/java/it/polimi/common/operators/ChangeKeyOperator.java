@@ -1,4 +1,5 @@
 package it.polimi.common.operators;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.IntUnaryOperator;

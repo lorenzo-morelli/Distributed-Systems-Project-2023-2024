@@ -23,17 +23,17 @@ public class Worker extends Thread {
         return this.port;
     }
 
-    public boolean getIsRunning(){
+    public boolean getIsRunning() {
         return isRunning;
     }
 
     @Override
-    public void run() {            
+    public void run() {
         try {
-            
+
             // Create a server socket to accept connections
             serverSocket = new ServerSocket(port);
-            
+
             while (isRunning) {
 
                 // Wait for a client to connect

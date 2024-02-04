@@ -28,11 +28,11 @@ class WorkerHandler extends Thread {
         ObjectInputStream inputStream = null;
         ObjectOutputStream outputStream = null;
         try {
-            
+
             inputStream = new ObjectInputStream(clientSocket.getInputStream());
             outputStream = new ObjectOutputStream(clientSocket.getOutputStream());
-            while(true){
-                
+            while (true) {
+
                 // Read the object from the coordinator
                 Object object = inputStream.readObject();
 
@@ -41,11 +41,11 @@ class WorkerHandler extends Thread {
 
                     // Process the Task
                     List<KeyValuePair> result = processTask(task);
-                    
-                    if(result != null){
+
+                    if (result != null) {
                         // Send the result back to the coordinator
                         outputStream.writeObject(result);
-                    }else{
+                    } else {
                         outputStream.writeObject(new ErrorMessage());
                     }
 
@@ -60,9 +60,9 @@ class WorkerHandler extends Thread {
             }
         } catch (Exception e) {
             System.out.println("Connection closed");
-        }finally {
-                try {
-                    // Close the streams and socket when done
+        } finally {
+            try {
+                // Close the streams and socket when done
                 if (inputStream != null) {
                     inputStream.close();
                 }
@@ -76,39 +76,39 @@ class WorkerHandler extends Thread {
                 e.printStackTrace();
             }
         }
-        
+
     }
 
-    private List<Operator> handleOperators(List<MutablePair<String,String>> dataFunctions){
+    private List<Operator> handleOperators(List<MutablePair<String, String>> dataFunctions) {
         List<Operator> operators = new ArrayList<>();
 
-        for (MutablePair<String,String> df: dataFunctions) {
-            String op = df.getLeft(); 
+        for (MutablePair<String, String> df : dataFunctions) {
+            String op = df.getLeft();
             String fun = df.getRight();
             operators.add(CreateOperator.createOperator(op, fun));
         }
-        
+
 
         return operators;
     }
-    
 
-    private List<KeyValuePair> processTask(Task task){        
+
+    private List<KeyValuePair> processTask(Task task) {
         List<KeyValuePair> result = null;
-        try{
+        try {
             List<Operator> operators = handleOperators(task.getOperators());
-            
+
             result = operators.get(0).execute(task.getData());
             operators.remove(0);
-                
-            for(Operator o: operators){
+
+            for (Operator o : operators) {
                 result = o.execute(result);
             }
-        }catch(Exception e){
+        } catch (Exception e) {
             System.out.println(e.getMessage());
         }
         return result;
-    }   
-    
+    }
+
 
 }

@@ -16,25 +16,27 @@ public class ConfigFileReader {
     public static MutablePair<Integer, List<MutablePair<String, String>>> readOperations(File file) throws Exception {
         int partitions = 0;
         List<MutablePair<String, String>> dataFunctions = new ArrayList<>();
-    
+
         try {
             ObjectMapper objectMapper = new ObjectMapper();
-            Map<String, Object> jsonData = objectMapper.readValue(file, new TypeReference<Map<String, Object>>() {});
+            Map<String, Object> jsonData = objectMapper.readValue(file, new TypeReference<Map<String, Object>>() {
+            });
             partitions = (int) jsonData.get("partitions");
-    
-            List<Map<String, String>> operations = objectMapper.convertValue(jsonData.get("operations"), new TypeReference<List<Map<String, String>>>() {});
-    
+
+            List<Map<String, String>> operations = objectMapper.convertValue(jsonData.get("operations"), new TypeReference<List<Map<String, String>>>() {
+            });
+
             for (Map<String, String> operation : operations) {
                 String operator = operation.get("operator");
                 String function = operation.get("function");
                 dataFunctions.add(new MutablePair<>(operator, function));
             }
-    
+
         } catch (Exception e) {
             e.printStackTrace();
             throw new Exception("Not possible to read the operations file:\n" + file.getAbsolutePath() + "\nCheck the path and the format of the file!");
         }
-    
+
         return new MutablePair<>(partitions, dataFunctions);
     }
 
@@ -44,9 +46,10 @@ public class ConfigFileReader {
 
         try {
             ObjectMapper objectMapper = new ObjectMapper();
-            Map<String, Object> jsonData = objectMapper.readValue(file, new TypeReference<Map<String, Object>>(){});
+            Map<String, Object> jsonData = objectMapper.readValue(file, new TypeReference<Map<String, Object>>() {
+            });
             numWorkers = (int) jsonData.get("numberWorkers");
-            ArrayList<?> servers = (ArrayList<?>) jsonData.get("workers");  
+            ArrayList<?> servers = (ArrayList<?>) jsonData.get("workers");
             for (int i = 0; i < numWorkers; i++) {
                 String server = servers.get(i).toString();
                 String[] parts = server.split(":");
@@ -55,7 +58,7 @@ public class ConfigFileReader {
                 addresses.add(new Address(host, port));
             }
         } catch (Exception e) {
-            throw new Exception("Not possible to read the configuration file:\n"+file.getAbsolutePath().toString()+"\nCheck the path and the format of the file!");
+            throw new Exception("Not possible to read the configuration file:\n" + file.getAbsolutePath().toString() + "\nCheck the path and the format of the file!");
         }
         return new ArrayList<>(addresses);
     }
@@ -76,7 +79,7 @@ public class ConfigFileReader {
                 }
             }
         } catch (Exception e) {
-            throw new Exception("Not possible to read the data file:\n"+file.getAbsolutePath().toString()+"\nCheck the path and the format of the file!");
+            throw new Exception("Not possible to read the data file:\n" + file.getAbsolutePath().toString() + "\nCheck the path and the format of the file!");
         }
 
         return keyValuePairs;

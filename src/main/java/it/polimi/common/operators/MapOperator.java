@@ -7,9 +7,7 @@ import java.util.stream.Collectors;
 import it.polimi.common.KeyValuePair;
 import it.polimi.common.Operator;
 
-// Map operator implementation
-
-public class MapOperator implements Operator{
+public class MapOperator implements Operator {
     private final IntUnaryOperator function;
 
     public MapOperator(IntUnaryOperator function) {
@@ -20,7 +18,7 @@ public class MapOperator implements Operator{
     public List<KeyValuePair> execute(List<KeyValuePair> input) {
         // Implementation of the map operator
         return input.stream()
-                .map(kv -> new KeyValuePair(kv.getKey(),function.applyAsInt(kv.getValue())))
+                .map(kv -> new KeyValuePair(kv.getKey(), function.applyAsInt(kv.getValue())))
                 .collect(Collectors.toList());
     }
 }

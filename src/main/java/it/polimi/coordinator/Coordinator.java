@@ -14,17 +14,18 @@ public class Coordinator {
     private int numPartitions;
     private List<MutablePair<String, String>> operations;
     private List<Socket> clientSockets;
-    
+
     public Coordinator(MutablePair<Integer, List<MutablePair<String, String>>> operations) {
         this.clientSockets = new ArrayList<>();
         this.operations = operations.getRight();
         this.numPartitions = operations.getLeft();
     }
 
-    public List<Socket> getClientSockets(){
+    public List<Socket> getClientSockets() {
         return clientSockets;
     }
-    public List<MutablePair<String, String>> getOperations(){
+
+    public List<MutablePair<String, String>> getOperations() {
         return operations;
     }
 
@@ -32,8 +33,8 @@ public class Coordinator {
         return this.numPartitions;
     }
 
-    public void initializeConnections(List<Address> list) throws Exception{
-        for(Address a: list){
+    public void initializeConnections(List<Address> list) throws Exception {
+        for (Address a : list) {
             try {
                 Socket clientSocket = new Socket(a.getHostname(), a.getPort());
                 clientSockets.add(clientSocket);

@@ -1,4 +1,5 @@
 package it.polimi.common.operators;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -9,7 +10,7 @@ import it.polimi.common.KeyValuePair;
 import it.polimi.common.Operator;
 
 public class ReduceOperator implements Operator {
-    private Function<List<Integer>, Integer> reduceFunction;
+    private final Function<List<Integer>, Integer> reduceFunction;
 
     public ReduceOperator(Function<List<Integer>, Integer> reduceFunction) {
         this.reduceFunction = reduceFunction;
@@ -30,10 +31,10 @@ public class ReduceOperator implements Operator {
         for (Map.Entry<Integer, List<Integer>> entry : groupedValues.entrySet()) {
             int key = entry.getKey();
             List<Integer> values = entry.getValue();
-            
+
             // Apply the reduce function and create a KeyValuePair with the result
             int reducedValue = reduceFunction.apply(values);
-            output.add(new KeyValuePair(key,reducedValue));
+            output.add(new KeyValuePair(key, reducedValue));
         }
 
         return output;

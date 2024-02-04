@@ -12,72 +12,54 @@ import it.polimi.common.messages.Task;
 
 public class SocketHandler implements Runnable {
     private Socket clientSocket;
-    private BlockingQueue<Task> taskQueue;
-    public SocketHandler(Socket clientSocket,BlockingQueue<Task> taskQueue) {
+
+    public SocketHandler(Socket clientSocket) {
         this.clientSocket = clientSocket;
-        this.taskQueue = taskQueue;
     }
 
     @Override
     public void run() {
         // Create input and output streams for communication
-        ObjectInputStream inputStream = null;
-        ObjectOutputStream outputStream = null;
+        ObjectInputStream inputStream;
+        ObjectOutputStream outputStream;
 
         try {
-            outputStream = new ObjectOutputStream(clientSocket.getOutputStream());
             inputStream = new ObjectInputStream(clientSocket.getInputStream());
-        
+            outputStream = new ObjectOutputStream(clientSocket.getOutputStream());
+
             while (true) {
-                Task task = taskQueue.poll(); // Retrieves and removes the head of the queue, returns null if empty
-                if (task == null) {
-                    // No task available, exit the loop
-                    break;
-                }
-
-                // Send data to the server using outputStream
-                // Receive data from the server using inputStream
-                outputStream.writeObject(task);
-                System.out.println("Sent task to server");
-
                 Object object = inputStream.readObject();
-                
-                if (object != null) {
-                    if (object instanceof List<?>) {
-                        // Assuming KeyValuePair is a parameterized type
-                        List<?> list = (List<?>) object;
-                        // Process or print the list
-                        System.out.println(list);
-                    } else if (object instanceof ErrorMessage) {
-                        System.out.println("Not valid format operations file");
-                    }
-                } else {
-                    // Handle the case where the end of the stream is reached
-                    System.out.println("End of stream reached");
+
+                if (object == null) break;
+                if (object instanceof List<?>) {
+                    List<?> list = (List<?>) object;
+                    // Process or print the list
+                    System.out.println(list);
+                } else if (object instanceof ErrorMessage) {
+                    System.out.println("Not valid format operations file");
                 }
             }
             inputStream.close();
             outputStream.close();
-            if(clientSocket.isConnected()){
-                clientSocket.close();
-            }
+            clientSocket.close();
         } catch (Exception e) {
-            e.printStackTrace();
-        }finally {
-                try {
-                    // Close the streams and socket when done
-                if (inputStream != null) {
-                    inputStream.close();
-                }
-                if (outputStream != null) {
-                    outputStream.close();
-                }
-                if (clientSocket != null && !clientSocket.isClosed()) {
-                    clientSocket.close();
-                }
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+            e.getStackTrace();
         }
+//        finally {
+//            try {
+//                // Close the streams and socket when done
+//                if (inputStream != null) {
+//                    inputStream.close();
+//                }
+//                if (outputStream != null) {
+//                    outputStream.close();
+//                }
+//                if (clientSocket != null && !clientSocket.isClosed()) {
+//                    clientSocket.close();
+//                }
+//            } catch (IOException e) {
+//                e.printStackTrace();
+//            }
+//        }
     }
 }

@@ -5,18 +5,12 @@ import java.net.ServerSocket;
 import java.net.Socket;
 
 public class Worker extends Thread {
-    private String hostname;
     private int port;
     private ServerSocket serverSocket;
     private boolean isRunning = true;
 
-    public Worker(String hostname, int port) {
-        this.hostname = hostname;
+    public Worker(int port) {
         this.port = port;
-    }
-
-    public String getHostname() {
-        return this.hostname;
     }
 
     public int getPort() {

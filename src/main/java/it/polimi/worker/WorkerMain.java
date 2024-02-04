@@ -12,8 +12,6 @@ public class WorkerMain {
         Scanner scanner = new Scanner(System.in);
         boolean exit = false;
 
-        System.out.println("Insert a hostname");
-        String hostname = scanner.nextLine();
         System.out.println("Insert a port");
         String portString = scanner.nextLine();
         int port;
@@ -24,8 +22,7 @@ public class WorkerMain {
             scanner.close();
             return;
         }
-        System.out.println(port);
-        worker = new Worker(hostname, port);
+        worker = new Worker(port);
         worker.start();
 
         try {
@@ -53,7 +50,7 @@ public class WorkerMain {
 
     private static void startServer() {
         if (!worker.getIsRunning()) {
-            Worker w = new Worker(worker.getHostname(), worker.getPort());
+            Worker w = new Worker(worker.getPort());
             worker = w;
             worker.start();
             System.out.println("Server started.");

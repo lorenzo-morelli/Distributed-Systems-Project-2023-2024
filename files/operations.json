@@ -9,5 +9,5 @@
       "function": "SUM"
     }
   ],
-  "partitions": 4
+  "partitions": 1
 }

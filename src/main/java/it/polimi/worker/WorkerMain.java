@@ -26,6 +26,7 @@ public class WorkerMain {
         }
 
         worker = new Worker(hostname, port);
+        worker.start();
 
         try{
             while (!exit) {

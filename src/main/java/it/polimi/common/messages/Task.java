@@ -5,20 +5,18 @@ import java.util.List;
 
 import org.apache.commons.lang3.tuple.MutablePair;
 
-import it.polimi.common.KeyValuePair;
-
 // Class representing a task to be executed by a worker
 public class Task implements Serializable{
-    List<MutablePair<String, String>> operators; // e.g., "map", "filter", "changeKey", "reduce"
-    List<KeyValuePair> data;
-    public Task(List<MutablePair<String, String>> list, List<KeyValuePair> data) {
+    private List<MutablePair<String, String>> operators; // e.g., "map", "filter", "changeKey", "reduce"
+    private String pathFile;
+    public Task(List<MutablePair<String, String>> list, String pathFile) {
         this.operators = list;
-        this.data = data;
+        this.pathFile = pathFile;
     }
     public List<MutablePair<String, String>> getOperators(){
         return operators;
     }
-    public List<KeyValuePair> getData(){
-        return data;
+    public String getPathFile(){
+        return pathFile;
     }
 }

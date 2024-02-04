@@ -3,60 +3,52 @@ package it.polimi.coordinator;
 import java.io.File;
 import java.net.Socket;
 import java.util.ArrayList;
-import java.util.Scanner;
-import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.LinkedBlockingQueue;
 
 import it.polimi.common.Address;
 import it.polimi.common.ConfigFileReader;
-import it.polimi.common.messages.Task;
 
 public class CoordinatorMain {
+    private static Coordinator coordinator;
+
     public static void main(String[] args) {
 
         String operations_path = "files/operations.json";
-
-        Coordinator coordinator;
+        String conf_path = "files/configurations.json";
         try {
-            coordinator = new Coordinator(ConfigFileReader.readOperations(new File(operations_path)));
+            coordinator = new Coordinator(
+                ConfigFileReader.readOperations(new File(operations_path)),
+                ConfigFileReader.readConfigurations(new File(conf_path))
+                );
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
 
-        ArrayList<Address> addresses;
+        
         try {
-            addresses = readAddresses(coordinator.getNumPartitions());
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-
-        try {
-            coordinator.initializeConnections(addresses);
+            coordinator.initializeConnections(new ArrayList<>(coordinator.getFileToMachineMap().keySet()));
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
 
 
         ExecutorService executorService = Executors.newFixedThreadPool(coordinator.getClientSockets().size());
+        
+        try{
         for (Socket socket : coordinator.getClientSockets()) {
-            executorService.submit(new SocketHandler(socket));
+            
+            for(int i = 0;i<coordinator.getFileToMachineMap().size();i++){
+                Address a = new Address(socket.getInetAddress().getHostName(), socket.getPort());
+                if(!coordinator.getProcessed().get(i) && coordinator.getFileToMachineMap().get(a)!= null){
+                    coordinator.getProcessed().set(i, true);
+                    executorService.submit(new SocketHandler(socket, coordinator.getFileToMachineMap().get(a),coordinator.getOperations()));
+                }
+            }
         }
         executorService.shutdown();
-    }
-
-    public static ArrayList<Address> readAddresses(int numPartitions) {
-        Scanner scanner = new Scanner(System.in);
-        ArrayList<Address> addresses = new ArrayList<>();
-        for (int i = 0; i < numPartitions; i++) {
-            System.out.println("Insert a hostname");
-            String hostname = scanner.nextLine();
-            System.out.println("Insert a port");
-            String portString = scanner.nextLine();
-            int port = Integer.parseInt(portString);
-            addresses.add(new Address(hostname, port));
+        }catch(Exception e){
+            e.printStackTrace();
         }
-        return addresses;
     }
 }

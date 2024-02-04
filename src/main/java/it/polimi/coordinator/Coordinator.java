@@ -3,7 +3,9 @@ package it.polimi.coordinator;
 import java.io.IOException;
 import java.net.Socket;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.commons.lang3.tuple.MutablePair;
 
@@ -14,11 +16,15 @@ public class Coordinator {
     private int numPartitions;
     private List<MutablePair<String, String>> operations;
     private List<Socket> clientSockets;
+    private Map<Address, String> fileToMachineMap;
+    private ArrayList<Boolean> processed;
 
-    public Coordinator(MutablePair<Integer, List<MutablePair<String, String>>> operations) {
+    public Coordinator(MutablePair<Integer, List<MutablePair<String, String>>> operations, Map<Address, String> processed ) {
         this.clientSockets = new ArrayList<>();
         this.operations = operations.getRight();
         this.numPartitions = operations.getLeft();
+        this.fileToMachineMap = processed;
+        this.processed = new ArrayList<>(Collections.nCopies(fileToMachineMap.size(), false));                
     }
 
     public List<Socket> getClientSockets() {
@@ -33,6 +39,15 @@ public class Coordinator {
         return this.numPartitions;
     }
 
+    public ArrayList<Boolean> getProcessed() {
+        return this.processed;
+    }
+
+    
+    public Map<Address, String> getFileToMachineMap() {
+            return fileToMachineMap;
+    }
+    
     public void initializeConnections(List<Address> list) throws Exception {
         for (Address a : list) {
             try {

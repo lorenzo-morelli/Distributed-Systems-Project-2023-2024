@@ -4,6 +4,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -40,29 +41,27 @@ public class ConfigFileReader {
         return new MutablePair<>(partitions, dataFunctions);
     }
 
-    public static List<Address> readConfigurations(File file) throws Exception {
-        int numWorkers = 0;
-        List<Address> addresses = new ArrayList<>();
-
+    public static Map<Address,String> readConfigurations(File file) throws Exception {
+        Map<Address, String> fileToMachineMap = new HashMap<>();
+        
         try {
             ObjectMapper objectMapper = new ObjectMapper();
             Map<String, Object> jsonData = objectMapper.readValue(file, new TypeReference<Map<String, Object>>() {
             });
-            numWorkers = (int) jsonData.get("numberWorkers");
-            ArrayList<?> servers = (ArrayList<?>) jsonData.get("workers");
-            for (int i = 0; i < numWorkers; i++) {
-                String server = servers.get(i).toString();
-                String[] parts = server.split(":");
-                String host = parts[0];
-                int port = Integer.parseInt(parts[1]);
-                addresses.add(new Address(host, port));
+            List<Map<String, String>> files = objectMapper.convertValue(jsonData.get("files"), new TypeReference<List<Map<String, String>>>() {
+            });
+            for (Map<String, String> f : files) {
+                String machine = f.get("machine");
+                int port = Integer.parseInt(f.get("port"));
+                String path = f.get("path");
+                fileToMachineMap.put(new Address(machine, port), path);
             }
         } catch (Exception e) {
             throw new Exception("Not possible to read the configuration file:\n" + file.getAbsolutePath().toString() + "\nCheck the path and the format of the file!");
         }
-        return new ArrayList<>(addresses);
+        return fileToMachineMap;
     }
-
+    
     public static List<KeyValuePair> readData(File file) throws Exception {
         List<KeyValuePair> keyValuePairs = new ArrayList<>();
 

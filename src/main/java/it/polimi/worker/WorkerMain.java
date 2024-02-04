@@ -24,7 +24,7 @@ public class WorkerMain {
             scanner.close();
             return;
         }
-
+        System.out.println(port);
         worker = new Worker(hostname, port);
         worker.start();
 

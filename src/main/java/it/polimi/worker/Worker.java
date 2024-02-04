@@ -30,10 +30,8 @@ public class Worker extends Thread {
     @Override
     public void run() {
         try {
-
             // Create a server socket to accept connections
             serverSocket = new ServerSocket(port);
-
             while (isRunning) {
 
                 // Wait for a client to connect

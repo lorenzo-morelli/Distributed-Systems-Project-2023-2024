@@ -36,9 +36,9 @@ public class WorkerMain {
                 if (command.equals("exit")) {
                     exit = true; // Set exit to true to exit the loop
                     stopServer();
-                } else if (command.equals("stop ")) {
+                } else if (command.equals("stop")) {
                     stopServer();
-                } else if (command.equals("start ")) {
+                } else if (command.equals("start")) {
                     startServer();
                 } else {
                     System.out.println("Unknown command. Try again.");

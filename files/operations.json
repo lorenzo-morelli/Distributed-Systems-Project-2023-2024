@@ -2,7 +2,7 @@
   "operations": [
     {
       "operator": "FILTER",
-      "function": "GT(16)"
+      "function": "GT(0)"
     },
     {
       "operator": "REDUCE",

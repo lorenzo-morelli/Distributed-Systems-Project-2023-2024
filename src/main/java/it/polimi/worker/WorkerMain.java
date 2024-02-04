@@ -1,55 +1,44 @@
 package it.polimi.worker;
 
-import java.io.File;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Scanner;
 
-import it.polimi.common.Address;
-import it.polimi.common.ConfigFileReader;
+import java.util.Scanner;
 
 public class WorkerMain {
     
-    private static List<Worker> workers = new ArrayList<>();
+    private static Worker worker;
     
     public static void main(String[] args) {
         
         Scanner scanner = new Scanner(System.in);
         boolean exit = false;
-        List<Address> addresses = new ArrayList<>();
 
+        System.out.println("Insert a hostname");
+        String hostname = scanner.nextLine();
+        System.out.println("Insert a port");
+        String portString = scanner.nextLine();
+        int port;
         try{
-            addresses = ConfigFileReader.readConfigurations(new File("files/conf.json"));
+            port = Integer.parseInt(portString);
         }catch(Exception e){
-            System.out.println(e);
-            scanner.close(); // Close the scanner to avoid resource leak
+            System.out.println("Not a number input port");
+            scanner.close();
             return;
         }
-        initializeWorkers(addresses);
-        startAll();
+
+        worker = new Worker(hostname, port);
 
         try{
             while (!exit) {
-                System.out.print("Enter command\nstart k\nstop k\nexit\n");
+                System.out.print("Enter command\nstart\nstop\nexit\n");
                 String command = scanner.nextLine();
 
                 if (command.equals("exit")) {
                     exit = true; // Set exit to true to exit the loop
-                    stopAllServers();
-                } else if (command.startsWith("stop ")) {
-                    try {
-                        int k = Integer.parseInt(command.substring(5));
-                        stopServer(k);
-                    } catch (NumberFormatException | IndexOutOfBoundsException e) {
-                        System.out.println("Invalid command format.");
-                    }
-                } else if (command.startsWith("start ")) {
-                    try {
-                        int k = Integer.parseInt(command.substring(6));
-                        startServer(k);
-                    } catch (NumberFormatException | IndexOutOfBoundsException e) {
-                        System.out.println("Invalid command format.");
-                    }
+                    stopServer();
+                } else if (command.equals("stop ")) {
+                    stopServer();
+                } else if (command.equals("start ")) {
+                    startServer();
                 } else {
                     System.out.println("Unknown command. Try again.");
                 }
@@ -60,72 +49,32 @@ public class WorkerMain {
         scanner.close(); // Close the scanner to avoid resource leak
     }
 
-    private static void initializeWorkers(List<Address> addresses) {
-        int i = 0;
-        for(Address a: addresses){
-            workers.add(new Worker(i, a.getHostname(), a.getPort()));
-            i++;
+
+    private static void startServer() {
+        if(!worker.getIsRunning()){
+            Worker w = new Worker(worker.getHostname(), worker.getPort());
+            worker = w;
+            worker.start();
+            System.out.println("Server started.");
+        }else{
+            System.out.println("Server was already started.");                    
         }
+        return;
     }
 
-    private static void startServer(int k) {
-        for (Worker w: workers) {
-            if (w.getWorkerId() == k) {
-                if(!w.getIsRunning()){
-                    workers.remove(w);
-                    Worker worker = new Worker(w.getWorkerId(), w.getHostname(), w.getPort());
-                    workers.add(worker);
-                    worker.start();
-                    System.out.println("Server " + k + " started.");
-                }else{
-                    System.out.println("Server " + k + " was already started.");                    
-                }
-                return;
+    private static void stopServer() {
+
+        if(worker.getIsRunning()){
+            worker.stopServer();
+            try {
+                worker.join(); // Wait for the thread to complete gracefully
+            } catch (InterruptedException e) {
+                e.printStackTrace();
             }
+            System.out.println("Server stopped.");
+        }else{
+            System.out.println("Server was already stopped.");                    
         }
-        System.out.println("Server " + k + " not found.");
-    }
-
-    private static void startAll() {
-        for (Worker w: workers) {
-            w.start(); 
-            System.out.println("Server " + w.getWorkerId() + " started.");           
-        }
-    }
-
-    private static void stopServer(int k) {
-        for (Worker w: workers) {
-
-            if (w.getWorkerId() == k) {
-                if(w.getIsRunning()){
-                    w.stopServer();
-                    try {
-                        w.join(); // Wait for the thread to complete gracefully
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
-                    System.out.println("Server " + k + " stopped.");
-                }else{
-                    System.out.println("Server " + k + " was already stopped.");                    
-                }
-                return;
-            }
-        }
-        System.out.println("Server " + k + " not found.");
-    }
-
-    private static void stopAllServers() {
-        for (Worker w : workers) {
-            if(w.getIsRunning()){
-                w.stopServer();
-                try {
-                    w.join(); // Wait for the thread to complete gracefully
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-                System.out.println("Server " + w.getWorkerId() + " stopped.");
-            }
-        }
-        System.out.println("All servers stopped.");
+        return;
     }
 }

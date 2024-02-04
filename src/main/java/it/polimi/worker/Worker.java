@@ -5,20 +5,14 @@ import java.net.ServerSocket;
 import java.net.Socket;
 
 public class Worker extends Thread {
-    private int worker_id;
     private String hostname;
     private int port;
     private ServerSocket serverSocket;
     private boolean isRunning = true;
 
-    public Worker(int worker_id, String hostname, int port) {
-        this.worker_id = worker_id;
+    public Worker(String hostname, int port) {
         this.hostname = hostname;
         this.port = port;
-    }
-
-    public int getWorkerId() {
-        return this.worker_id;
     }
 
     public String getHostname() {
@@ -65,7 +59,7 @@ public class Worker extends Thread {
         try {
             serverSocket.close(); // Close the server socket to unblock accept
         } catch (IOException e) {
-            System.out.println("Unable to stop server" + getWorkerId());
+            System.out.println("Unable to stop server");
         }
     }
 }

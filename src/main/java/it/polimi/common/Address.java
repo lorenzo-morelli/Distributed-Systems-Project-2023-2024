@@ -18,6 +18,7 @@ public class Address {
     public String getHostname() {
         return hostname;
     }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -25,7 +26,6 @@ public class Address {
         Address address = (Address) o;
         return port == address.port && Objects.equals(hostname, address.hostname);
     }
-
     @Override
     public int hashCode() {
         return Objects.hash(port, hostname);

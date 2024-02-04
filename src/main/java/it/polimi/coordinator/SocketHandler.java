@@ -47,7 +47,7 @@ public class SocketHandler implements Runnable {
             outputStream.close();
             clientSocket.close();
         } catch (Exception e) {
-            e.printStackTrace();
+            System.out.println("Worker connection lost");
         }
     }
 }

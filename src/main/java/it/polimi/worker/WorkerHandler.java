@@ -1,10 +1,14 @@
 package it.polimi.worker;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -19,7 +23,7 @@ import it.polimi.common.messages.Task;
 
 class WorkerHandler extends Thread {
     private Socket clientSocket;
-
+    private String OUTPUT_DIRECTORY_1 = "step1";
     public WorkerHandler(Socket clientSocket) {
         this.clientSocket = clientSocket;
     }
@@ -33,7 +37,7 @@ class WorkerHandler extends Thread {
 
             outputStream = new ObjectOutputStream(clientSocket.getOutputStream());
             inputStream = new ObjectInputStream(clientSocket.getInputStream());
-
+            OUTPUT_DIRECTORY_1 = "step1_" + clientSocket.getLocalPort();
             while (true) {
 
                 // Read the object from the coordinator
@@ -43,6 +47,24 @@ class WorkerHandler extends Thread {
 
                     // Process the Task
                     List<KeyValuePair> result = processTask(task);
+                    
+                    createOutputDirectory(); // Ensure the 'output' directory exists
+                    for (KeyValuePair pair : result) {
+                        Integer key = pair.getKey();
+                        Integer value = pair.getValue();
+                        String fileName = OUTPUT_DIRECTORY_1 + "/file_" + key + ".csv"; // Save files in the 'output' directory
+
+                        try (FileOutputStream fileOutputStream = new FileOutputStream(fileName)) {
+
+                            fileOutputStream.write((key + "," + value + "\n").getBytes());
+
+                            System.out.println("File created for key " + key + ": " + fileName);
+
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                    }
+
 
                     if (result != null) {
                         // Send the result back to the coordinator
@@ -113,6 +135,17 @@ class WorkerHandler extends Thread {
         }
         return result;
     }
+    private void createOutputDirectory() {
+        Path outputDirectoryPath = Paths.get(OUTPUT_DIRECTORY_1);
 
+        if (Files.notExists(outputDirectoryPath)) {
+            try {
+                Files.createDirectories(outputDirectoryPath);
+                System.out.println("Created 'output' directory.");
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
 
 }

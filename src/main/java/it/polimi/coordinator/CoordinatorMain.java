@@ -22,14 +22,15 @@ public class CoordinatorMain {
                 ConfigFileReader.readConfigurations(new File(conf_path))
                 );
         } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
+            System.out.println(e.getMessage());
+            return;        }
 
         
         try {
             coordinator.initializeConnections(new ArrayList<>(coordinator.getFileToMachineMap().keySet()));
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            System.out.println(e.getMessage());
+            return;
         }
 
 
@@ -48,7 +49,7 @@ public class CoordinatorMain {
         }
         executorService.shutdown();
         }catch(Exception e){
-            e.printStackTrace();
+            System.out.println(e.getMessage());
         }
     }
 }

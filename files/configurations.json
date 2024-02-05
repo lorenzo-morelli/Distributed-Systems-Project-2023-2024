@@ -4,6 +4,11 @@
         "machine": "127.0.0.1",
         "port": 5001,
         "path": "files/data.csv"
+      },
+      {
+        "machine": "127.0.0.1",
+        "port": 5002,
+        "path": "files/data.csv"
       }
     ]
   }

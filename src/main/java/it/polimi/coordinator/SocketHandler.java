@@ -27,10 +27,11 @@ public class SocketHandler implements Runnable {
         // Create input and output streams for communication
         ObjectInputStream inputStream = null;
         ObjectOutputStream outputStream = null;
+
         try {
             inputStream = new ObjectInputStream(clientSocket.getInputStream());
             outputStream = new ObjectOutputStream(clientSocket.getOutputStream());
-
+            
             Task t = new Task(operations, pathFile,isPresentStep2);
             outputStream.writeObject(t);
 

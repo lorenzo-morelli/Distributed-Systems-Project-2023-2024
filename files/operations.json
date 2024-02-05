@@ -13,5 +13,5 @@
       "function": "SUM"
     }
   ],
-  "partitions": 1
+  "partitions": 2
 }

@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -16,15 +17,19 @@ public class Coordinator {
     private int numPartitions;
     private List<MutablePair<String, String>> operations;
     private List<Socket> clientSockets;
-    private Map<Address, String> fileToMachineMap;
+    private Map<Socket, String> socketFileMap;
+    private Map<Address, String> addressFileMap;
+
     private ArrayList<Boolean> processed;
 
     public Coordinator(MutablePair<Integer, List<MutablePair<String, String>>> operations, Map<Address, String> processed ) {
         this.clientSockets = new ArrayList<>();
         this.operations = operations.getRight();
         this.numPartitions = operations.getLeft();
-        this.fileToMachineMap = processed;
-        this.processed = new ArrayList<>(Collections.nCopies(fileToMachineMap.size(), false));                
+
+        this.addressFileMap = processed;
+        this.socketFileMap = new HashMap<>();
+        this.processed = new ArrayList<>(Collections.nCopies(addressFileMap.size(), false));                
     }
 
     public List<Socket> getClientSockets() {
@@ -44,19 +49,25 @@ public class Coordinator {
     }
 
     
-    public Map<Address, String> getFileToMachineMap() {
-            return fileToMachineMap;
+    public Map<Address, String> getAddressFileMap() {
+            return addressFileMap;
     }
+    public Map<Socket, String> getSocketFileMap() {
+        return socketFileMap;
+}
     
     public void initializeConnections(List<Address> list) throws Exception {
+        
         for (Address a : list) {
             try {
                 Socket clientSocket = new Socket(a.getHostname(), a.getPort());
                 clientSockets.add(clientSocket);
+                socketFileMap.put(clientSocket, addressFileMap.get(a));
             } catch (IOException e) {
                 throw new Exception("Not possible to initialize the connections with the workers!");
             }
         }
+
     }
     public boolean checkChangeKeyReduce(){
         boolean changeKey = false;

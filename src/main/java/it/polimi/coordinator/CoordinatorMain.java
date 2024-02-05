@@ -28,25 +28,20 @@ public class CoordinatorMain {
 
         
         try {
-            coordinator.initializeConnections(new ArrayList<>(coordinator.getFileToMachineMap().keySet()));
+            coordinator.initializeConnections(new ArrayList<>(coordinator.getAddressFileMap().keySet()));
         } catch (Exception e) {
             System.out.println(e.getMessage());
             return;
         }
 
 
+
+
         ExecutorService executorService = Executors.newFixedThreadPool(coordinator.getClientSockets().size());
         
         try{
         for (Socket socket : coordinator.getClientSockets()) {
-            
-            for(int i = 0;i<coordinator.getFileToMachineMap().size();i++){
-                Address a = new Address(socket.getInetAddress().getHostName(), socket.getPort());
-                if(!coordinator.getProcessed().get(i) && coordinator.getFileToMachineMap().get(a)!= null){
-                    coordinator.getProcessed().set(i, true);
-                    executorService.submit(new SocketHandler(socket, coordinator.getFileToMachineMap().get(a),coordinator.getOperations(),coordinator.checkChangeKeyReduce()));
-                }
-            }
+            executorService.submit(new SocketHandler(socket, coordinator.getSocketFileMap().get(socket),coordinator.getOperations(),coordinator.checkChangeKeyReduce()));
         }
         executorService.shutdown();
         }catch(Exception e){

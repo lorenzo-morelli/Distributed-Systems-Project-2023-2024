@@ -56,6 +56,7 @@ class WorkerHandler extends Thread {
 
                             createFilesForStep2(result);
                             outputStream.writeObject(extractKeys(result));
+
                         }
                     } else {
                         outputStream.writeObject(new ErrorMessage());
@@ -65,7 +66,10 @@ class WorkerHandler extends Thread {
                     System.out.println("Heartbeat received");
                     // Send the result back to the coordinator
                     outputStream.writeObject(new Heartbeat());
-                } else {
+                } else if(object instanceof List<?>){
+                    System.out.println(object);
+                }
+                else {
                     // Handle other types or unexpected objects
                     System.out.println("Received unexpected object type");
                 }

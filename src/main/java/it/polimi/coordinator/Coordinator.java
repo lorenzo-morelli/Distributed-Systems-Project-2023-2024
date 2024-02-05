@@ -14,7 +14,7 @@ import it.polimi.common.Address;
 
 public class Coordinator {
 
-    private int numPartitions;
+    private Integer numPartitions;
     private List<MutablePair<String, String>> operations;
     private List<Socket> clientSockets;
     private Map<Socket, String> socketFileMap;
@@ -40,7 +40,7 @@ public class Coordinator {
         return operations;
     }
 
-    public int getNumPartitions() {
+    public Integer getNumPartitions() {
         return this.numPartitions;
     }
 

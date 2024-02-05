@@ -6,7 +6,6 @@ import java.util.ArrayList;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import it.polimi.common.Address;
 import it.polimi.common.ConfigFileReader;
 
 public class CoordinatorMain {
@@ -36,12 +35,17 @@ public class CoordinatorMain {
 
 
 
-
+        KeyAssignmentManager keyManager = new KeyAssignmentManager();
         ExecutorService executorService = Executors.newFixedThreadPool(coordinator.getClientSockets().size());
         
         try{
         for (Socket socket : coordinator.getClientSockets()) {
-            executorService.submit(new SocketHandler(socket, coordinator.getSocketFileMap().get(socket),coordinator.getOperations(),coordinator.checkChangeKeyReduce()));
+            executorService.submit(new SocketHandler(socket, 
+                coordinator.getSocketFileMap().get(socket),
+                coordinator.getOperations(),
+                coordinator.checkChangeKeyReduce(),
+                coordinator.getNumPartitions(),
+                keyManager));
         }
         executorService.shutdown();
         }catch(Exception e){

@@ -58,6 +58,18 @@ public class Coordinator {
             }
         }
     }
+    public boolean checkChangeKeyReduce(){
+        boolean changeKey = false;
+        boolean reduce = false;
 
-
+        for(MutablePair<String,String> m : operations){
+            if(m.getLeft().equals("CHANGEKEY")){
+                changeKey = true;
+            }
+            if(m.getLeft().equals("CHANGEKEY")){
+                reduce = true;
+            }
+        }
+        return changeKey && reduce;
+    }
 }

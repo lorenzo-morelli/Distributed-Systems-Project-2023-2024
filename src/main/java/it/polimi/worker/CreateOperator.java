@@ -37,7 +37,7 @@ public class CreateOperator {
                         throw new IllegalArgumentException("Cannot divide by zero");
                     }
                 default:
-                    throw new IllegalArgumentException("Unknown map function: " + function);
+                    throw new IllegalArgumentException("Unknown function: " + function);
             }
         } else {
             throw new IllegalArgumentException("Invalid function format: " + function);

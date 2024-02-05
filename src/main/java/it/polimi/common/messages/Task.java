@@ -7,11 +7,13 @@ import org.apache.commons.lang3.tuple.MutablePair;
 
 // Class representing a task to be executed by a worker
 public class Task implements Serializable{
-    private List<MutablePair<String, String>> operators; // e.g., "map", "filter", "changeKey", "reduce"
-    private String pathFile;
-    public Task(List<MutablePair<String, String>> list, String pathFile) {
+    private final List<MutablePair<String, String>> operators;
+    private final String pathFile;
+    private final boolean isPresentStep2;
+    public Task(List<MutablePair<String, String>> list, String pathFile,boolean isPresentStep2) {
         this.operators = list;
         this.pathFile = pathFile;
+        this.isPresentStep2 = isPresentStep2;
     }
     public List<MutablePair<String, String>> getOperators(){
         return operators;
@@ -19,4 +21,8 @@ public class Task implements Serializable{
     public String getPathFile(){
         return pathFile;
     }
+    public boolean isPresentStep2(){
+        return isPresentStep2;
+    }
+
 }

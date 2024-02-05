@@ -48,27 +48,15 @@ class WorkerHandler extends Thread {
                     // Process the Task
                     List<KeyValuePair> result = processTask(task);
                     
-                    createOutputDirectory(); // Ensure the 'output' directory exists
-                    for (KeyValuePair pair : result) {
-                        Integer key = pair.getKey();
-                        Integer value = pair.getValue();
-                        String fileName = OUTPUT_DIRECTORY_1 + "/file_" + key + ".csv"; // Save files in the 'output' directory
-
-                        try (FileOutputStream fileOutputStream = new FileOutputStream(fileName)) {
-
-                            fileOutputStream.write((key + "," + value + "\n").getBytes());
-
-                            System.out.println("File created for key " + key + ": " + fileName);
-
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                        }
-                    }
-
-
                     if (result != null) {
-                        // Send the result back to the coordinator
-                        outputStream.writeObject(result);
+                        if(!task.isPresentStep2()){
+                            // Send the result back to the coordinator
+                            outputStream.writeObject(result);
+                        }else{
+
+                            createFilesForStep2(result);
+                            outputStream.writeObject(extractKeys(result));
+                        }
                     } else {
                         outputStream.writeObject(new ErrorMessage());
                     }
@@ -135,6 +123,38 @@ class WorkerHandler extends Thread {
         }
         return result;
     }
+
+    public static List<Integer> extractKeys(List<KeyValuePair> keyValuePairs) {
+        List<Integer> keys = new ArrayList<>();
+
+        for (KeyValuePair pair : keyValuePairs) {
+            keys.add(pair.getKey());
+        }
+
+        return keys;
+    }
+
+
+    private void createFilesForStep2(List<KeyValuePair> result){
+        createOutputDirectory(); // Ensure the 'output' directory exists
+
+        for (KeyValuePair pair : result) {
+            Integer key = pair.getKey();
+            Integer value = pair.getValue();
+            String fileName = OUTPUT_DIRECTORY_1 + "/file_" + key + ".csv"; // Save files in the 'output' directory
+
+            try (FileOutputStream fileOutputStream = new FileOutputStream(fileName)) {
+
+                fileOutputStream.write((key + "," + value + "\n").getBytes());
+
+                System.out.println("File created for key " + key + ": " + fileName);
+
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
     private void createOutputDirectory() {
         Path outputDirectoryPath = Paths.get(OUTPUT_DIRECTORY_1);
 

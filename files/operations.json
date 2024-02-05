@@ -5,6 +5,10 @@
       "function": "GT(0)"
     },
     {
+      "operator": "CHANGEKEY",
+      "function": "DIVIDE(2)"
+    },
+    {
       "operator": "REDUCE",
       "function": "SUM"
     }

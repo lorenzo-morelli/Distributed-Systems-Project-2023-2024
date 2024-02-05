@@ -23,7 +23,8 @@ public class CoordinatorMain {
                 );
         } catch (Exception e) {
             System.out.println(e.getMessage());
-            return;        }
+            return;
+        }
 
         
         try {
@@ -43,7 +44,7 @@ public class CoordinatorMain {
                 Address a = new Address(socket.getInetAddress().getHostName(), socket.getPort());
                 if(!coordinator.getProcessed().get(i) && coordinator.getFileToMachineMap().get(a)!= null){
                     coordinator.getProcessed().set(i, true);
-                    executorService.submit(new SocketHandler(socket, coordinator.getFileToMachineMap().get(a),coordinator.getOperations()));
+                    executorService.submit(new SocketHandler(socket, coordinator.getFileToMachineMap().get(a),coordinator.getOperations(),coordinator.checkChangeKeyReduce()));
                 }
             }
         }

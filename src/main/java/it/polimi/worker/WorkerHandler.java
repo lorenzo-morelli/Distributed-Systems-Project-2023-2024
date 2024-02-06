@@ -66,8 +66,16 @@ class WorkerHandler extends Thread {
                     System.out.println("Heartbeat received");
                     // Send the result back to the coordinator
                     outputStream.writeObject(new Heartbeat());
-                } else if(object instanceof List<?>){
+                } else if (object instanceof List<?> list){
                     System.out.println(object);
+                    List<Integer> keys = new ArrayList<>();
+                    for (Object element : list) {
+                        if (element instanceof Integer) {
+                            keys.add((Integer) element);
+                        }
+                    }
+                    System.out.println("Received keys: " + keys);
+
                 }
                 else {
                     // Handle other types or unexpected objects

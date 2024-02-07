@@ -5,9 +5,7 @@ import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
-
 import org.apache.commons.lang3.tuple.MutablePair;
-
 import it.polimi.common.messages.ErrorMessage;
 import it.polimi.common.messages.Task;
 
@@ -16,24 +14,24 @@ public class SocketHandler implements Runnable {
     private String pathFile;
     private List<MutablePair<String, String>> operations;
     private boolean isPresentStep2;
-    private volatile boolean keysProcessingCompleted;
-    private boolean keysProcessingStarted;
-    private boolean finalPhase;
     private Integer numWorkers;
     private List<Integer> keys;
     private Integer taskId;
     private KeyAssignmentManager keyManager;
+    private CoordinatorPhase phase;
+    private volatile boolean canProceedStep2;
+
     public SocketHandler(Socket clientSocket, String pathFile, List<MutablePair<String, String>> operations,boolean isPresentStep2, int numWorkers, KeyAssignmentManager keyManager,Integer taskId) {
         this.clientSocket = clientSocket;
-        this.pathFile =pathFile; 
+        this.pathFile = pathFile; 
         this.operations = operations;
         this.isPresentStep2 = isPresentStep2;
-        this.keysProcessingCompleted = false;
-        this.keysProcessingStarted = false;
         this.numWorkers = numWorkers;
-        this.keys = new ArrayList<>();
         this.keyManager = keyManager;
         this.taskId = taskId;
+        this.phase = CoordinatorPhase.INIT;
+        this.keys = new ArrayList<>();
+        this.canProceedStep2 = false;
     }
 
     @Override
@@ -49,40 +47,49 @@ public class SocketHandler implements Runnable {
             Task t = new Task(operations, pathFile,isPresentStep2,taskId);
             outputStream.writeObject(t);
 
-            while (true) {
-                if(!keysProcessingStarted){
-                    Object object = inputStream.readObject();
-                    if (object == null) break;
-                    
-                    if (object instanceof List<?>) {
-                        List<?> list = (List<?>) object;
-                        // Process or print the list
-                        if(!isPresentStep2){
-                            System.out.println(list);
-                        }else{
-                            managePhase2(list);
+            boolean isProcessing = true;
+            while (isProcessing) {
+                switch (phase) {
+                    case INIT:
+                        Object object = inputStream.readObject();
+                        if (object == null){ 
+                            isProcessing = false;
+                            break;
                         }
-                    } else if (object instanceof ErrorMessage) {
-                        System.out.println("Not valid format operations file");
-                    }
-                }
-
-                if(keysProcessingCompleted){
-                    outputStream.writeObject(keys);
-                    keysProcessingCompleted = false;
-                    finalPhase = true;
-                }
-
-                if(finalPhase){
-                    Object object = inputStream.readObject();
-                    if (object == null) break;
-                    
-                    if (object instanceof List<?>) {
-                        System.out.println(object);
-                    } else if (object instanceof ErrorMessage) {
-                        System.out.println("Something went wrong with the reduce phase!");
-                    }
-                    break;
+                        if (object instanceof List<?>) {
+                            List<?> list = (List<?>) object;
+                            // Process or print the list
+                            if (!isPresentStep2) {
+                                System.out.println(list);
+                            } else {
+                                managePhase2(list);
+                            }
+                        } else if (object instanceof ErrorMessage) {
+                            System.out.println("Not valid format operations file");
+                        }
+                        break;
+            
+                    case KEYPROCESS:
+                        if(canProceedStep2){
+                            outputStream.writeObject(keys);
+                            phase = CoordinatorPhase.FINAL;
+                        }
+                        break;
+            
+                    case FINAL:
+                        Object finalObject = inputStream.readObject();
+                        isProcessing = false;
+                        if (finalObject == null) {
+                            break;
+                        }            
+                        if (finalObject instanceof List<?>) {
+                            System.out.println(finalObject);
+                        } else if (finalObject instanceof ErrorMessage) {
+                            System.out.println("Something went wrong with the reduce phase!");
+                        }
+                        break;
+                    default:
+                        break;
                 }
 
             }
@@ -95,12 +102,9 @@ public class SocketHandler implements Runnable {
     }
     public void sendNewAssignment(List<Integer> newKeys) {
         this.keys = newKeys;
-        this.keysProcessingCompleted = true;
+        this.canProceedStep2 = true;
     }
-    
-    public void setKeysProcessingStarted(boolean keysProcessingStarted) {
-        this.keysProcessingStarted = keysProcessingStarted;
-    }
+
     public void managePhase2(List<?> list){
         List<Integer> integerList = new ArrayList<>();
         for (Object element : list) {
@@ -109,6 +113,6 @@ public class SocketHandler implements Runnable {
             }
         }
         keyManager.insertAssignment(this, integerList,numWorkers);
-        setKeysProcessingStarted(true);
+        this.phase = CoordinatorPhase.KEYPROCESS;
     }    
 }

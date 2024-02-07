@@ -39,13 +39,15 @@ public class CoordinatorMain {
         ExecutorService executorService = Executors.newFixedThreadPool(coordinator.getClientSockets().size());
         
         try{
+        int i = 0;
         for (Socket socket : coordinator.getClientSockets()) {
             executorService.submit(new SocketHandler(socket, 
                 coordinator.getSocketFileMap().get(socket),
                 coordinator.getOperations(),
                 coordinator.checkChangeKeyReduce(),
                 coordinator.getNumPartitions(),
-                keyManager));
+                keyManager,i));
+            i++;
         }
         executorService.shutdown();
         }catch(Exception e){

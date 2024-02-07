@@ -18,10 +18,12 @@ public class SocketHandler implements Runnable {
     private boolean isPresentStep2;
     private volatile boolean keysProcessingCompleted;
     private boolean keysProcessingStarted;
+    private boolean finalPhase;
     private Integer numWorkers;
     private List<Integer> keys;
+    private Integer taskId;
     private KeyAssignmentManager keyManager;
-    public SocketHandler(Socket clientSocket, String pathFile, List<MutablePair<String, String>> operations,boolean isPresentStep2, int numWorkers, KeyAssignmentManager keyManager) {
+    public SocketHandler(Socket clientSocket, String pathFile, List<MutablePair<String, String>> operations,boolean isPresentStep2, int numWorkers, KeyAssignmentManager keyManager,Integer taskId) {
         this.clientSocket = clientSocket;
         this.pathFile =pathFile; 
         this.operations = operations;
@@ -31,6 +33,7 @@ public class SocketHandler implements Runnable {
         this.numWorkers = numWorkers;
         this.keys = new ArrayList<>();
         this.keyManager = keyManager;
+        this.taskId = taskId;
     }
 
     @Override
@@ -43,7 +46,7 @@ public class SocketHandler implements Runnable {
             inputStream = new ObjectInputStream(clientSocket.getInputStream());
             outputStream = new ObjectOutputStream(clientSocket.getOutputStream());
             
-            Task t = new Task(operations, pathFile,isPresentStep2);
+            Task t = new Task(operations, pathFile,isPresentStep2,taskId);
             outputStream.writeObject(t);
 
             while (true) {
@@ -67,7 +70,20 @@ public class SocketHandler implements Runnable {
                 if(keysProcessingCompleted){
                     outputStream.writeObject(keys);
                     keysProcessingCompleted = false;
-                } 
+                    finalPhase = true;
+                }
+
+                if(finalPhase){
+                    Object object = inputStream.readObject();
+                    if (object == null) break;
+                    
+                    if (object instanceof List<?>) {
+                        System.out.println(object);
+                    } else if (object instanceof ErrorMessage) {
+                        System.out.println("Something went wrong with the reduce phase!");
+                    }
+                    break;
+                }
 
             }
             inputStream.close();
@@ -92,7 +108,6 @@ public class SocketHandler implements Runnable {
                 integerList.add((Integer) element);
             }
         }
-        System.out.println(list);
         keyManager.insertAssignment(this, integerList,numWorkers);
         setKeysProcessingStarted(true);
     }    

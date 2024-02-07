@@ -20,10 +20,13 @@ import it.polimi.common.Operator;
 import it.polimi.common.messages.ErrorMessage;
 import it.polimi.common.messages.Heartbeat;
 import it.polimi.common.messages.Task;
+import it.polimi.common.operators.ReduceOperator;
 
 class WorkerHandler extends Thread {
     private Socket clientSocket;
     private String OUTPUT_DIRECTORY_1 = "step1";
+    private Integer taskId;
+    private Operator reduce;
     public WorkerHandler(Socket clientSocket) {
         this.clientSocket = clientSocket;
     }
@@ -44,7 +47,7 @@ class WorkerHandler extends Thread {
                 Object object = inputStream.readObject();
                 if (object instanceof Task) {
                     Task task = (Task) object;
-
+                    taskId = task.getTaskId(); 
                     // Process the Task
                     List<KeyValuePair> result = processTask(task);
                     
@@ -53,8 +56,10 @@ class WorkerHandler extends Thread {
                             // Send the result back to the coordinator
                             outputStream.writeObject(result);
                         }else{
-
-                            createFilesForStep2(result);
+                            HadoopFileReadWrite.writeKeys(
+                                taskId.toString(),
+                                result
+                                );
                             outputStream.writeObject(extractKeys(result));
 
                         }
@@ -74,8 +79,10 @@ class WorkerHandler extends Thread {
                             keys.add((Integer) element);
                         }
                     }
-                    System.out.println("Received keys: " + keys);
-
+                    
+                    List<KeyValuePair> result = reduce.execute(HadoopFileReadWrite.readKeys(keys));
+                    outputStream.writeObject(result);
+                    break;
                 }
                 else {
                     // Handle other types or unexpected objects
@@ -121,6 +128,7 @@ class WorkerHandler extends Thread {
         
         List<KeyValuePair> result = null;
         try {
+            boolean firstReduce = true;
             List<KeyValuePair> data = ConfigFileReader.readData(new File(task.getPathFile()));
             List<Operator> operators = handleOperators(task.getOperators());
 
@@ -128,6 +136,10 @@ class WorkerHandler extends Thread {
             operators.remove(0);
 
             for (Operator o : operators) {
+                if(o instanceof ReduceOperator && firstReduce){
+                    reduce = o;
+                    firstReduce = false;
+                }
                 result = o.execute(result);
             }
         } catch (Exception e) {

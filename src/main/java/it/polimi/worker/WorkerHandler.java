@@ -55,6 +55,7 @@ class WorkerHandler extends Thread {
                         if(!task.isPresentStep2()){
                             // Send the result back to the coordinator
                             outputStream.writeObject(result);
+                            break;
                         }else{
                             HadoopFileReadWrite.writeKeys(
                                 taskId.toString(),
@@ -72,7 +73,7 @@ class WorkerHandler extends Thread {
                     // Send the result back to the coordinator
                     outputStream.writeObject(new Heartbeat());
                 } else if (object instanceof List<?> list){
-                    System.out.println(object);
+                    System.out.println("Responsible for the keys: " + object);
                     List<Integer> keys = new ArrayList<>();
                     for (Object element : list) {
                         if (element instanceof Integer) {
@@ -92,6 +93,7 @@ class WorkerHandler extends Thread {
         } catch (Exception e) {
             System.out.println("Connection closed");
         } finally {
+            System.out.println("Closing connection");
             try {
                 // Close the streams and socket when done
                 if (inputStream != null) {

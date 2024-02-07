@@ -46,7 +46,6 @@ public class SocketHandler implements Runnable {
             
             Task t = new Task(operations, pathFile,isPresentStep2,taskId);
             outputStream.writeObject(t);
-
             boolean isProcessing = true;
             while (isProcessing) {
                 switch (phase) {
@@ -61,6 +60,7 @@ public class SocketHandler implements Runnable {
                             // Process or print the list
                             if (!isPresentStep2) {
                                 System.out.println(list);
+                                isProcessing = false;
                             } else {
                                 managePhase2(list);
                             }

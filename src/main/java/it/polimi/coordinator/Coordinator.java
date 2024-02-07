@@ -77,7 +77,7 @@ public class Coordinator {
             if(m.getLeft().equals("CHANGEKEY")){
                 changeKey = true;
             }
-            if(m.getLeft().equals("CHANGEKEY")){
+            if(m.getLeft().equals("REDUCE")){
                 reduce = true;
             }
         }

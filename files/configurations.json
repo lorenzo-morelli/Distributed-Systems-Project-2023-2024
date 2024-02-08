@@ -1,14 +1,10 @@
 {
     "files": [
-      {
-        "machine": "127.0.0.1",
-        "port": 5001,
-        "path": "files/data.csv"
-      },
-      {
-        "machine": "127.0.0.1",
-        "port": 5002,
-        "path": "files/data.csv"
-      }
+      "files/data1.csv",
+      "files/data2.csv"
+    ],
+    "workers": [
+      "localhost:5001",
+      "localhost:5002"
     ]
   }

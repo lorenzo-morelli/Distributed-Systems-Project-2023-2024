@@ -1,5 +1,10 @@
-package it.polimi.worker;
+package it.polimi.common;
+import java.io.BufferedInputStream;
+import java.io.BufferedReader;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -9,8 +14,6 @@ import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
-
-import it.polimi.common.KeyValuePair;
 
 public class HadoopFileReadWrite {
     private static String HDFS_URI = "hdfs://localhost:9000";
@@ -99,4 +102,74 @@ public class HadoopFileReadWrite {
         }
         return result;
     }
+    private static void uploadFileToHDFS(String localFilePath, String hdfsDestinationPath, Configuration conf) throws IOException {
+        // Get the Hadoop FileSystem object
+        FileSystem fs = FileSystem.get(conf);
+
+        // Open the local file
+        try (InputStream in = new BufferedInputStream(new FileInputStream(localFilePath))) {
+            // Create HDFS output stream
+            FSDataOutputStream out = fs.create(new Path(hdfsDestinationPath + localFilePath));
+
+            // Set buffer size to 4KB
+            byte[] buffer = new byte[4096];
+            int bytesRead;
+            
+            // Read file in chunks and write to HDFS
+            while ((bytesRead = in.read(buffer)) > 0) {
+                out.write(buffer, 0, bytesRead);
+            }
+
+            // Close the streams
+            out.close();
+        } finally {
+            // Close the FileSystem object
+            fs.close();
+        }
+
+        System.out.println("File uploaded to HDFS successfully.");
+    }
+    
+    public static void updloadFiles(List<String> list) throws IOException{
+        Configuration conf = new Configuration();
+        conf.set("fs.defaultFS", HDFS_URI);
+        
+        for(String localFilePath : list){
+            uploadFileToHDFS(localFilePath,"/input/", conf);
+        }
+    }
+    public static List<KeyValuePair> readInputFile(String path) throws IOException{
+        
+        List<KeyValuePair> result = new ArrayList<>();
+        Configuration conf = new Configuration();
+        conf.set("fs.defaultFS", HDFS_URI);
+        FileSystem fs = FileSystem.get(conf);
+
+
+        Path filePath = new Path("/input/" + path);
+        System.out.println(filePath);
+
+        // Open the HDFS input stream
+        try (FSDataInputStream in = fs.open(filePath);
+             BufferedReader reader = new BufferedReader(new InputStreamReader(in))) {
+
+            String line;
+            while ((line = reader.readLine()) != null) {
+                String[] parts = line.split(",");
+                if (parts.length == 2) {
+                    Integer key = Integer.parseInt(parts[0].trim());
+                    Integer value = Integer.parseInt(parts[1].trim());
+                    result.add(new KeyValuePair(key, value));
+                } else {
+                    System.out.println("Invalid line in CSV: " + line);
+                }
+                System.out.println("Read from HDFS: " + line);
+            }
+        } finally {
+            fs.close();
+        }
+
+        return result;
+    }
+   
 }

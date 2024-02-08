@@ -1,6 +1,5 @@
 package it.polimi.worker;
 
-import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -14,7 +13,7 @@ import java.util.List;
 
 import org.apache.commons.lang3.tuple.MutablePair;
 
-import it.polimi.common.ConfigFileReader;
+import it.polimi.common.HadoopFileReadWrite;
 import it.polimi.common.KeyValuePair;
 import it.polimi.common.Operator;
 import it.polimi.common.messages.ErrorMessage;
@@ -48,6 +47,7 @@ class WorkerHandler extends Thread {
                 if (object instanceof Task) {
                     Task task = (Task) object;
                     taskId = task.getTaskId(); 
+                    System.out.println("path" + task.getPathFile());
                     // Process the Task
                     List<KeyValuePair> result = processTask(task);
                     
@@ -131,7 +131,9 @@ class WorkerHandler extends Thread {
         List<KeyValuePair> result = null;
         try {
             boolean firstReduce = true;
-            List<KeyValuePair> data = ConfigFileReader.readData(new File(task.getPathFile()));
+                        
+            List<KeyValuePair> data = HadoopFileReadWrite.readInputFile(task.getPathFile());
+
             List<Operator> operators = handleOperators(task.getOperators());
 
             result = operators.get(0).execute(data);
@@ -160,7 +162,7 @@ class WorkerHandler extends Thread {
         return keys;
     }
 
-
+    
     private void createFilesForStep2(List<KeyValuePair> result){
         createOutputDirectory(); // Ensure the 'output' directory exists
 

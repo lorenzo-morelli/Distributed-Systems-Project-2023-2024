@@ -132,7 +132,7 @@ class WorkerHandler extends Thread {
         try {
             boolean firstReduce = true;
                         
-            List<KeyValuePair> data = HadoopFileReadWrite.readInputFile(task.getPathFile());
+            List<KeyValuePair> data = HadoopFileReadWrite.readInputFile("/input/"+task.getPathFile());
 
             List<Operator> operators = handleOperators(task.getOperators());
 

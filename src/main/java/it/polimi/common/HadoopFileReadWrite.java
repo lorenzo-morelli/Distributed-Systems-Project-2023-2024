@@ -32,7 +32,7 @@ public class HadoopFileReadWrite {
             FSDataOutputStream outputStream = fs.create(outputPath);
 
             // Write the content to the file on HDFS
-            outputStream.writeUTF(content);
+            outputStream.write(content.getBytes()); // Write content as bytes
 
             outputStream.close();
             fs.close();
@@ -49,31 +49,14 @@ public class HadoopFileReadWrite {
         FileSystem fs = FileSystem.get(conf);
 
         try {
-            Path filePath = new Path(hdfsPath);
-            FileStatus[] fileStatuses = fs.listStatus(filePath);
+            FileStatus[] fileStatuses = fs.listStatus(new Path(hdfsPath));
 
             for (FileStatus fileStatus : fileStatuses) {
-                FSDataInputStream inputStream = fs.open(fileStatus.getPath());
-
-                try {
-                    String content = inputStream.readUTF();
-
-                    String[] parts = content.split(",");
-                    if (parts.length == 2) {
-                        Integer key = Integer.parseInt(parts[0].trim());
-                        Integer value = Integer.parseInt(parts[1].trim());
-                        result.add(new KeyValuePair(key, value));
-                    } else {
-                        System.out.println("Invalid line in CSV: " + content);
-                    }
-                } finally {
-                    inputStream.close();
-                }
+                result.addAll(readInputFile(fileStatus.getPath().toString()));
             }
         } finally {
             fs.close();
         }
-
         return result;
     }
 
@@ -146,8 +129,7 @@ public class HadoopFileReadWrite {
         FileSystem fs = FileSystem.get(conf);
 
 
-        Path filePath = new Path("/input/" + path);
-        System.out.println(filePath);
+        Path filePath = new Path(path);
 
         // Open the HDFS input stream
         try (FSDataInputStream in = fs.open(filePath);
@@ -163,7 +145,6 @@ public class HadoopFileReadWrite {
                 } else {
                     System.out.println("Invalid line in CSV: " + line);
                 }
-                System.out.println("Read from HDFS: " + line);
             }
         } finally {
             fs.close();

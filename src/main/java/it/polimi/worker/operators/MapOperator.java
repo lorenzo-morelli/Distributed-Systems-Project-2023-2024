@@ -1,11 +1,11 @@
-package it.polimi.common.operators;
+package it.polimi.worker.operators;
 
 import java.util.List;
 import java.util.function.IntUnaryOperator;
 import java.util.stream.Collectors;
 
 import it.polimi.common.KeyValuePair;
-import it.polimi.common.Operator;
+import it.polimi.worker.Operator;
 
 public class MapOperator implements Operator {
     private final IntUnaryOperator function;

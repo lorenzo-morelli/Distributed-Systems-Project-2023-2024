@@ -1,11 +1,11 @@
-package it.polimi.common.operators;
+package it.polimi.worker.operators;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.IntUnaryOperator;
 
 import it.polimi.common.KeyValuePair;
-import it.polimi.common.Operator;
+import it.polimi.worker.Operator;
 
 public class ChangeKeyOperator implements Operator {
     private final IntUnaryOperator function;

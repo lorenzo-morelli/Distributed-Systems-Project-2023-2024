@@ -91,8 +91,10 @@ public class HadoopFileReadWrite {
 
         // Open the local file
         try (InputStream in = new BufferedInputStream(new FileInputStream(localFilePath))) {
+
+            String filename = new Path(localFilePath).getName();
             // Create HDFS output stream
-            FSDataOutputStream out = fs.create(new Path(hdfsDestinationPath + localFilePath));
+            FSDataOutputStream out = fs.create(new Path(hdfsDestinationPath + filename));
 
             // Set buffer size to 4KB
             byte[] buffer = new byte[4096];
@@ -113,12 +115,12 @@ public class HadoopFileReadWrite {
         System.out.println("File uploaded to HDFS successfully.");
     }
     
-    public static void updloadFiles(List<String> list) throws IOException{
+    public static void updloadFiles(List<String> list, String hdfsDestinationPath) throws IOException{
         Configuration conf = new Configuration();
         conf.set("fs.defaultFS", HDFS_URI);
         
         for(String localFilePath : list){
-            uploadFileToHDFS(localFilePath,"/input/", conf);
+            uploadFileToHDFS(localFilePath,hdfsDestinationPath, conf);
         }
     }
     public static List<KeyValuePair> readInputFile(String path) throws IOException{

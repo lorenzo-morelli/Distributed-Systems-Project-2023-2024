@@ -1,4 +1,4 @@
-package it.polimi.common.operators;
+package it.polimi.worker.operators;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -7,7 +7,7 @@ import java.util.HashMap;
 import java.util.function.Function;
 
 import it.polimi.common.KeyValuePair;
-import it.polimi.common.Operator;
+import it.polimi.worker.Operator;
 
 public class ReduceOperator implements Operator {
     private final Function<List<Integer>, Integer> reduceFunction;

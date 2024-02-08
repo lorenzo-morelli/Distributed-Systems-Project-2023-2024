@@ -15,11 +15,10 @@ import org.apache.commons.lang3.tuple.MutablePair;
 
 import it.polimi.common.HadoopFileReadWrite;
 import it.polimi.common.KeyValuePair;
-import it.polimi.common.Operator;
 import it.polimi.common.messages.ErrorMessage;
 import it.polimi.common.messages.Heartbeat;
 import it.polimi.common.messages.Task;
-import it.polimi.common.operators.ReduceOperator;
+import it.polimi.worker.operators.ReduceOperator;
 
 class WorkerHandler extends Thread {
     private Socket clientSocket;
@@ -132,7 +131,7 @@ class WorkerHandler extends Thread {
         try {
             boolean firstReduce = true;
                         
-            List<KeyValuePair> data = HadoopFileReadWrite.readInputFile("/input/"+task.getPathFile());
+            List<KeyValuePair> data = HadoopFileReadWrite.readInputFile(task.getPathFile());
 
             List<Operator> operators = handleOperators(task.getOperators());
 

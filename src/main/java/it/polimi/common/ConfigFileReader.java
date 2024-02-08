@@ -9,6 +9,8 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.lang3.tuple.MutablePair;
+import org.apache.hadoop.fs.Path;
+
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -50,7 +52,7 @@ public class ConfigFileReader {
 
             List<String> files = objectMapper.convertValue(jsonData.get("files"), new TypeReference<List<String>>() {});
             
-            HadoopFileReadWrite.updloadFiles(files);
+            HadoopFileReadWrite.updloadFiles(files,"/input/");
 
             List<String> workers = objectMapper.convertValue(jsonData.get("workers"), new TypeReference<List<String>>() {});
             if(workers.size() != files.size()){
@@ -61,7 +63,7 @@ public class ConfigFileReader {
                     String[] parts = workers.get(i).split(":");
                     String hostname = parts[0];
                     int port = Integer.parseInt(parts[1]);
-                    fileToMachineMap.put(new Address(hostname,port), files.get(i));
+                    fileToMachineMap.put(new Address(hostname,port), "/input/" + new Path(files.get(i)).getName());
                 }
             }
 

@@ -1,16 +1,15 @@
 package it.polimi.worker;
 
 
-import it.polimi.common.Operator;
-import it.polimi.common.operators.ChangeKeyOperator;
-import it.polimi.common.operators.FilterOperator;
-import it.polimi.common.operators.MapOperator;
-import it.polimi.common.operators.ReduceOperator;
-
 import java.util.List;
 import java.util.function.IntUnaryOperator;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import it.polimi.worker.operators.ChangeKeyOperator;
+import it.polimi.worker.operators.FilterOperator;
+import it.polimi.worker.operators.MapOperator;
+import it.polimi.worker.operators.ReduceOperator;
 
 public class CreateOperator {
 

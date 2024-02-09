@@ -31,18 +31,12 @@ public class CoordinatorMain {
         }
 
 
-
         ExecutorService executorService = Executors.newFixedThreadPool(coordinator.getFileSocketMap().size());
 
         try{
             int i = 0;
             
             for (String f : coordinator.getFileSocketMap().keySet()) {
-                
-                if(coordinator.getFileSocketMap().get(f) == null){
-                    coordinator.retryConnection(f);
-                }
-
                 executorService.submit(new SocketHandler(coordinator,f,i,CoordinatorPhase.INIT,false));
                 i++;
             }

@@ -128,6 +128,7 @@ public class SocketHandler implements Runnable {
     
                 if (!reconnected) {
                     System.out.println("Not possible to connect to any worker.");
+                    System.exit(0);
                 } else {
                     performReconnectedActions();
                 }

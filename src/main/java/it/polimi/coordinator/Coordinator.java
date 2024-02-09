@@ -21,10 +21,9 @@ public class Coordinator {
     private KeyAssignmentManager keyManager;
 
     private Map<String, Socket> fileSocketMap;
-    private Map<String, Address> fileAddresMap;
     private List<String> files;
     private List<Address> addresses;
-    MutablePair<String,String> lastReduce;
+    private MutablePair<String,String> lastReduce;
 
 
     public Coordinator(MutablePair<Integer, List<MutablePair<String, String>>> operations, MutablePair<List<String>, List<Address>> filesAddresses ) {
@@ -36,10 +35,9 @@ public class Coordinator {
         this.addresses = filesAddresses.getRight();
 
         this.fileSocketMap = new HashMap<>();
-        this.fileAddresMap = new HashMap<>();
         this.lastReduce = new MutablePair<>();
         this.keyManager = new KeyAssignmentManager();
-        if(this.numPartitions == 0 || this.operations.size() == 0 || this.files.size() == 0 || this.addresses.size() != this.numPartitions){
+        if(this.numPartitions == 0 || this.operations.size() == 0 || this.files.size() == 0 || this.files.size() != this.numPartitions){
             throw new IllegalArgumentException("Invalid input parameters!");
         }
     }
@@ -73,15 +71,16 @@ public class Coordinator {
         int i = 0;
         for (String f : files) {
             try {
-                Address a = addresses.get(i);
-                Socket clientSocket = new Socket(a.getHostname(), a.getPort());
-                clientSockets.add(clientSocket);
-                fileSocketMap.put(f, clientSocket);
-                fileAddresMap.put(f, a);
-            
+                if(i<addresses.size()){
+                    Address a = addresses.get(i);
+                    Socket clientSocket = new Socket(a.getHostname(), a.getPort());
+                    clientSockets.add(clientSocket);
+                    fileSocketMap.put(f, clientSocket);
+                }else{
+                    throw new RuntimeException("No workers available");
+                }
             } catch (IOException e) {
-                fileSocketMap.put(f, getLeastLoadedWorker());
-                fileAddresMap.put(f, addresses.get(i));
+                fileSocketMap.put(f, getNewActiveSocket(new ArrayList<>(addresses)));
             }
             i++;
         }
@@ -106,51 +105,9 @@ public class Coordinator {
         return changeKey && reduce;
     }
 
-    public void retryConnection(String f) {
-        
-        try {
-            System.out.println("Retrying connection for file: " + f);
-            Address a =  fileAddresMap.get(f);
-
-            Socket clientSocket = new Socket(a.getHostname(), a.getPort());
-            clientSockets.add(clientSocket);
-            fileSocketMap.put(f, clientSocket);
-        
-        } catch (IOException e) {
-            if(clientSockets.size() == 0){
-                throw new RuntimeException("No workers available");
-            }
-            fileSocketMap.put(f, getLeastLoadedWorker());
-        }
-    }
-
-    private Socket getLeastLoadedWorker(){
-        
-        if(clientSockets.size() == 0){
-            return null;
-        }
-
-        Map<Socket,Integer> load = new HashMap<>();
-        for(Socket s : clientSockets){
-            load.put(s, 0);
-        }
-
-        for(String f : files){
-            if(fileSocketMap.get(f) != null){
-                load.put(fileSocketMap.get(f), load.get(fileSocketMap.get(f)) + 1);
-            }
-        }
-        Socket s = Collections.min(load.entrySet(), Map.Entry.comparingByValue()).getKey();
-        try{
-            return new Socket(s.getInetAddress().getHostName(), s.getPort());
-        }catch(Exception e){
-            clientSockets.remove(s);
-            throw new RuntimeException("Not possible to initialize connection");
-        }
-    }
     public Socket getNewActiveSocket(List<Address> addressesTocheck){
         
-        if(addressesTocheck.size() == 0 || clientSockets.size() == 0){
+        if(addressesTocheck.size() == 0){
             throw new RuntimeException("No workers available");
         }
 

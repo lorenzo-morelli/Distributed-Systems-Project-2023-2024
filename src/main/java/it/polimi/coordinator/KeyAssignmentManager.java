@@ -13,11 +13,8 @@ public class KeyAssignmentManager {
 
     public void insertAssignment(SocketHandler worker, List<Integer> keys, Integer num) {
         currentAssignments.put(worker, keys);
-        try{
         if (currentAssignments.size() == num) {
             assignKeys(determineNewAssignmentsWithLoadBalancing());
-        }}catch(Exception e){
-            e.printStackTrace();
         }
     }
 

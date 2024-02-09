@@ -54,19 +54,16 @@ public class ConfigFileReader {
             HadoopFileReadWrite.updloadFiles(tempFiles,"/input/");
 
             List<String> workers = objectMapper.convertValue(jsonData.get("workers"), new TypeReference<List<String>>() {});
-            if(workers.size() != tempFiles.size()){
-                throw new IllegalArgumentException("The number of workers and files must be the same!");
+            
+            for(int i = 0; i < workers.size(); i++){
+                String[] parts = workers.get(i).split(":");
+                String hostname = parts[0];
+                int port = Integer.parseInt(parts[1]);
+                addresses.add(new Address(hostname,port));
             }
-            else{
-                for(int i = 0; i < workers.size(); i++){
-                    String[] parts = workers.get(i).split(":");
-                    String hostname = parts[0];
-                    int port = Integer.parseInt(parts[1]);
-                    addresses.add(new Address(hostname,port));
-                    files.add("/input/" + new Path(tempFiles.get(i)).getName());
-                }
+            for(int i = 0; i < tempFiles.size(); i++){
+                files.add("/input/" + new Path(tempFiles.get(i)).getName());
             }
-
         } catch (Exception e) {
             e.printStackTrace();
             throw new Exception("Not possible to read the configuration file:\n" + file.getAbsolutePath().toString() + "\nCheck the path and the format of the file!");

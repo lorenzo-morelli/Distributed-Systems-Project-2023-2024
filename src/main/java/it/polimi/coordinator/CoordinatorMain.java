@@ -1,8 +1,6 @@
 package it.polimi.coordinator;
 
 import java.io.File;
-import java.net.Socket;
-import java.util.ArrayList;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -25,9 +23,8 @@ public class CoordinatorMain {
             return;
         }
 
-        
         try {
-            coordinator.initializeConnections(new ArrayList<>(coordinator.getAddressFileMap().keySet()));
+            coordinator.initializeConnections();
         } catch (Exception e) {
             System.out.println(e.getMessage());
             return;
@@ -35,21 +32,21 @@ public class CoordinatorMain {
 
 
 
-        KeyAssignmentManager keyManager = new KeyAssignmentManager();
-        ExecutorService executorService = Executors.newFixedThreadPool(coordinator.getClientSockets().size());
-        
+        ExecutorService executorService = Executors.newFixedThreadPool(coordinator.getFileSocketMap().size());
+
         try{
-        int i = 0;
-        for (Socket socket : coordinator.getClientSockets()) {
-            executorService.submit(new SocketHandler(socket, 
-                coordinator.getSocketFileMap().get(socket),
-                coordinator.getOperations(),
-                coordinator.checkChangeKeyReduce(),
-                coordinator.getNumPartitions(),
-                keyManager,i));
-            i++;
-        }
-        executorService.shutdown();
+            int i = 0;
+            
+            for (String f : coordinator.getFileSocketMap().keySet()) {
+                
+                if(coordinator.getFileSocketMap().get(f) == null){
+                    coordinator.retryConnection(f);
+                }
+
+                executorService.submit(new SocketHandler(coordinator,f,i,CoordinatorPhase.INIT,false));
+                i++;
+            }
+            executorService.shutdown();
         }catch(Exception e){
             System.out.println(e.getMessage());
         }

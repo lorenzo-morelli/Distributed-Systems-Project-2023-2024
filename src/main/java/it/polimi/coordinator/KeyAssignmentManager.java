@@ -5,8 +5,10 @@ import java.util.*;
 public class KeyAssignmentManager {
 
     private Map<SocketHandler, List<Integer>> currentAssignments;
+    private Map<SocketHandler, List<Integer>> finalAssignments;
     public KeyAssignmentManager() {
         currentAssignments = new HashMap<>();
+        finalAssignments = new HashMap<>();
     }
 
     public void insertAssignment(SocketHandler worker, List<Integer> keys, Integer num) {
@@ -21,6 +23,7 @@ public class KeyAssignmentManager {
 
     // Method to determine new worker assignments with load balancing for selected keys
     public Map<SocketHandler, List<Integer>> determineNewAssignmentsWithLoadBalancing() {
+        
         Map<SocketHandler, List<Integer>> newAssignments = new HashMap<>();
         for(SocketHandler s: currentAssignments.keySet()){
             newAssignments.put(s,new ArrayList<>());
@@ -50,8 +53,14 @@ public class KeyAssignmentManager {
     }
 
     private void assignKeys(Map<SocketHandler, List<Integer>> newAssignments) {
+        
         for (SocketHandler s : newAssignments.keySet()) {
-            s.sendNewAssignment(newAssignments.get(s));
+            s.sendNewAssignment();
         }
+        finalAssignments = newAssignments;
+    }
+
+    public Map<SocketHandler,List<Integer>> getFinalAssignments(){
+        return finalAssignments;
     }
 }

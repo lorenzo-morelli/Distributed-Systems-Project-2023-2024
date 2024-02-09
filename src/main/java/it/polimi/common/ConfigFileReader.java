@@ -4,7 +4,6 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -36,42 +35,43 @@ public class ConfigFileReader {
             }
 
         } catch (Exception e) {
-            e.printStackTrace();
             throw new Exception("Not possible to read the operations file:\n" + file.getAbsolutePath() + "\nCheck the path and the format of the file!");
         }
 
         return new MutablePair<>(partitions, dataFunctions);
     }
 
-    public static Map<Address,String> readConfigurations(File file) throws Exception {
-        Map<Address, String> fileToMachineMap = new HashMap<>();
-        
+    public static MutablePair<List<String>, List<Address>> readConfigurations(File file) throws Exception {
+        List<Address> addresses = new ArrayList<>();
+        List<String> files = new ArrayList<>();
+
         try {
             ObjectMapper objectMapper = new ObjectMapper();
             Map<String, Object> jsonData = objectMapper.readValue(file, new TypeReference<Map<String, Object>>() {});
 
-            List<String> files = objectMapper.convertValue(jsonData.get("files"), new TypeReference<List<String>>() {});
+            List<String> tempFiles = objectMapper.convertValue(jsonData.get("files"), new TypeReference<List<String>>() {});
             
-            HadoopFileReadWrite.updloadFiles(files,"/input/");
+            HadoopFileReadWrite.updloadFiles(tempFiles,"/input/");
 
             List<String> workers = objectMapper.convertValue(jsonData.get("workers"), new TypeReference<List<String>>() {});
-            if(workers.size() != files.size()){
-                throw new Exception("The number of workers and files must be the same!");
+            if(workers.size() != tempFiles.size()){
+                throw new IllegalArgumentException("The number of workers and files must be the same!");
             }
             else{
                 for(int i = 0; i < workers.size(); i++){
                     String[] parts = workers.get(i).split(":");
                     String hostname = parts[0];
                     int port = Integer.parseInt(parts[1]);
-                    fileToMachineMap.put(new Address(hostname,port), "/input/" + new Path(files.get(i)).getName());
+                    addresses.add(new Address(hostname,port));
+                    files.add("/input/" + new Path(tempFiles.get(i)).getName());
                 }
             }
 
         } catch (Exception e) {
             e.printStackTrace();
-            throw new Exception("Not possible to read the configuration file:\n" + e.getMessage() + "\nCheck the path and the format of the file!");
+            throw new Exception("Not possible to read the configuration file:\n" + file.getAbsolutePath().toString() + "\nCheck the path and the format of the file!");
         }
-        return fileToMachineMap;
+        return new MutablePair<>(files, addresses);
     }
     
 

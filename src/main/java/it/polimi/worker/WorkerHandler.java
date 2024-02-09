@@ -17,14 +17,13 @@ import it.polimi.common.HadoopFileReadWrite;
 import it.polimi.common.KeyValuePair;
 import it.polimi.common.messages.ErrorMessage;
 import it.polimi.common.messages.Heartbeat;
+import it.polimi.common.messages.LastReduce;
 import it.polimi.common.messages.Task;
-import it.polimi.worker.operators.ReduceOperator;
 
 class WorkerHandler extends Thread {
     private Socket clientSocket;
     private String OUTPUT_DIRECTORY_1 = "step1";
     private Integer taskId;
-    private Operator reduce;
     public WorkerHandler(Socket clientSocket) {
         this.clientSocket = clientSocket;
     }
@@ -63,25 +62,19 @@ class WorkerHandler extends Thread {
                             outputStream.writeObject(extractKeys(result));
 
                         }
-                    } else {
+                    }else{
                         outputStream.writeObject(new ErrorMessage());
                     }
-
                 } else if (object instanceof Heartbeat) {
                     System.out.println("Heartbeat received");
                     // Send the result back to the coordinator
                     outputStream.writeObject(new Heartbeat());
-                } else if (object instanceof List<?> list){
-                    System.out.println("Responsible for the keys: " + object);
-                    List<Integer> keys = new ArrayList<>();
-                    for (Object element : list) {
-                        if (element instanceof Integer) {
-                            keys.add((Integer) element);
-                        }
-                    }
+                } else if (object instanceof LastReduce){
+                    LastReduce reduceMessage = (LastReduce) object;
+
+                    System.out.println("Responsible for the keys: " + reduceMessage.getKeys());
                     
-                    List<KeyValuePair> result = reduce.execute(HadoopFileReadWrite.readKeys(keys));
-                    outputStream.writeObject(result);
+                    outputStream.writeObject(computeReduceMessage(reduceMessage));
                     break;
                 }
                 else {
@@ -90,6 +83,7 @@ class WorkerHandler extends Thread {
                 }
             }
         } catch (Exception e) {
+            e.printStackTrace();
             System.out.println("Connection closed");
         } finally {
             System.out.println("Closing connection");
@@ -123,29 +117,30 @@ class WorkerHandler extends Thread {
 
         return operators;
     }
+    private List<KeyValuePair> computeReduceMessage(LastReduce reduceMessage){
 
+        List<KeyValuePair> data = HadoopFileReadWrite.readKeys(reduceMessage.getKeys());
+        Operator operator = CreateOperator.createOperator(reduceMessage.getReduce().getLeft(), reduceMessage.getReduce().getRight());
+
+        List<KeyValuePair> result = operator.execute(data);
+        return result;
+    }
 
     private List<KeyValuePair> processTask(Task task) {
         
         List<KeyValuePair> result = null;
         try {
-            boolean firstReduce = true;
                         
             List<KeyValuePair> data = HadoopFileReadWrite.readInputFile(task.getPathFile());
-
             List<Operator> operators = handleOperators(task.getOperators());
-
             result = operators.get(0).execute(data);
             operators.remove(0);
 
             for (Operator o : operators) {
-                if(o instanceof ReduceOperator && firstReduce){
-                    reduce = o;
-                    firstReduce = false;
-                }
                 result = o.execute(result);
             }
         } catch (Exception e) {
+            e.printStackTrace();
             System.out.println(e.getMessage());
         }
         return result;

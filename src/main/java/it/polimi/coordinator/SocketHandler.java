@@ -1,55 +1,52 @@
 package it.polimi.coordinator;
 
+import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
+
 import java.util.ArrayList;
 import java.util.List;
-import org.apache.commons.lang3.tuple.MutablePair;
+
+
 import it.polimi.common.messages.ErrorMessage;
+import it.polimi.common.messages.LastReduce;
 import it.polimi.common.messages.Task;
 
 public class SocketHandler implements Runnable {
     public Socket clientSocket;
-    private String pathFile;
-    private List<MutablePair<String, String>> operations;
-    private boolean isPresentStep2;
-    private Integer numWorkers;
-    private List<Integer> keys;
     private Integer taskId;
+    private Coordinator coordinator;
+    private String file;
     private KeyAssignmentManager keyManager;
     private CoordinatorPhase phase;
     private volatile boolean canProceedStep2;
-
-    public SocketHandler(Socket clientSocket, String pathFile, List<MutablePair<String, String>> operations,boolean isPresentStep2, int numWorkers, KeyAssignmentManager keyManager,Integer taskId) {
-        this.clientSocket = clientSocket;
-        this.pathFile = pathFile; 
-        this.operations = operations;
-        this.isPresentStep2 = isPresentStep2;
-        this.numWorkers = numWorkers;
-        this.keyManager = keyManager;
+    private ObjectInputStream inputStream = null;
+    private ObjectOutputStream outputStream = null;
+    private boolean isProcessing;
+    public SocketHandler(Coordinator coordinator, String file, Integer taskId,CoordinatorPhase phase,boolean canProceedStep2) {
+        this.clientSocket = coordinator.getFileSocketMap().get(file);
+        this.keyManager = coordinator.getKeyManager();
+        this.file = file;
         this.taskId = taskId;
-        this.phase = CoordinatorPhase.INIT;
-        this.keys = new ArrayList<>();
-        this.canProceedStep2 = false;
+        this.coordinator = coordinator;
+        this.canProceedStep2 = canProceedStep2;
+        this.phase = phase;
+        this.isProcessing = true;
     }
 
     @Override
     public void run() {
-        // Create input and output streams for communication
-        ObjectInputStream inputStream = null;
-        ObjectOutputStream outputStream = null;
-
         try {
             inputStream = new ObjectInputStream(clientSocket.getInputStream());
             outputStream = new ObjectOutputStream(clientSocket.getOutputStream());
             
-            Task t = new Task(operations, pathFile,isPresentStep2,taskId);
-            outputStream.writeObject(t);
-            boolean isProcessing = true;
             while (isProcessing) {
                 switch (phase) {
                     case INIT:
+                        Task t = new Task(coordinator.getOperations(), file,coordinator.checkChangeKeyReduce(),taskId);
+                        System.out.println("Sending task to worker phase1");
+                        outputStream.writeObject(t);
                         Object object = inputStream.readObject();
                         if (object == null){ 
                             isProcessing = false;
@@ -58,7 +55,7 @@ public class SocketHandler implements Runnable {
                         if (object instanceof List<?>) {
                             List<?> list = (List<?>) object;
                             // Process or print the list
-                            if (!isPresentStep2) {
+                            if (!coordinator.checkChangeKeyReduce()) {
                                 System.out.println(list);
                                 isProcessing = false;
                             } else {
@@ -69,23 +66,24 @@ public class SocketHandler implements Runnable {
                         }
                         break;
             
-                    case KEYPROCESS:
-                        if(canProceedStep2){
-                            outputStream.writeObject(keys);
-                            phase = CoordinatorPhase.FINAL;
-                        }
-                        break;
-            
                     case FINAL:
-                        Object finalObject = inputStream.readObject();
-                        isProcessing = false;
-                        if (finalObject == null) {
-                            break;
-                        }            
-                        if (finalObject instanceof List<?>) {
-                            System.out.println(finalObject);
-                        } else if (finalObject instanceof ErrorMessage) {
-                            System.out.println("Something went wrong with the reduce phase!");
+                        if(canProceedStep2){
+                            
+                            System.out.println("Sending task to worker phase2");
+                            LastReduce lastReduce = new LastReduce(coordinator.getLastReduce(), keyManager.getFinalAssignments().get(this));
+                            outputStream.writeObject(lastReduce);
+        
+                        
+                            Object finalObject = inputStream.readObject();
+                            isProcessing = false;
+                            if (finalObject == null) {
+                                break;
+                            }            
+                            if (finalObject instanceof List<?>) {
+                                System.out.println(finalObject);
+                            } else if (finalObject instanceof ErrorMessage) {
+                                System.out.println("Something went wrong with the reduce phase!");
+                            }
                         }
                         break;
                     default:
@@ -96,12 +94,12 @@ public class SocketHandler implements Runnable {
             inputStream.close();
             outputStream.close();
             clientSocket.close();
-        } catch (Exception e) {
+        } catch (Exception e) {      
             System.out.println("Worker connection lost");
+            handleSocketException();
         }
     }
-    public void sendNewAssignment(List<Integer> newKeys) {
-        this.keys = newKeys;
+    public void sendNewAssignment() {
         this.canProceedStep2 = true;
     }
 
@@ -112,7 +110,92 @@ public class SocketHandler implements Runnable {
                 integerList.add((Integer) element);
             }
         }
-        keyManager.insertAssignment(this, integerList,numWorkers);
-        this.phase = CoordinatorPhase.KEYPROCESS;
-    }    
+        keyManager.insertAssignment(this, integerList,coordinator.getNumPartitions());
+        this.phase = CoordinatorPhase.FINAL;
+    }
+    private void handleSocketException() {
+      
+      
+        coordinator.getClientSockets().remove(clientSocket);
+        coordinator.getFileSocketMap().put(file, null);
+    
+        if (isProcessing) {
+            boolean reconnected = attemptReconnection(clientSocket, 3, 5000);
+    
+            if (!reconnected) {
+                System.out.println("Not possible to reconnect to the failed worker. Assigning to another worker...");
+                reconnected = attemptReconnectionFromPool(3, 5000);
+    
+                if (!reconnected) {
+                    System.out.println("Not possible to connect to any worker.");
+                } else {
+                    performReconnectedActions();
+                }
+            } else {
+                performReconnectedActions();
+            }
+        }
+    }
+    
+    private boolean attemptReconnection(Socket socket, int maxAttempts, long reconnectDelayMillis) {
+        boolean reconnected = false;
+        int attempts = 0;
+    
+        while (!reconnected && attempts < maxAttempts) {
+            try {
+                clientSocket = new Socket(socket.getInetAddress().getHostName(), socket.getPort());
+                reconnected = true;
+            } catch (IOException e) {
+                attempts++;
+                System.out.println("Reconnection attempt " + attempts + " failed. Retrying...");
+    
+                try {
+                    Thread.sleep(reconnectDelayMillis);
+                } catch (InterruptedException interruptedException) {
+                    System.out.println("Reconnection attempt interrupted.");
+                    Thread.currentThread().interrupt();
+                }
+            }
+        }
+    
+        return reconnected;
+    }
+    
+    private boolean attemptReconnectionFromPool(int maxAttempts, long reconnectDelayMillis) {
+        boolean reconnected = false;
+        int attempts = 0;
+    
+        while (!reconnected && attempts < maxAttempts) {
+            try {
+                clientSocket = coordinator.getNewActiveSocket(new ArrayList<>(coordinator.getAddresses()));
+                reconnected = true;
+            } catch (Exception e) {
+                attempts++;
+                System.out.println("Reconnection attempt " + attempts + " failed. Retrying...");
+    
+                try {
+                    Thread.sleep(reconnectDelayMillis);
+                } catch (InterruptedException interruptedException) {
+                    System.out.println("Reconnection attempt interrupted.");
+                    Thread.currentThread().interrupt();
+                }
+            }
+        }
+    
+        return reconnected;
+    }
+    
+    private void performReconnectedActions() {
+        coordinator.getClientSockets().add(clientSocket);
+        coordinator.getFileSocketMap().put(file, clientSocket);
+        SocketHandler newSocketHandler = new SocketHandler(coordinator, file, taskId, phase, canProceedStep2);
+        if (keyManager.getFinalAssignments().get(this) != null) {
+            System.out.println("Reassigning keys to the new worker...");
+            List<Integer> keys= keyManager.getFinalAssignments().get(this);
+            keyManager.getFinalAssignments().remove(this);            
+            keyManager.getFinalAssignments().put(newSocketHandler, keys);
+        }
+        System.out.println("Reconnected to a new worker. Resuming operations...");
+        newSocketHandler.run();
+    }
 }

@@ -72,7 +72,7 @@ public class HadoopFileReadWrite {
         }
     }
 
-    public synchronized static List<KeyValuePair> readKeys(List<Integer> keys) {
+    public static List<KeyValuePair> readKeys(List<Integer> keys) {
         List<KeyValuePair> result = new ArrayList<>(); 
         for (Integer key : keys) {
             String fileName = "/key" + key;
@@ -85,7 +85,7 @@ public class HadoopFileReadWrite {
         }
         return result;
     }
-    private synchronized static void uploadFileToHDFS(String localFilePath, String hdfsDestinationPath, Configuration conf) throws IOException {
+    private static void uploadFileToHDFS(String localFilePath, String hdfsDestinationPath, Configuration conf) throws IOException {
         
         String finalName =  hdfsDestinationPath + new Path(localFilePath).getName();
         // Get the Hadoop FileSystem object
@@ -116,7 +116,7 @@ public class HadoopFileReadWrite {
         System.out.println("File "+finalName +" uploaded to HDFS successfully.");
     }
     
-    public synchronized static void updloadFiles(List<String> list, String hdfsDestinationPath) throws IOException{
+    public static void updloadFiles(List<String> list, String hdfsDestinationPath) throws IOException{
         Configuration conf = new Configuration();
         conf.set("fs.defaultFS", HDFS_URI);
         

@@ -1,10 +1,12 @@
 {
     "files": [
       "files/data1.csv",
-      "files/data2.csv"
+      "files/data2.csv",
+      "files/data3.csv"
     ],
     "workers": [
       "localhost:5001",
-      "localhost:5002"
+      "localhost:5002",
+      "localhost:5003"
     ]
   }

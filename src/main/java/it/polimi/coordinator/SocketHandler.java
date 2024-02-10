@@ -75,7 +75,6 @@ public class SocketHandler implements Runnable {
         
                         
                             Object finalObject = inputStream.readObject();
-                            isProcessing = false;
                             if (finalObject == null) {
                                 break;
                             }            
@@ -84,6 +83,7 @@ public class SocketHandler implements Runnable {
                             } else if (finalObject instanceof ErrorMessage) {
                                 System.out.println("Something went wrong with the reduce phase!");
                             }
+                            isProcessing = false;
                         }
                         break;
                     default:
@@ -94,7 +94,8 @@ public class SocketHandler implements Runnable {
             inputStream.close();
             outputStream.close();
             clientSocket.close();
-        } catch (Exception e) {      
+        } catch (Exception e) {  
+            System.out.println("Crash" + Thread.currentThread().getName());    
             System.out.println("Worker connection lost");
             handleSocketException();
         }

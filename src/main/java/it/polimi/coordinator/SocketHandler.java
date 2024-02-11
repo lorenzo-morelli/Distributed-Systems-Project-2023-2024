@@ -95,7 +95,6 @@ public class SocketHandler implements Runnable {
             outputStream.close();
             clientSocket.close();
         } catch (Exception e) {  
-            System.out.println("Crash" + Thread.currentThread().getName());    
             System.out.println("Worker connection lost");
             handleSocketException();
         }

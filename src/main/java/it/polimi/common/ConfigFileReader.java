@@ -72,7 +72,7 @@ public class ConfigFileReader {
     }
     
 
-    public static List<KeyValuePair> readData(File file) throws Exception {
+    public synchronized static List<KeyValuePair> readData(File file) throws Exception {
         List<KeyValuePair> keyValuePairs = new ArrayList<>();
 
         try (BufferedReader br = new BufferedReader(new FileReader(file))) {
@@ -87,6 +87,7 @@ public class ConfigFileReader {
                     System.out.println("Invalid line in CSV: " + line);
                 }
             }
+            br.close();
         } catch (Exception e) {
             throw new Exception("Not possible to read the data file:\n" + file.getAbsolutePath().toString() + "\nCheck the path and the format of the file!");
         }

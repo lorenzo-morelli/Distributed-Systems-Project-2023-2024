@@ -6,5 +6,5 @@ import it.polimi.common.KeyValuePair;
 
 // Operator interface
 public interface Operator {
-    List<KeyValuePair> execute(List<KeyValuePair> input);
+    public List<KeyValuePair> execute(List<KeyValuePair> input);
 }

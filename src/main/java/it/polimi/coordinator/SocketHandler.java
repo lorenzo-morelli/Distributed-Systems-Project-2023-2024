@@ -50,9 +50,7 @@ public class SocketHandler implements Runnable {
                         Object object = inputStream.readObject();
                         if (object == null){ 
                             isProcessing = false;
-                            break;
-                        }
-                        if (object instanceof List<?>) {
+                        }else if (object instanceof List<?>) {
                             List<?> list = (List<?>) object;
                             // Process or print the list
                             if (!coordinator.checkChangeKeyReduce()) {
@@ -62,7 +60,7 @@ public class SocketHandler implements Runnable {
                                 managePhase2(list);
                             }
                         } else if (object instanceof ErrorMessage) {
-                            System.out.println("Not valid format operations file");
+                            System.out.println(((ErrorMessage) object).getMessage());
                         }
                         break;
             
@@ -75,14 +73,13 @@ public class SocketHandler implements Runnable {
         
                         
                             Object finalObject = inputStream.readObject();
-                            if (finalObject == null) {
-                                break;
-                            }            
-                            if (finalObject instanceof List<?>) {
-                                System.out.println(finalObject);
-                            } else if (finalObject instanceof ErrorMessage) {
+                            if (finalObject == null ) {
                                 System.out.println("Something went wrong with the reduce phase!");
-                            }
+                            }else if (finalObject instanceof ErrorMessage){
+                                System.out.println(((ErrorMessage) finalObject).getMessage());
+                            }else if (finalObject instanceof List<?>) {
+                                System.out.println(finalObject);
+                            }            
                             isProcessing = false;
                         }
                         break;

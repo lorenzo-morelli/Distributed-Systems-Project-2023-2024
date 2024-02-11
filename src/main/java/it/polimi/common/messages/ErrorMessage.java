@@ -2,4 +2,12 @@ package it.polimi.common.messages;
 
 import java.io.Serializable;
 
-public class ErrorMessage implements Serializable{}
+public class ErrorMessage implements Serializable{
+    private final String message;
+    public ErrorMessage(String message) {
+        this.message = message;
+    }
+    public String getMessage() {
+        return message;
+    }
+}

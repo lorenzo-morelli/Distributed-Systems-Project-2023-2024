@@ -3,6 +3,7 @@ package it.polimi.common;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
+import java.net.ConnectException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -65,8 +66,11 @@ public class ConfigFileReader {
                 files.add("/input/" + new Path(tempFiles.get(i)).getName());
             }
         } catch (Exception e) {
-            e.printStackTrace();
-            throw new Exception("Not possible to read the configuration file:\n" + file.getAbsolutePath().toString() + "\nCheck the path and the format of the file!");
+            if(e instanceof ConnectException){
+                throw new Exception("Not possible to connect to the HDFS server. Check if the server is running!");
+            }else{
+                throw new Exception("Not possible to read the configuration file:\n" + file.getAbsolutePath().toString() + "\nCheck the path and the format of the file!");
+            }
         }
         return new MutablePair<>(files, addresses);
     }

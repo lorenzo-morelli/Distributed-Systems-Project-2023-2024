@@ -12,7 +12,6 @@ import org.apache.commons.lang3.tuple.MutablePair;
 import it.polimi.common.HadoopFileReadWrite;
 import it.polimi.common.KeyValuePair;
 import it.polimi.common.messages.ErrorMessage;
-import it.polimi.common.messages.Heartbeat;
 import it.polimi.common.messages.LastReduce;
 import it.polimi.common.messages.Task;
 import it.polimi.worker.operators.ReduceOperator;
@@ -57,12 +56,8 @@ class WorkerHandler extends Thread {
 
                         }
                     }else{
-                        outputStream.writeObject(new ErrorMessage());
+                        outputStream.writeObject(new ErrorMessage("Not valid format operations file"));
                     }
-                } else if (object instanceof Heartbeat) {
-                    System.out.println("Heartbeat received");
-                    // Send the result back to the coordinator
-                    outputStream.writeObject(new Heartbeat());
                 } else if (object instanceof LastReduce){
                     LastReduce reduceMessage = (LastReduce) object;
 
@@ -74,6 +69,8 @@ class WorkerHandler extends Thread {
                 else {
                     // Handle other types or unexpected objects
                     System.out.println("Received unexpected object type");
+                    outputStream.writeObject(new ErrorMessage("Received unexpected object type"));
+                    break;
                 }
             }
         } catch (Exception e) {

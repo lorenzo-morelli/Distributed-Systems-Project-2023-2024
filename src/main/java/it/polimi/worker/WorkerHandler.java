@@ -1,6 +1,5 @@
 package it.polimi.worker;
 
-import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
@@ -115,13 +114,34 @@ class WorkerHandler extends Thread {
 
         return operators;
     }
-    private List<KeyValuePair> computeReduceMessage(LastReduce reduceMessage) throws IOException{
-    
-        List<KeyValuePair> data = HadoopFileReadWrite.readKeys(reduceMessage.getKeys());
+    private List<KeyValuePair> computeReduceMessage(LastReduce reduceMessage) throws Exception{
         
-        Operator operator = CreateOperator.createOperator(reduceMessage.getReduce().getLeft(), reduceMessage.getReduce().getRight());
+        List<KeyValuePair> result = new ArrayList<>();
+        List<KeyValuePair> temp = new ArrayList<>();
 
-        List<KeyValuePair> result = operator.execute(data);
+        Integer sizeCheckPoint = 10;
+        Integer i = 0;
+        Integer j = 0;
+        for(Integer key: reduceMessage.getKeys()){
+
+            List<KeyValuePair> data = HadoopFileReadWrite.readKey(key);
+            
+            MutablePair<Boolean, List<KeyValuePair>> checkPoint = CheckPointReaderWriter.checkCheckPoint(key,true);
+            if(checkPoint.getRight().size() == 0){
+                Operator operator = CreateOperator.createOperator(reduceMessage.getReduce().getLeft(), reduceMessage.getReduce().getRight());
+                temp.addAll(operator.execute(data));
+                i++;
+            }else{
+                result.addAll(checkPoint.getRight());
+                j++;
+            }
+
+            if(i%sizeCheckPoint == 0 || (i+j) == reduceMessage.getKeys().size()){
+                CheckPointReaderWriter.writeCheckPointPhase2(temp,true);
+            }
+            
+        }
+        result.addAll(temp);
         return result;
     }
 
@@ -130,8 +150,8 @@ class WorkerHandler extends Thread {
         List<KeyValuePair> result = null;
                         
         List<KeyValuePair> data = HadoopFileReadWrite.readInputFile(task.getPathFile());
-        
-        MutablePair<Boolean, List<KeyValuePair>> checkPoint = CheckPointReaderWriter.checkCheckPoint(task.getTaskId());
+        MutablePair<Boolean, List<KeyValuePair>> checkPoint = CheckPointReaderWriter.checkCheckPoint(task.getTaskId(),false);
+
         
         Integer size = checkPoint.getRight().size();
         result = checkPoint.getRight();
@@ -158,7 +178,7 @@ class WorkerHandler extends Thread {
                     }
                 }
                 result.addAll(tempResult);
-                CheckPointReaderWriter.writeCheckPoint(task.getTaskId(), result,false);
+                CheckPointReaderWriter.writeCheckPointPhase1(task.getTaskId(), result,false);
             }
 
             for(Operator o : operators){
@@ -166,7 +186,7 @@ class WorkerHandler extends Thread {
                     result = o.execute(result);
                 }   
             }
-            CheckPointReaderWriter.writeCheckPoint(task.getTaskId(), result,true);
+            CheckPointReaderWriter.writeCheckPointPhase1(task.getTaskId(), result,true);
         }
      
         return result;

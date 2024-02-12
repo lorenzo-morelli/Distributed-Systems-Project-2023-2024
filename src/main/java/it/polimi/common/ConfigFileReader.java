@@ -4,12 +4,17 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.net.ConnectException;
+import java.nio.file.AtomicMoveNotSupportedException;
+import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 
 import org.apache.commons.lang3.tuple.MutablePair;
 import org.apache.hadoop.fs.Path;
+
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -76,7 +81,7 @@ public class ConfigFileReader {
         return new MutablePair<>(files, addresses);
     }
     
-    public static synchronized MutablePair<Boolean, List<KeyValuePair>> readCheckPoint(File file) throws Exception {
+    public static synchronized MutablePair<Boolean, List<KeyValuePair>> readCheckPoint(File file, Boolean phase2) throws Exception {
         List<KeyValuePair> result = new ArrayList<>();
         Boolean end = false;
     
@@ -85,26 +90,39 @@ public class ConfigFileReader {
             Map<String, Object> jsonData = objectMapper.readValue(file, new TypeReference<Map<String, Object>>() {});
     
             result = objectMapper.convertValue(jsonData.get("values"), new TypeReference<List<KeyValuePair>>() {});    
-    
-            end = (Boolean) jsonData.get("end");
-    
+            if(!phase2){
+                end = (Boolean) jsonData.get("end");
+            }
         } catch (Exception e) {
-            throw new Exception("Not possible to read the checkpoint file:\n" + file.getAbsolutePath().toString() + "!");
+            throw new Exception("Not possible to read the checkpoint file:\n" + file.getAbsolutePath().toString());
         }
         return new MutablePair<>(end, result);
     }
     
 
-    public static synchronized void createCheckpoint(List<KeyValuePair> result, String fileName, boolean finished) throws Exception {
+    public static synchronized void createCheckpoint(List<KeyValuePair> result, String fileName, boolean finished, boolean phase2) throws Exception {
         JSONObject jsonObject = new JSONObject();
         jsonObject.put("values", result);
-        jsonObject.put("end", finished);
+        if(!phase2){
+            jsonObject.put("end", finished);
+        }
+
+        String tempFile = fileName.split("\\.")[0] + ".temp";
 
         // Write the JSON object to a file
-        try (FileWriter fileWriter = new FileWriter(fileName)) {
+        try (FileWriter fileWriter = new FileWriter(tempFile)) {
             fileWriter.write(jsonObject.toJSONString());
         } catch (IOException e) {
             throw new Exception("Not possible to write the checkpoint file:\n" + fileName + "!");
+        }
+
+        try {
+            // Atomically move the file to the target location
+            Files.move(Paths.get(tempFile), Paths.get(fileName), StandardCopyOption.ATOMIC_MOVE);
+        } catch (AtomicMoveNotSupportedException e) {
+            System.out.println("Atomic move is not supported");
+            // Atomic move is not supported, handle accordingly (fall back to non-atomic move)
+            Files.move(Paths.get(tempFile), Paths.get(fileName));
         }
     }
 }

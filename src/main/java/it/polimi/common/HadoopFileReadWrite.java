@@ -68,13 +68,12 @@ public class HadoopFileReadWrite {
         }
     }
 
-    public static List<KeyValuePair> readKeys(List<Integer> keys) throws IOException{
+    public static List<KeyValuePair> readKey(Integer key) throws IOException{
         List<KeyValuePair> result = new ArrayList<>(); 
-        for (Integer key : keys) {
-            String fileName = "/key" + key;
-            List<KeyValuePair> partialResult = readFromHDFS(fileName);
-            result.addAll(partialResult);
-        }
+        String fileName = "/key" + key;
+        List<KeyValuePair> partialResult = readFromHDFS(fileName);
+        result.addAll(partialResult);
+        
         return result;
     }
     private static void uploadFileToHDFS(String localFilePath, String hdfsDestinationPath, Configuration conf) throws IOException {

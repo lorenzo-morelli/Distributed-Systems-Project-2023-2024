@@ -73,7 +73,7 @@ public class ConfigFileReader {
             }
         } catch (Exception e) {
             if(e instanceof ConnectException){
-                throw new Exception("Not possible to connect to the HDFS server. Check if the server is running!");
+                throw new Exception("Not possible to connect to the HDFS server. Check the address of the server and if it is running!");
             }else{
                 throw new Exception("Not possible to read the configuration file:\n" + file.getAbsolutePath().toString() + "\nCheck the path and the format of the file!");
             }
@@ -103,26 +103,18 @@ public class ConfigFileReader {
     public static synchronized void createCheckpoint(List<KeyValuePair> result, String fileName, boolean finished, boolean phase2) throws Exception {
         JSONObject jsonObject = new JSONObject();
         jsonObject.put("values", result);
-        if(!phase2){
+    
+        if (!phase2) {
             jsonObject.put("end", finished);
         }
-
-        String tempFile = fileName.split("\\.")[0] + ".temp";
-
-        // Write the JSON object to a file
-        try (FileWriter fileWriter = new FileWriter(tempFile)) {
+    
+       // Write the JSON object to a file
+        try (FileWriter fileWriter = new FileWriter(fileName)) {
             fileWriter.write(jsonObject.toJSONString());
         } catch (IOException e) {
             throw new Exception("Not possible to write the checkpoint file:\n" + fileName + "!");
         }
-
-        try {
-            // Atomically move the file to the target location
-            Files.move(Paths.get(tempFile), Paths.get(fileName), StandardCopyOption.ATOMIC_MOVE);
-        } catch (AtomicMoveNotSupportedException e) {
-            System.out.println("Atomic move is not supported");
-            // Atomic move is not supported, handle accordingly (fall back to non-atomic move)
-            Files.move(Paths.get(tempFile), Paths.get(fileName));
-        }
+        
     }
+    
 }

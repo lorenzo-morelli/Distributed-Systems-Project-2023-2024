@@ -1,5 +1,6 @@
 package it.polimi.worker;
 
+import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
@@ -98,8 +99,21 @@ class WorkerHandler extends Thread {
             System.out.println("Coordinator connection lost");
         } finally {
             System.out.println("Closing connection");
+            try {
+                // Close the streams and socket when done
+                if (inputStream != null) {
+                    inputStream.close();
+                }
+                if (outputStream != null) {
+                    outputStream.close();
+                }
+                if (clientSocket != null && !clientSocket.isClosed()) {
+                    clientSocket.close();
+                }
+            } catch (IOException e) {
+                System.out.println(e.getMessage());
+            }
         }
-
     }
 
     private List<Operator> handleOperators(List<MutablePair<String, String>> dataFunctions) {
@@ -161,7 +175,6 @@ class WorkerHandler extends Thread {
         Integer sizeCheckPoint = 8;
 
         List<KeyValuePair> tempResult = new ArrayList<>();
-
         if(!finished){  
             for(int i = size; i < data.size();){
 

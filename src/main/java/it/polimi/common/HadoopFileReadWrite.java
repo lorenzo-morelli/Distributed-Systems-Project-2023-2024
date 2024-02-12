@@ -22,23 +22,19 @@ public class HadoopFileReadWrite {
         HDFS_URI = newURI;
     }
 
-    private synchronized static void writeToHDFS(String content, String hdfsPath) {
-        try {
-            Configuration conf = new Configuration();
-            conf.set("fs.defaultFS", HDFS_URI);
-            FileSystem fs = FileSystem.get(conf);
+    private synchronized static void writeToHDFS(String content, String hdfsPath) throws IOException{
+        Configuration conf = new Configuration();
+        conf.set("fs.defaultFS", HDFS_URI);
+        FileSystem fs = FileSystem.get(conf);
 
-            Path outputPath = new Path(hdfsPath);
-            FSDataOutputStream outputStream = fs.create(outputPath);
+        Path outputPath = new Path(hdfsPath);
+        FSDataOutputStream outputStream = fs.create(outputPath);
 
-            // Write the content to the file on HDFS
-            outputStream.write(content.getBytes()); // Write content as bytes
+        // Write the content to the file on HDFS
+        outputStream.write(content.getBytes()); // Write content as bytes
 
-            outputStream.close();
-            fs.close();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        outputStream.close();
+        fs.close();
     }
 
     private synchronized static List<KeyValuePair> readFromHDFS(String hdfsPath) throws IOException {
@@ -60,7 +56,7 @@ public class HadoopFileReadWrite {
         return result;
     }
 
-    public synchronized static void writeKeys(String identifier,List<KeyValuePair> result) {
+    public synchronized static void writeKeys(String identifier,List<KeyValuePair> result) throws IOException {
     
         for (KeyValuePair pair : result) {
             Integer key = pair.getKey();
@@ -72,16 +68,12 @@ public class HadoopFileReadWrite {
         }
     }
 
-    public static List<KeyValuePair> readKeys(List<Integer> keys) {
+    public static List<KeyValuePair> readKeys(List<Integer> keys) throws IOException{
         List<KeyValuePair> result = new ArrayList<>(); 
         for (Integer key : keys) {
             String fileName = "/key" + key;
-            try{
-                List<KeyValuePair> partialResult = readFromHDFS(fileName);
-                result.addAll(partialResult);
-            }catch(Exception e){
-                System.out.println(e.getMessage());
-            }   
+            List<KeyValuePair> partialResult = readFromHDFS(fileName);
+            result.addAll(partialResult);
         }
         return result;
     }

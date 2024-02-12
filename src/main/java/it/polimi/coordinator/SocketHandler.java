@@ -47,7 +47,11 @@ public class SocketHandler implements Runnable {
                         outputStream.writeObject(t);
                         Object object = inputStream.readObject();
                         if (object == null){ 
-                            isProcessing = false;
+                            System.out.println("Received a null object!");
+                            System.exit(0);
+                        }else if (object instanceof ErrorMessage) {
+                            System.out.println(((ErrorMessage) object).getMessage());
+                            System.exit(0);
                         }else if (object instanceof List<?>) {
                             List<?> list = (List<?>) object;
                             // Process or print the list
@@ -57,9 +61,7 @@ public class SocketHandler implements Runnable {
                             } else {
                                 managePhase2(list);
                             }
-                        } else if (object instanceof ErrorMessage) {
-                            System.out.println(((ErrorMessage) object).getMessage());
-                        }
+                        } 
                         break;
             
                     case FINAL:
@@ -73,8 +75,10 @@ public class SocketHandler implements Runnable {
                             Object finalObject = inputStream.readObject();
                             if (finalObject == null ) {
                                 System.out.println("Something went wrong with the reduce phase!");
+                                System.exit(0);
                             }else if (finalObject instanceof ErrorMessage){
                                 System.out.println(((ErrorMessage) finalObject).getMessage());
+                                System.exit(0);
                             }else if (finalObject instanceof List<?>) {
                                 System.out.println(finalObject);
                             }            

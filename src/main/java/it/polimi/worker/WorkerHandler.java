@@ -39,31 +39,53 @@ class WorkerHandler extends Thread {
                 if (object instanceof Task) {
                     Task task = (Task) object;
                     taskId = task.getTaskId(); 
-                    // Process the Task
-                    List<KeyValuePair> result = processTask(task);
+                    List<KeyValuePair> result  = new ArrayList<>();
                     
+                    try{
+                        // Process the Task
+                        result = processTask(task);
+                    }
+                    catch(Exception e){
+                        outputStream.writeObject(new ErrorMessage(e.getMessage()));
+                        System.out.println("Error while processing the task");
+                        break;
+                    }
+
                     if (result != null) {
                         if(!task.isPresentStep2()){
                             // Send the result back to the coordinator
                             outputStream.writeObject(result);
                             break;
                         }else{
-                            HadoopFileReadWrite.writeKeys(
-                                taskId.toString(),
-                                result
-                                );
+                            try{
+                                HadoopFileReadWrite.writeKeys(
+                                    taskId.toString(),
+                                    result
+                                    );
+                            }catch(Exception e){
+                                outputStream.writeObject(new ErrorMessage("Error while writing the keys in HDFS"));
+                                break;
+                            }
                             outputStream.writeObject(extractKeys(result));
 
                         }
                     }else{
-                        outputStream.writeObject(new ErrorMessage("Not valid format operations file"));
+                        outputStream.writeObject(new ErrorMessage("Result is null!"));
                     }
                 } else if (object instanceof LastReduce){
                     LastReduce reduceMessage = (LastReduce) object;
 
                     System.out.println("Responsible for the keys: " + reduceMessage.getKeys());
                     
-                    outputStream.writeObject(computeReduceMessage(reduceMessage));
+                    List<KeyValuePair> result = new ArrayList<>(); 
+                    try{
+                        result = computeReduceMessage(reduceMessage);
+                    }
+                    catch(Exception e){
+                        outputStream.writeObject(new ErrorMessage("Error in the reduce phase"));
+                        break;
+                    }
+                    outputStream.writeObject(result);
                     break;
                 }
                 else {
@@ -74,24 +96,9 @@ class WorkerHandler extends Thread {
                 }
             }
         } catch (Exception e) {
-            e.printStackTrace();
-            System.out.println("Connection closed");
+            System.out.println("Coordinator connection lost");
         } finally {
             System.out.println("Closing connection");
-            try {
-                // Close the streams and socket when done
-                if (inputStream != null) {
-                    inputStream.close();
-                }
-                if (outputStream != null) {
-                    outputStream.close();
-                }
-                if (clientSocket != null && !clientSocket.isClosed()) {
-                    clientSocket.close();
-                }
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
         }
 
     }
@@ -108,63 +115,60 @@ class WorkerHandler extends Thread {
 
         return operators;
     }
-    private List<KeyValuePair> computeReduceMessage(LastReduce reduceMessage){
-
+    private List<KeyValuePair> computeReduceMessage(LastReduce reduceMessage) throws IOException{
+    
         List<KeyValuePair> data = HadoopFileReadWrite.readKeys(reduceMessage.getKeys());
+        
         Operator operator = CreateOperator.createOperator(reduceMessage.getReduce().getLeft(), reduceMessage.getReduce().getRight());
 
         List<KeyValuePair> result = operator.execute(data);
         return result;
     }
 
-    private List<KeyValuePair> processTask(Task task) {
+    private List<KeyValuePair> processTask(Task task) throws Exception{
         
         List<KeyValuePair> result = null;
-        try {
                         
-            List<KeyValuePair> data = HadoopFileReadWrite.readInputFile(task.getPathFile());
-            
-            MutablePair<Boolean, List<KeyValuePair>> checkPoint = CheckPointReaderWriter.checkCheckPoint(task.getTaskId());
-            
-            Integer size = checkPoint.getRight().size();
-            result = checkPoint.getRight();
-            Boolean finished = checkPoint.getLeft();
+        List<KeyValuePair> data = HadoopFileReadWrite.readInputFile(task.getPathFile());
+        
+        MutablePair<Boolean, List<KeyValuePair>> checkPoint = CheckPointReaderWriter.checkCheckPoint(task.getTaskId());
+        
+        Integer size = checkPoint.getRight().size();
+        result = checkPoint.getRight();
+        Boolean finished = checkPoint.getLeft();
 
-            List<Operator> operators = handleOperators(task.getOperators());
-            Integer sizeCheckPoint = 8;
+        List<Operator> operators = handleOperators(task.getOperators());
+        Integer sizeCheckPoint = 8;
 
-            List<KeyValuePair> tempResult = new ArrayList<>();
+        List<KeyValuePair> tempResult = new ArrayList<>();
 
-            if(!finished){  
-                for(int i = size; i < data.size();){
+        if(!finished){  
+            for(int i = size; i < data.size();){
 
-                    Integer end = i+sizeCheckPoint; 
-                    if(i+sizeCheckPoint > data.size()){
-                        end = data.size();
-                    }
-                    for (int k = 0;k < operators.size(); k++) {
-                        if(k == 0){
-                            tempResult = (operators.get(k).execute(data.subList(i, end)));
-                            i = end;
-                        }else{
-                            tempResult = (operators.get(k).execute(tempResult));
-                        }
-                    }
-                    result.addAll(tempResult);
-                    CheckPointReaderWriter.writeCheckPoint(task.getTaskId(), result,false);
+                Integer end = i+sizeCheckPoint; 
+                if(i+sizeCheckPoint > data.size()){
+                    end = data.size();
                 }
-
-                for(Operator o : operators){
-                    if(o instanceof ReduceOperator){
-                        result = o.execute(result);
-                    }   
+                for (int k = 0;k < operators.size(); k++) {
+                    if(k == 0){
+                        tempResult = (operators.get(k).execute(data.subList(i, end)));
+                        i = end;
+                    }else{
+                        tempResult = (operators.get(k).execute(tempResult));
+                    }
                 }
-                CheckPointReaderWriter.writeCheckPoint(task.getTaskId(), result,true);
+                result.addAll(tempResult);
+                CheckPointReaderWriter.writeCheckPoint(task.getTaskId(), result,false);
             }
-        } catch (Exception e) {
-            e.printStackTrace();
-            System.out.println(e.getMessage());
+
+            for(Operator o : operators){
+                if(o instanceof ReduceOperator){
+                    result = o.execute(result);
+                }   
+            }
+            CheckPointReaderWriter.writeCheckPoint(task.getTaskId(), result,true);
         }
+     
         return result;
     }
 

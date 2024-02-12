@@ -6,9 +6,17 @@ public class KeyAssignmentManager {
 
     private Map<SocketHandler, List<Integer>> currentAssignments;
     private Map<SocketHandler, List<Integer>> finalAssignments;
+    private Boolean canProceed;
     public KeyAssignmentManager() {
         currentAssignments = new HashMap<>();
         finalAssignments = new HashMap<>();
+        canProceed = false;
+    }
+    public Map<SocketHandler,List<Integer>> getFinalAssignments(){
+        return finalAssignments;
+    }
+    public Boolean canProceed(){
+        return canProceed;
     }
 
     public void insertAssignment(SocketHandler worker, List<Integer> keys, Integer num) {
@@ -50,14 +58,9 @@ public class KeyAssignmentManager {
     }
 
     private void assignKeys(Map<SocketHandler, List<Integer>> newAssignments) {
-        
-        for (SocketHandler s : newAssignments.keySet()) {
-            s.sendNewAssignment();
-        }
+        canProceed = true;
         finalAssignments = newAssignments;
     }
 
-    public Map<SocketHandler,List<Integer>> getFinalAssignments(){
-        return finalAssignments;
-    }
+    
 }

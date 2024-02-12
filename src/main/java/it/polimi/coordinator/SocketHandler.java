@@ -20,17 +20,15 @@ public class SocketHandler implements Runnable {
     private String file;
     private KeyAssignmentManager keyManager;
     private CoordinatorPhase phase;
-    private volatile boolean canProceedStep2;
     private ObjectInputStream inputStream = null;
     private ObjectOutputStream outputStream = null;
     private boolean isProcessing;
-    public SocketHandler(Coordinator coordinator, String file, Integer taskId,CoordinatorPhase phase,boolean canProceedStep2) {
+    public SocketHandler(Coordinator coordinator, String file, Integer taskId,CoordinatorPhase phase) {
         this.clientSocket = coordinator.getFileSocketMap().get(file);
         this.keyManager = coordinator.getKeyManager();
         this.file = file;
         this.taskId = taskId;
         this.coordinator = coordinator;
-        this.canProceedStep2 = canProceedStep2;
         this.phase = phase;
         this.isProcessing = true;
     }
@@ -65,7 +63,7 @@ public class SocketHandler implements Runnable {
                         break;
             
                     case FINAL:
-                        if(canProceedStep2){
+                        if(keyManager.canProceed()){
                             
                             System.out.println("Sending task to worker phase2");
                             LastReduce lastReduce = new LastReduce(coordinator.getLastReduce(), keyManager.getFinalAssignments().get(this));
@@ -95,9 +93,6 @@ public class SocketHandler implements Runnable {
             System.out.println("Worker connection lost");
             handleSocketException();
         }
-    }
-    public void sendNewAssignment() {
-        this.canProceedStep2 = true;
     }
 
     public void managePhase2(List<?> list){
@@ -186,7 +181,7 @@ public class SocketHandler implements Runnable {
     private void performReconnectedActions() {
         coordinator.getClientSockets().add(clientSocket);
         coordinator.getFileSocketMap().put(file, clientSocket);
-        SocketHandler newSocketHandler = new SocketHandler(coordinator, file, taskId, phase, canProceedStep2);
+        SocketHandler newSocketHandler = new SocketHandler(coordinator, file, taskId, phase);
         if (keyManager.getFinalAssignments().get(this) != null) {
             System.out.println("Reassigning keys to the new worker...");
             List<Integer> keys= keyManager.getFinalAssignments().get(this);

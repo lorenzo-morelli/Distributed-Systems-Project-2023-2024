@@ -37,7 +37,7 @@ public class CoordinatorMain {
             int i = 0;
             
             for (String f : coordinator.getFileSocketMap().keySet()) {
-                executorService.submit(new SocketHandler(coordinator,f,i,CoordinatorPhase.INIT,false));
+                executorService.submit(new SocketHandler(coordinator,f,i,CoordinatorPhase.INIT));
                 i++;
             }
             executorService.shutdown();

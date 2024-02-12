@@ -1,8 +1,8 @@
 package it.polimi.common;
 
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.net.ConnectException;
 import java.util.ArrayList;
 import java.util.List;
@@ -13,6 +13,7 @@ import org.apache.hadoop.fs.Path;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.nimbusds.jose.shaded.json.JSONObject;
 
 public class ConfigFileReader {
 
@@ -75,27 +76,35 @@ public class ConfigFileReader {
         return new MutablePair<>(files, addresses);
     }
     
-
-    public synchronized static List<KeyValuePair> readData(File file) throws Exception {
-        List<KeyValuePair> keyValuePairs = new ArrayList<>();
-
-        try (BufferedReader br = new BufferedReader(new FileReader(file))) {
-            String line;
-            while ((line = br.readLine()) != null) {
-                String[] parts = line.split(",");
-                if (parts.length == 2) {
-                    Integer key = Integer.parseInt(parts[0].trim());
-                    Integer value = Integer.parseInt(parts[1].trim());
-                    keyValuePairs.add(new KeyValuePair(key, value));
-                } else {
-                    System.out.println("Invalid line in CSV: " + line);
-                }
-            }
-            br.close();
+    public static synchronized MutablePair<Boolean, List<KeyValuePair>> readCheckPoint(File file) throws Exception {
+        List<KeyValuePair> result = new ArrayList<>();
+        Boolean end = false;
+    
+        try {
+            ObjectMapper objectMapper = new ObjectMapper();
+            Map<String, Object> jsonData = objectMapper.readValue(file, new TypeReference<Map<String, Object>>() {});
+    
+            result = objectMapper.convertValue(jsonData.get("values"), new TypeReference<List<KeyValuePair>>() {});    
+    
+            end = (Boolean) jsonData.get("end");
+    
         } catch (Exception e) {
-            throw new Exception("Not possible to read the data file:\n" + file.getAbsolutePath().toString() + "\nCheck the path and the format of the file!");
+            throw new Exception("Not possible to read the checkpoint file:\n" + file.getAbsolutePath().toString() + "!");
         }
+        return new MutablePair<>(end, result);
+    }
+    
 
-        return keyValuePairs;
+    public static synchronized void createCheckpoint(List<KeyValuePair> result, String fileName, boolean finished) throws Exception {
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.put("values", result);
+        jsonObject.put("end", finished);
+
+        // Write the JSON object to a file
+        try (FileWriter fileWriter = new FileWriter(fileName)) {
+            fileWriter.write(jsonObject.toJSONString());
+        } catch (IOException e) {
+            throw new Exception("Not possible to write the checkpoint file:\n" + fileName + "!");
+        }
     }
 }

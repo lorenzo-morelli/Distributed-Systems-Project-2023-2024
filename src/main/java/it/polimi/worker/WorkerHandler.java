@@ -124,38 +124,42 @@ class WorkerHandler extends Thread {
                         
             List<KeyValuePair> data = HadoopFileReadWrite.readInputFile(task.getPathFile());
             
-            List<KeyValuePair> checkPoint = CheckPointReaderWriter.checkCheckPoint(task.getTaskId());
+            MutablePair<Boolean, List<KeyValuePair>> checkPoint = CheckPointReaderWriter.checkCheckPoint(task.getTaskId());
             
-            Integer size = checkPoint.size();
-            result = checkPoint;
+            Integer size = checkPoint.getRight().size();
+            result = checkPoint.getRight();
+            Boolean finished = checkPoint.getLeft();
 
             List<Operator> operators = handleOperators(task.getOperators());
             Integer sizeCheckPoint = 8;
 
             List<KeyValuePair> tempResult = new ArrayList<>();
 
-            for(int i = size; i < data.size();){
+            if(!finished){  
+                for(int i = size; i < data.size();){
 
-                Integer end = i+sizeCheckPoint; 
-                if(i+sizeCheckPoint > data.size()){
-                    end = data.size();
-                }
-                for (int k = 0;k < operators.size(); k++) {
-                    if(k == 0){
-                        tempResult = (operators.get(k).execute(data.subList(i, end)));
-                        i = end;
-                    }else{
-                        tempResult = (operators.get(k).execute(tempResult));
+                    Integer end = i+sizeCheckPoint; 
+                    if(i+sizeCheckPoint > data.size()){
+                        end = data.size();
                     }
+                    for (int k = 0;k < operators.size(); k++) {
+                        if(k == 0){
+                            tempResult = (operators.get(k).execute(data.subList(i, end)));
+                            i = end;
+                        }else{
+                            tempResult = (operators.get(k).execute(tempResult));
+                        }
+                    }
+                    result.addAll(tempResult);
+                    CheckPointReaderWriter.writeCheckPoint(task.getTaskId(), result,false);
                 }
-                result.addAll(tempResult);
-                CheckPointReaderWriter.writeCheckPoint(task.getTaskId(), result,i);
-            }
 
-            for(Operator o : operators){
-                if(o instanceof ReduceOperator){
-                    result = o.execute(result);
-                }   
+                for(Operator o : operators){
+                    if(o instanceof ReduceOperator){
+                        result = o.execute(result);
+                    }   
+                }
+                CheckPointReaderWriter.writeCheckPoint(task.getTaskId(), result,true);
             }
         } catch (Exception e) {
             e.printStackTrace();

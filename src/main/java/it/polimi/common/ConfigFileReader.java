@@ -4,17 +4,14 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.net.ConnectException;
-import java.nio.file.AtomicMoveNotSupportedException;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 
 import org.apache.commons.lang3.tuple.MutablePair;
 import org.apache.hadoop.fs.Path;
-
+import java.nio.file.Files;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -107,14 +104,23 @@ public class ConfigFileReader {
         if (!phase2) {
             jsonObject.put("end", finished);
         }
-    
+        
+        String tempFileName = fileName.split("\\.")[0] + "_temp.json";
+
+
        // Write the JSON object to a file
-        try (FileWriter fileWriter = new FileWriter(fileName)) {
+        try (FileWriter fileWriter = new FileWriter(tempFileName)) {
             fileWriter.write(jsonObject.toJSONString());
         } catch (IOException e) {
-            throw new Exception("Not possible to write the checkpoint file:\n" + fileName + "!");
+            e.printStackTrace();
+            throw new Exception("Not possible to write the checkpoint file:\n" + tempFileName + "!");
         }
-        
+
+        java.nio.file.Path sourcePath = java.nio.file.Path.of(tempFileName);
+        java.nio.file.Path destinationPath = java.nio.file.Path.of(fileName);
+        Files.copy(sourcePath, destinationPath, StandardCopyOption.REPLACE_EXISTING);
+    
+        Files.deleteIfExists(sourcePath);
     }
     
 }

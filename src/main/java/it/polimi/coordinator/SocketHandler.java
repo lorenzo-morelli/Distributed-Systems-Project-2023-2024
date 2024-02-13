@@ -8,7 +8,7 @@ import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
 
-
+import it.polimi.common.Address;
 import it.polimi.common.messages.ErrorMessage;
 import it.polimi.common.messages.LastReduce;
 import it.polimi.common.messages.Task;
@@ -116,7 +116,7 @@ public class SocketHandler implements Runnable {
         coordinator.getFileSocketMap().put(file, null);
     
         if (isProcessing) {
-            boolean reconnected = attemptReconnection(clientSocket, 3, 5000);
+            boolean reconnected = attemptReconnection(3, 5000);
     
             if (!reconnected) {
                 System.out.println("Not possible to reconnect to the failed worker. Assigning to another worker...");
@@ -134,13 +134,13 @@ public class SocketHandler implements Runnable {
         }
     }
     
-    private boolean attemptReconnection(Socket socket, int maxAttempts, long reconnectDelayMillis) {
+    private boolean attemptReconnection(int maxAttempts, long reconnectDelayMillis) {
         boolean reconnected = false;
         int attempts = 0;
     
         while (!reconnected && attempts < maxAttempts) {
             try {
-                clientSocket = new Socket(socket.getInetAddress().getHostName(), socket.getPort());
+                clientSocket = new Socket(clientSocket.getInetAddress().getHostName(), clientSocket.getPort());
                 reconnected = true;
             } catch (IOException e) {
                 attempts++;
@@ -164,7 +164,9 @@ public class SocketHandler implements Runnable {
     
         while (!reconnected && attempts < maxAttempts) {
             try {
-                clientSocket = coordinator.getNewActiveSocket(new ArrayList<>(coordinator.getAddresses()));
+                List<Address> addresses = new ArrayList<>(coordinator.getAddresses());
+                addresses.remove(new Address(clientSocket.getInetAddress().getHostName(), clientSocket.getPort()));
+                clientSocket = coordinator.getNewActiveSocket(addresses);
                 reconnected = true;
             } catch (Exception e) {
                 attempts++;

@@ -34,6 +34,7 @@ public class CheckPointReaderWriter {
             try{
                 result = ConfigFileReader.readCheckPoint(file,phase2);
             }catch(Exception e){
+                e.printStackTrace();
                 System.out.println(e.getMessage());
             }
         }

@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import it.polimi.common.Address;
+import it.polimi.common.KeyValuePair;
 import it.polimi.common.messages.ErrorMessage;
 import it.polimi.common.messages.LastReduce;
 import it.polimi.common.messages.Task;
@@ -57,6 +58,7 @@ public class SocketHandler implements Runnable {
                             // Process or print the list
                             if (!coordinator.checkChangeKeyReduce()) {
                                 System.out.println(list);
+                                end(object);
                                 isProcessing = false;
                             } else {
                                 managePhase2(list);
@@ -81,6 +83,7 @@ public class SocketHandler implements Runnable {
                                 System.exit(0);
                             }else if (finalObject instanceof List<?>) {
                                 System.out.println(finalObject);
+                                end(finalObject);
                             }            
                             isProcessing = false;
                         }
@@ -98,8 +101,28 @@ public class SocketHandler implements Runnable {
             handleSocketException();
         }
     }
+    private void end(Object object){
+        try{
+            coordinator.writeResult(convertObjectToListKeyValuePairs(object));
+        }catch(Exception e){
+            System.out.println("Error while writing the final result");
+            System.out.println(e.getMessage());
+        }
+    }
 
-    public void managePhase2(List<?> list){
+    private List<KeyValuePair> convertObjectToListKeyValuePairs(Object object) {
+        List<?> objectList = (List<?>) object;
+        List<KeyValuePair> list = new ArrayList<>();   
+        
+        for (Object element : objectList) {
+            if (element instanceof KeyValuePair) {
+                list.add((KeyValuePair) element);
+            }
+        }
+        return list;
+    }
+
+    private void managePhase2(List<?> list){
         List<Integer> integerList = new ArrayList<>();
         for (Object element : list) {
             if (element instanceof Integer) {

@@ -147,5 +147,32 @@ public class HadoopFileReadWrite {
 
         return result;
     }
-   
+    public static void deleteFiles() {
+        Configuration conf = new Configuration();
+        conf.set("fs.defaultFS", HDFS_URI);
+        FileSystem fs = null;
+        try {
+            fs = FileSystem.get(conf);
+
+            fs.delete(new Path("/input"), true);
+            
+            FileStatus[] keyFileStatus = fs.globStatus(new Path("/key*"));
+            if (keyFileStatus != null) {
+                for (FileStatus fileStatus : keyFileStatus) {
+                    fs.delete(fileStatus.getPath(), true);
+                }
+            }          
+            System.out.println("Files deleted");
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                if (fs != null) {
+                    fs.close();
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
 }

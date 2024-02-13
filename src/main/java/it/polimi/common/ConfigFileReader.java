@@ -112,8 +112,7 @@ public class ConfigFileReader {
         try (FileWriter fileWriter = new FileWriter(tempFileName)) {
             fileWriter.write(jsonObject.toJSONString());
         } catch (IOException e) {
-            e.printStackTrace();
-            throw new Exception("Not possible to write the checkpoint file:\n" + tempFileName + "!");
+            throw new Exception("Not possible to write the checkpoint file:\n" + tempFileName);
         }
 
         java.nio.file.Path sourcePath = java.nio.file.Path.of(tempFileName);
@@ -121,6 +120,18 @@ public class ConfigFileReader {
         Files.copy(sourcePath, destinationPath, StandardCopyOption.REPLACE_EXISTING);
     
         Files.deleteIfExists(sourcePath);
+    }
+
+    public static void writeResult(List<KeyValuePair> finalResult) throws Exception {
+        String fileName = "result.csv";
+
+        try (FileWriter fileWriter = new FileWriter(fileName)) {
+            for (KeyValuePair pair : finalResult) {
+                fileWriter.write(pair.getKey() + "," + pair.getValue() + "\n");
+            }
+        } catch (IOException e) {
+            throw new Exception("Not possible to write the finalResult:\n" + fileName);
+        }
     }
     
 }

@@ -11,6 +11,9 @@ import java.util.Map;
 import org.apache.commons.lang3.tuple.MutablePair;
 
 import it.polimi.common.Address;
+import it.polimi.common.ConfigFileReader;
+import it.polimi.common.HadoopFileReadWrite;
+import it.polimi.common.KeyValuePair;
 
 public class Coordinator {
 
@@ -25,6 +28,8 @@ public class Coordinator {
     private List<Address> addresses;
     private MutablePair<String,String> lastReduce;
 
+    private Integer endedTasks;
+    private List<KeyValuePair> finalResult;
 
     public Coordinator(MutablePair<Integer, List<MutablePair<String, String>>> operations, MutablePair<List<String>, List<Address>> filesAddresses ) {
         this.clientSockets = new ArrayList<>();
@@ -40,6 +45,8 @@ public class Coordinator {
         if(this.numPartitions == 0 || this.operations.size() == 0 || this.files.size() == 0 || this.files.size() != this.numPartitions){
             throw new IllegalArgumentException("Invalid input parameters!");
         }
+        this.endedTasks = 0;
+        this.finalResult = new ArrayList<>();
     }
 
     public KeyAssignmentManager getKeyManager(){
@@ -130,5 +137,19 @@ public class Coordinator {
             return getNewActiveSocket(addressesTocheck);
         }
     }
-
+    public void writeResult(List<KeyValuePair> result){
+        endedTasks++;
+        finalResult.addAll(result);
+        if(endedTasks == numPartitions){
+            System.out.println("Writing the final result...");
+            try{
+                ConfigFileReader.writeResult(finalResult);
+            }
+            catch(Exception e){
+                System.out.println("Error while writing the final result");
+                System.out.println(e.getMessage());
+            }
+            HadoopFileReadWrite.deleteFiles();
+        }
+    }
 }

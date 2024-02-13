@@ -26,6 +26,6 @@ public class KeyValuePair implements Serializable {
     // Override toString() for a more meaningful output
     @Override
     public String toString() {
-        return "(" + key + ", " + value + ")";
+        return "(" + key + ", " + value+ ")";
     }
 }

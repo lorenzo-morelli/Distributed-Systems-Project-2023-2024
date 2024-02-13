@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.lang3.tuple.MutablePair;
+import org.apache.hadoop.fs.Path;
 
 import it.polimi.common.Address;
 import it.polimi.common.ConfigFileReader;
@@ -25,6 +26,7 @@ public class Coordinator {
 
     private Map<String, Socket> fileSocketMap;
     private List<String> files;
+    private List<String> localFiles;
     private List<Address> addresses;
     private MutablePair<String,String> lastReduce;
 
@@ -36,8 +38,13 @@ public class Coordinator {
         this.operations = operations.getRight();
         this.numPartitions = operations.getLeft();
 
-        this.files = filesAddresses.getLeft();
+        this.localFiles = filesAddresses.getLeft();
         this.addresses = filesAddresses.getRight();
+        this.files = new ArrayList<>();
+         for(int i = 0; i < localFiles.size(); i++){
+                files.add("/input/" + new Path(localFiles.get(i)).getName());
+        }
+
 
         this.fileSocketMap = new HashMap<>();
         this.lastReduce = new MutablePair<>();
@@ -113,7 +120,7 @@ public class Coordinator {
     }
 
     public Socket getNewActiveSocket(List<Address> addressesTocheck){
-        
+                
         if(addressesTocheck.size() == 0){
             throw new RuntimeException("No workers available");
         }
@@ -123,6 +130,7 @@ public class Coordinator {
         for(Address a: addressesTocheck){
             load.put(a, 0);
         }
+        
         for(Socket s:clientSockets){
             Address a = new Address(s.getInetAddress().getHostName(), s.getPort());
             load.put(a, load.get(a) + 1);
@@ -150,6 +158,13 @@ public class Coordinator {
                 System.out.println(e.getMessage());
             }
             HadoopFileReadWrite.deleteFiles();
+        }
+    }
+    public void initializeHadoop(){
+        try{
+            HadoopFileReadWrite.updloadFiles(localFiles,"/input/");
+        }catch(Exception e){
+            throw new RuntimeException("Not possible to connect to the HDFS server. Check the address of the server and if it is running!");
         }
     }
 }

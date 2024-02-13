@@ -29,7 +29,11 @@ public class CoordinatorMain {
             System.out.println(e.getMessage());
             return;
         }
-
+        try{
+            coordinator.initializeHadoop();
+        }catch(Exception e){
+            System.out.println(e.getMessage());
+        }
 
         ExecutorService executorService = Executors.newFixedThreadPool(coordinator.getFileSocketMap().size());
 

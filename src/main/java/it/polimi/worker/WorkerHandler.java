@@ -25,9 +25,11 @@ class WorkerHandler extends Thread {
 
     @Override
     public void run() {
+        System.out.println("WorkerHandler started");
         // Create input and output streams for communication
         ObjectInputStream inputStream = null;
         ObjectOutputStream outputStream = null;
+
         try {
 
             outputStream = new ObjectOutputStream(clientSocket.getOutputStream());

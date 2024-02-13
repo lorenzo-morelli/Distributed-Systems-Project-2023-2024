@@ -8,7 +8,6 @@ import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
 
-import it.polimi.common.Address;
 import it.polimi.common.KeyValuePair;
 import it.polimi.common.messages.ErrorMessage;
 import it.polimi.common.messages.LastReduce;
@@ -121,8 +120,7 @@ public class SocketHandler implements Runnable {
         }
         return list;
     }
-
-    private void managePhase2(List<?> list){
+    public void managePhase2(List<?> list){
         List<Integer> integerList = new ArrayList<>();
         for (Object element : list) {
             if (element instanceof Integer) {
@@ -139,7 +137,7 @@ public class SocketHandler implements Runnable {
         coordinator.getFileSocketMap().put(file, null);
     
         if (isProcessing) {
-            boolean reconnected = attemptReconnection(3, 5000);
+            boolean reconnected = attemptReconnection(clientSocket, 3, 5000);
     
             if (!reconnected) {
                 System.out.println("Not possible to reconnect to the failed worker. Assigning to another worker...");
@@ -157,13 +155,13 @@ public class SocketHandler implements Runnable {
         }
     }
     
-    private boolean attemptReconnection(int maxAttempts, long reconnectDelayMillis) {
+    private boolean attemptReconnection(Socket socket, int maxAttempts, long reconnectDelayMillis) {
         boolean reconnected = false;
         int attempts = 0;
     
         while (!reconnected && attempts < maxAttempts) {
             try {
-                clientSocket = new Socket(clientSocket.getInetAddress().getHostName(), clientSocket.getPort());
+                clientSocket = new Socket(socket.getInetAddress().getHostName(), socket.getPort());
                 reconnected = true;
             } catch (IOException e) {
                 attempts++;
@@ -187,9 +185,7 @@ public class SocketHandler implements Runnable {
     
         while (!reconnected && attempts < maxAttempts) {
             try {
-                List<Address> addresses = new ArrayList<>(coordinator.getAddresses());
-                addresses.remove(new Address(clientSocket.getInetAddress().getHostName(), clientSocket.getPort()));
-                clientSocket = coordinator.getNewActiveSocket(addresses);
+                clientSocket = coordinator.getNewActiveSocket(new ArrayList<>(coordinator.getAddresses()));
                 reconnected = true;
             } catch (Exception e) {
                 attempts++;

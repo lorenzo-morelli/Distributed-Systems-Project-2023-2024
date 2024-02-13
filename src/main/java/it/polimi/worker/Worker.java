@@ -26,6 +26,7 @@ public class Worker{
         try {
             // Create a server socket to accept connections
             serverSocket = new ServerSocket(port);
+            System.out.println("Server started on port " + port);
             while (true) {
 
                 // Wait for a client to connect

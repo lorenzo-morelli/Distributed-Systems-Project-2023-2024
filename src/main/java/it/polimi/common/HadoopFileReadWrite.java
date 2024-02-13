@@ -37,7 +37,7 @@ public class HadoopFileReadWrite {
         fs.close();
     }
 
-    private synchronized static List<KeyValuePair> readFromHDFS(String hdfsPath) throws Exception {
+    private synchronized static List<KeyValuePair> readFromHDFS(String hdfsPath) throws IOException {
         List<KeyValuePair> result = new ArrayList<>();
 
         Configuration conf = new Configuration();
@@ -68,7 +68,7 @@ public class HadoopFileReadWrite {
         }
     }
 
-    public static List<KeyValuePair> readKey(Integer key) throws Exception{
+    public static List<KeyValuePair> readKey(Integer key) throws IOException{
         List<KeyValuePair> result = new ArrayList<>(); 
         String fileName = "/key" + key;
         List<KeyValuePair> partialResult = readFromHDFS(fileName);
@@ -115,7 +115,7 @@ public class HadoopFileReadWrite {
             uploadFileToHDFS(localFilePath,hdfsDestinationPath, conf);
         }
     }
-    public synchronized static List<KeyValuePair> readInputFile(String path) throws Exception{
+    public synchronized static List<KeyValuePair> readInputFile(String path) throws IOException{
         
         List<KeyValuePair> result = new ArrayList<>();
         Configuration conf = new Configuration();
@@ -138,7 +138,7 @@ public class HadoopFileReadWrite {
                     result.add(new KeyValuePair(key, value));
                 } else {
                     System.out.println("Invalid line in CSV: " + line);
-                    throw new Exception("Invalid line in CSV: " + line);
+                    throw new IOException("Invalid line in CSV: " + line);
                 }
             }
         } finally {

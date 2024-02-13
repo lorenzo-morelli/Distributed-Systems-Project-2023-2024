@@ -17,7 +17,7 @@ public class CheckPointReaderWriter {
 
     private static final String OUTPUT_DIRECTORY = "checkpoints/";
    
-    public static MutablePair<Boolean, List<KeyValuePair>> checkCheckPoint(Integer integer, Boolean phase2) throws Exception {
+    public static MutablePair<Boolean, List<KeyValuePair>> checkCheckPoint(Integer integer, Boolean phase2){
         String fileName;
 
         if(phase2){
@@ -33,7 +33,7 @@ public class CheckPointReaderWriter {
         if(file.exists()){
             try{
                 result = ConfigFileReader.readCheckPoint(file,phase2);
-            }catch(Exception e){
+            }catch(IOException e){
                 System.out.println(e.getMessage());
             }
         }
@@ -63,7 +63,7 @@ public class CheckPointReaderWriter {
         try{
             ConfigFileReader.createCheckpoint(result, fileName,finished,phase2);
         }
-        catch(Exception e){
+        catch(IOException e){
             System.out.println("Error while writing the checkpoint");
             System.out.println(e.getMessage());
         }

@@ -47,7 +47,7 @@ class WorkerHandler extends Thread {
                         // Process the Task
                         result = processTask(task);
                     }
-                    catch(Exception e){
+                    catch(IOException e){
                         outputStream.writeObject(new ErrorMessage(e.getMessage()));
                         System.out.println("Error while processing the task");
                         break;
@@ -64,7 +64,7 @@ class WorkerHandler extends Thread {
                                     taskId.toString(),
                                     result
                                     );
-                            }catch(Exception e){
+                            }catch(IOException e){
                                 outputStream.writeObject(new ErrorMessage("Error while writing the keys in HDFS"));
                                 break;
                             }
@@ -83,7 +83,7 @@ class WorkerHandler extends Thread {
                     try{
                         result = computeReduceMessage(reduceMessage);
                     }
-                    catch(Exception e){
+                    catch(IOException e){
                         outputStream.writeObject(new ErrorMessage("Error in the reduce phase"));
                         break;
                     }
@@ -97,7 +97,7 @@ class WorkerHandler extends Thread {
                     break;
                 }
             }
-        } catch (Exception e) {
+        } catch (IOException | ClassNotFoundException e) {
             System.out.println("Coordinator connection lost");
         } finally {
             System.out.println("Closing connection");
@@ -130,7 +130,7 @@ class WorkerHandler extends Thread {
 
         return operators;
     }
-    private List<KeyValuePair> computeReduceMessage(LastReduce reduceMessage) throws Exception{
+    private List<KeyValuePair> computeReduceMessage(LastReduce reduceMessage) throws IOException{
         
         List<KeyValuePair> result = new ArrayList<>();
         List<KeyValuePair> temp = new ArrayList<>();
@@ -161,7 +161,7 @@ class WorkerHandler extends Thread {
         return result;
     }
 
-    private List<KeyValuePair> processTask(Task task) throws Exception{
+    private List<KeyValuePair> processTask(Task task) throws IOException{
         
         List<KeyValuePair> result = null;
                         

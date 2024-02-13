@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.lang3.tuple.MutablePair;
+
 import java.nio.file.Files;
 import java.nio.file.Path;
 
@@ -68,7 +69,7 @@ public class ConfigFileReader {
         return new MutablePair<>(files, addresses);
     }
     
-    public static synchronized MutablePair<Boolean, List<KeyValuePair>> readCheckPoint(File file, Boolean phase2) throws Exception {
+    public static synchronized MutablePair<Boolean, List<KeyValuePair>> readCheckPoint(File file, Boolean phase2) throws IOException {
         List<KeyValuePair> result = new ArrayList<>();
         Boolean end = false;
     
@@ -80,14 +81,14 @@ public class ConfigFileReader {
             if(!phase2){
                 end = (Boolean) jsonData.get("end");
             }
-        } catch (Exception e) {
-            throw new Exception("Not possible to read the checkpoint file:\n" + file.getAbsolutePath().toString());
+        } catch (IOException e) {
+            throw new IOException("Not possible to read the checkpoint file:\n" + file.getAbsolutePath().toString(), e);
         }
         return new MutablePair<>(end, result);
     }
     
 
-    public static synchronized void createCheckpoint(List<KeyValuePair> result, String fileName, boolean finished, boolean phase2) throws Exception {
+    public static synchronized void createCheckpoint(List<KeyValuePair> result, String fileName, boolean finished, boolean phase2) throws IOException {
         JSONObject jsonObject = new JSONObject();
         jsonObject.put("values", result);
     
@@ -102,7 +103,7 @@ public class ConfigFileReader {
         try (FileWriter fileWriter = new FileWriter(tempFileName)) {
             fileWriter.write(jsonObject.toJSONString());
         } catch (IOException e) {
-            throw new Exception("Not possible to write the checkpoint file:\n" + tempFileName);
+            throw new IOException("Not possible to write the checkpoint file:\n" + tempFileName);
         }
 
         Path sourcePath = Path.of(tempFileName);
@@ -112,7 +113,7 @@ public class ConfigFileReader {
         Files.deleteIfExists(sourcePath);
     }
 
-    public static void writeResult(List<KeyValuePair> finalResult) throws Exception {
+    public static void writeResult(List<KeyValuePair> finalResult) throws IOException {
         String fileName = "result.csv";
 
         try (FileWriter fileWriter = new FileWriter(fileName)) {
@@ -120,7 +121,7 @@ public class ConfigFileReader {
                 fileWriter.write(pair.getKey() + "," + pair.getValue() + "\n");
             }
         } catch (IOException e) {
-            throw new Exception("Not possible to write the finalResult:\n" + fileName);
+            throw new IOException("Not possible to write the finalResult:\n" + fileName);
         }
     }
     

@@ -11,10 +11,11 @@ public class Worker{
     public static void main(String[] args){
         Scanner scanner = new Scanner(System.in);
 
-        System.out.println("Insert a port");
-        String portString = scanner.nextLine();
+       
         int port;
         try {
+            System.out.println("Insert a port");
+            String portString = scanner.nextLine();
             port = Integer.parseInt(portString);
             scanner.close();
         } catch (Exception e) {

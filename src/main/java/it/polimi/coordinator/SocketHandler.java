@@ -8,6 +8,9 @@ import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.commons.math3.analysis.function.Add;
+
+import it.polimi.common.Address;
 import it.polimi.common.KeyValuePair;
 import it.polimi.common.messages.ErrorMessage;
 import it.polimi.common.messages.LastReduce;
@@ -185,9 +188,17 @@ public class SocketHandler implements Runnable {
     
         while (!reconnected && attempts < maxAttempts) {
             try {
-                clientSocket = coordinator.getNewActiveSocket(new ArrayList<>(coordinator.getAddresses()));
+                List<Address> addresses = new ArrayList<>(coordinator.getAddresses());
+                addresses.remove(new Address(clientSocket.getInetAddress().getHostName(), clientSocket.getPort()));
+                for(Address a: addresses){
+                    System.out.println(a.getHostname() + " " + a.getPort());
+                }
+                clientSocket = coordinator.getNewActiveSocket(addresses);
                 reconnected = true;
             } catch (Exception e) {
+                
+
+
                 attempts++;
                 System.out.println("Reconnection attempt " + attempts + " failed. Retrying...");
     

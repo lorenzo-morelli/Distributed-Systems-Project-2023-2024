@@ -133,7 +133,9 @@ public class Coordinator {
         
         for(Socket s:clientSockets){
             Address a = new Address(s.getInetAddress().getHostName(), s.getPort());
-            load.put(a, load.get(a) + 1);
+            if(load.containsKey(a)){
+                load.put(a, load.get(a) + 1);
+            }
         }
         Address finalAddress = Collections.min(load.entrySet(), Map.Entry.comparingByValue()).getKey();
         

@@ -10,6 +10,7 @@ import java.util.Map;
 
 import org.apache.commons.lang3.tuple.MutablePair;
 import java.nio.file.Files;
+import java.nio.file.Path;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -104,8 +105,8 @@ public class ConfigFileReader {
             throw new Exception("Not possible to write the checkpoint file:\n" + tempFileName);
         }
 
-        java.nio.file.Path sourcePath = java.nio.file.Path.of(tempFileName);
-        java.nio.file.Path destinationPath = java.nio.file.Path.of(fileName);
+        Path sourcePath = Path.of(tempFileName);
+        Path destinationPath = Path.of(fileName);
         Files.copy(sourcePath, destinationPath, StandardCopyOption.REPLACE_EXISTING);
     
         Files.deleteIfExists(sourcePath);

@@ -3,31 +3,30 @@ package it.polimi.worker;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.Scanner;
 
 
-public class Worker extends Thread {
-    private int port;
-    private ServerSocket serverSocket;
-    private boolean isRunning = true;
+public class Worker{
+    
+    public static void main(String[] args){
+        Scanner scanner = new Scanner(System.in);
 
-    public Worker(int port) {
-        this.port = port;
-    }
-
-    public int getPort() {
-        return this.port;
-    }
-
-    public boolean getIsRunning() {
-        return isRunning;
-    }
-
-    @Override
-    public void run() {
+        System.out.println("Insert a port");
+        String portString = scanner.nextLine();
+        int port;
+        try {
+            port = Integer.parseInt(portString);
+            scanner.close();
+        } catch (Exception e) {
+            System.out.println("Not a number input port");
+            scanner.close();
+            return;
+        }
+        ServerSocket serverSocket = null;
         try {
             // Create a server socket to accept connections
             serverSocket = new ServerSocket(port);
-            while (isRunning) {
+            while (true) {
 
                 // Wait for a client to connect
                 Socket clientSocket = serverSocket.accept();
@@ -37,22 +36,8 @@ public class Worker extends Thread {
                 workerHandler.start();
             }
 
-            // Close the server socket when the thread is interrupted
-            serverSocket.close();
         } catch (IOException e) {
-            if (!serverSocket.isClosed()) {
-                e.printStackTrace();
-            }
-        }
-    }
-
-    // Method to gracefully stop the server
-    public void stopServer() {
-        isRunning = false; // Interrupt the thread
-        try {
-            serverSocket.close(); // Close the server socket to unblock accept
-        } catch (IOException e) {
-            System.out.println("Unable to stop server");
+            System.out.println(e.getMessage());
         }
     }
 }

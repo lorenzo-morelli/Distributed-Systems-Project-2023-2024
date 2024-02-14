@@ -2,11 +2,16 @@ package it.polimi.coordinator;
 
 import java.util.*;
 
+import org.apache.log4j.LogManager;
+import org.apache.log4j.Logger;
+
 public class KeyAssignmentManager {
 
     private Map<SocketHandler, List<Integer>> currentAssignments;
     private Map<SocketHandler, List<Integer>> finalAssignments;
     private Boolean canProceed;
+    private static final Logger logger = LogManager.getLogger("it.polimi.Coordinator");
+
     public KeyAssignmentManager() {
         currentAssignments = new HashMap<>();
         finalAssignments = new HashMap<>();
@@ -22,6 +27,7 @@ public class KeyAssignmentManager {
     public void insertAssignment(SocketHandler worker, List<Integer> keys, Integer num) {
         currentAssignments.put(worker, keys);
         if (currentAssignments.size() == num) {
+            logger.info("All workers have been assigned keys");
             assignKeys(determineNewAssignmentsWithLoadBalancing());
         }
     }
@@ -29,6 +35,8 @@ public class KeyAssignmentManager {
     // Method to determine new worker assignments with load balancing for selected keys
     public Map<SocketHandler, List<Integer>> determineNewAssignmentsWithLoadBalancing() {
         
+        logger.info("Determining new worker assignments with load balancing");
+
         Map<SocketHandler, List<Integer>> newAssignments = new HashMap<>();
         for(SocketHandler s: currentAssignments.keySet()){
             newAssignments.put(s,new ArrayList<>());
@@ -48,6 +56,7 @@ public class KeyAssignmentManager {
                 }
             }
         }
+        logger.info("New worker assignments with load balancing determined");
         return newAssignments;
     }
 
@@ -58,8 +67,10 @@ public class KeyAssignmentManager {
     }
 
     private void assignKeys(Map<SocketHandler, List<Integer>> newAssignments) {
+        logger.info("Assigning keys to workers");
         canProceed = true;
         finalAssignments = newAssignments;
+        logger.info("Keys assigned to workers");
     }
 
     

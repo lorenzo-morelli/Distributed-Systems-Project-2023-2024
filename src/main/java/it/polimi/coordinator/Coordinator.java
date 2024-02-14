@@ -10,6 +10,8 @@ import java.util.Map;
 
 import org.apache.commons.lang3.tuple.MutablePair;
 import org.apache.hadoop.fs.Path;
+import org.apache.log4j.LogManager;
+import org.apache.log4j.Logger;
 
 import it.polimi.common.Address;
 import it.polimi.common.ConfigFileReader;
@@ -32,6 +34,8 @@ public class Coordinator {
 
     private Integer endedTasks;
     private List<KeyValuePair> finalResult;
+    private static final Logger logger = LogManager.getLogger("it.polimi.Coordinator");
+
 
     public Coordinator(MutablePair<Integer, List<MutablePair<String, String>>> operations, MutablePair<List<String>, List<Address>> filesAddresses ) {
         this.clientSockets = new ArrayList<>();
@@ -50,6 +54,7 @@ public class Coordinator {
         this.lastReduce = new MutablePair<>();
         this.keyManager = new KeyAssignmentManager();
         if(this.numPartitions == 0 || this.operations.size() == 0 || this.files.size() == 0 || this.files.size() != this.numPartitions){
+            logger.error("Invalid input parameters!");
             throw new IllegalArgumentException("Invalid input parameters!");
         }
         this.endedTasks = 0;
@@ -81,7 +86,7 @@ public class Coordinator {
         return lastReduce;
     }   
     public void initializeConnections(){
-        
+        logger.info("Initializing connections...");
         int i = 0;
         for (String f : files) {
             try {
@@ -91,6 +96,7 @@ public class Coordinator {
                     clientSockets.add(clientSocket);
                     fileSocketMap.put(f, clientSocket);
                 }else{
+                    logger.error("No workers available");
                     throw new RuntimeException("No workers available");
                 }
             } catch (IOException e) {
@@ -98,6 +104,7 @@ public class Coordinator {
             }
             i++;
         }
+        logger.info("Connections initialized");
 
     }
     public boolean checkChangeKeyReduce(){
@@ -116,12 +123,14 @@ public class Coordinator {
                 }
             }
         }
+        logger.info("Phase 2 exists:" + (changeKey && reduce));
         return changeKey && reduce;
     }
 
     public Socket getNewActiveSocket(List<Address> addressesTocheck){
-                
+        logger.info("Search for a new active socket...");
         if(addressesTocheck.size() == 0){
+            logger.error("No workers available");
             throw new RuntimeException("No workers available");
         }
 
@@ -141,8 +150,10 @@ public class Coordinator {
         
         try{
             result = new Socket(finalAddress.getHostname(), finalAddress.getPort());
+            logger.info("New active socket found " + finalAddress.getHostname() + ":" + finalAddress.getPort());
             return result;
         }catch(Exception e){
+            logger.warn("Error while creating the new active socket");
             addressesTocheck.remove(finalAddress);
             return getNewActiveSocket(addressesTocheck);
         }
@@ -152,11 +163,14 @@ public class Coordinator {
         finalResult.addAll(result);
         if(endedTasks == numPartitions){
             System.out.println("Writing the final result...");
+            logger.info("Writing the final result...");
             try{
                 ConfigFileReader.writeResult(finalResult);
+                logger.info("Final result written");
             }
             catch(Exception e){
                 System.out.println("Error while writing the final result");
+                logger.error("Error while writing the final result");
                 System.out.println(e.getMessage());
             }
             HadoopFileReadWrite.deleteFiles();
@@ -164,8 +178,11 @@ public class Coordinator {
     }
     public void initializeHadoop(){
         try{
-            HadoopFileReadWrite.updloadFiles(localFiles,"/input/");
+            logger.info("Uploading files to HDFS...");
+            HadoopFileReadWrite.uploadFiles(localFiles,"/input/");
+            logger.info("Files uploaded to HDFS successfully");
         }catch(Exception e){
+            logger.error("Error while uploading files to HDFS");
             throw new RuntimeException("Not possible to connect to the HDFS server. Check the address of the server and if it is running!");
         }
     }

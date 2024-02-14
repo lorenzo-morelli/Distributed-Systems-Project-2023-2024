@@ -92,7 +92,8 @@ public class HadoopFileReadWrite {
         return result;
     }
     private static void uploadFileToHDFS(String localFilePath, String hdfsDestinationPath, Configuration conf) throws IOException {
-        
+        logger = LogManager.getLogger("it.polimi.Coordinator");
+        logger.info("Uploading file to HDFS: " + localFilePath);
         String finalName =  hdfsDestinationPath + new Path(localFilePath).getName();
         // Get the Hadoop FileSystem object
         FileSystem fs = FileSystem.get(conf);
@@ -118,17 +119,20 @@ public class HadoopFileReadWrite {
             // Close the FileSystem object
             fs.close();
         }
-
+        logger.info("File "+finalName +" uploaded to HDFS successfully.");
         System.out.println("File "+finalName +" uploaded to HDFS successfully.");
     }
     
-    public static void updloadFiles(List<String> list, String hdfsDestinationPath) throws IOException{
+    public static void uploadFiles(List<String> list, String hdfsDestinationPath) throws IOException{
+        logger = LogManager.getLogger("it.polimi.Coordinator");
+        logger.info("Uploading files to HDFS");
         Configuration conf = new Configuration();
         conf.set("fs.defaultFS", HDFS_URI);
         
         for(String localFilePath : list){
             uploadFileToHDFS(localFilePath,hdfsDestinationPath, conf);
         }
+        logger.info("Files uploaded to HDFS successfully.");
     }
     public synchronized static List<KeyValuePair> readInputFile(String path) throws IOException{
         logger = LogManager.getLogger("it.polimi.Worker");
@@ -166,6 +170,8 @@ public class HadoopFileReadWrite {
         return result;
     }
     public static void deleteFiles() {
+        logger = LogManager.getLogger("it.polimi.Coordinator");
+        logger.info("Deleting files from HDFS");
         Configuration conf = new Configuration();
         conf.set("fs.defaultFS", HDFS_URI);
         FileSystem fs = null;
@@ -181,7 +187,9 @@ public class HadoopFileReadWrite {
                 }
             }          
             System.out.println("Files deleted");
+            logger.info("Files deleted from HDFS");
         } catch (IOException e) {
+            logger.error(e);
             e.printStackTrace();
         } finally {
             try {
@@ -189,6 +197,7 @@ public class HadoopFileReadWrite {
                     fs.close();
                 }
             } catch (IOException e) {
+                logger.error(e);
                 e.printStackTrace();
             }
         }

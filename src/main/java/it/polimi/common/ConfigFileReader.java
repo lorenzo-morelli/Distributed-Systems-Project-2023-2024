@@ -9,6 +9,8 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.lang3.tuple.MutablePair;
+import org.apache.log4j.LogManager;
+import org.apache.log4j.Logger;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -17,7 +19,10 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nimbusds.jose.shaded.json.JSONObject;
 
+
 public class ConfigFileReader {
+    
+    private static Logger logger;
 
     public static MutablePair<Integer, List<MutablePair<String, String>>> readOperations(File file) throws Exception {
         int partitions = 0;
@@ -70,9 +75,11 @@ public class ConfigFileReader {
     }
     
     public static synchronized MutablePair<Boolean, List<KeyValuePair>> readCheckPoint(File file, Boolean phase2) throws IOException {
+        logger = LogManager.getLogger("it.polimi.Worker");
+        logger.info(Thread.currentThread().getName() + ": Reading checkpoint file: " + file.getAbsolutePath().toString());
         List<KeyValuePair> result = new ArrayList<>();
         Boolean end = false;
-    
+        
         try {
             ObjectMapper objectMapper = new ObjectMapper();
             Map<String, Object> jsonData = objectMapper.readValue(file, new TypeReference<Map<String, Object>>() {});
@@ -82,13 +89,17 @@ public class ConfigFileReader {
                 end = (Boolean) jsonData.get("end");
             }
         } catch (IOException e) {
-            throw new IOException("Not possible to read the checkpoint file:\n" + file.getAbsolutePath().toString(), e);
+            logger.error(e);
+            throw new IOException("Not possible to read the checkpoint file:\n" + file.getAbsolutePath().toString());
         }
+        logger.info(Thread.currentThread().getName() + ": Checkpoint file read: " + file.getAbsolutePath().toString());
         return new MutablePair<>(end, result);
     }
     
 
     public static synchronized void createCheckpoint(List<KeyValuePair> result, String fileName, boolean finished, boolean phase2) throws IOException {
+        logger = LogManager.getLogger("it.polimi.Worker");
+        logger.info(Thread.currentThread().getName() + ": Creating checkpoint file: " + fileName);
         JSONObject jsonObject = new JSONObject();
         jsonObject.put("values", result);
     
@@ -98,19 +109,23 @@ public class ConfigFileReader {
         
         String tempFileName = fileName.split("\\.")[0] + "_temp.json";
 
-
+        logger.info(Thread.currentThread().getName() + ": Writing temp checkpoint file: " + tempFileName);
        // Write the JSON object to a file
         try (FileWriter fileWriter = new FileWriter(tempFileName)) {
             fileWriter.write(jsonObject.toJSONString());
         } catch (IOException e) {
+            logger.error(e);
             throw new IOException("Not possible to write the checkpoint file:\n" + tempFileName);
         }
+        logger.info(Thread.currentThread().getName() + ": Temp checkpoint file written: " + tempFileName);
 
         Path sourcePath = Path.of(tempFileName);
         Path destinationPath = Path.of(fileName);
+        logger.info(Thread.currentThread().getName() + ": Moving temp checkpoint file to: " + fileName);
         Files.copy(sourcePath, destinationPath, StandardCopyOption.REPLACE_EXISTING);
-    
+        logger.info(Thread.currentThread().getName() + ": Temp checkpoint file moved to: " + fileName);
         Files.deleteIfExists(sourcePath);
+        logger.info(Thread.currentThread().getName() + ": Temp checkpoint file deleted: " + tempFileName);
     }
 
     public static void writeResult(List<KeyValuePair> finalResult) throws IOException {

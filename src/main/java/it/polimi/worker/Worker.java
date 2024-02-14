@@ -8,13 +8,17 @@ import java.util.Scanner;
 import org.apache.log4j.Logger;
 import org.apache.log4j.PropertyConfigurator;
 
+
+import org.apache.log4j.LogManager;
+
 public class Worker{
-    private static final Logger serverLogger = Logger.getLogger(Worker.class.getName());
-    public static void main(String[] args){
+
+        private static final Logger logger = LogManager.getLogger("it.polimi.Worker");
+        public static void main(String[] args){
         
         
         PropertyConfigurator.configure("src/log4j.properties");
-        
+
 
         Scanner scanner = new Scanner(System.in);
 
@@ -35,16 +39,17 @@ public class Worker{
             // Create a server socket to accept connections
             serverSocket = new ServerSocket(port);
             System.out.println("Server started on port " + port);
-            serverLogger.info("Server started on port "+ port + ".");
+            logger.info("Server started on port " + port);
             while (true) {
 
                 // Wait for a client to connect
                 Socket clientSocket = serverSocket.accept();
 
-                serverLogger.info("Coordinator opened a connection.");
+
+                logger.info("Coordinator opened a connection.");
 
                 // Handle the connection in a separate thread
-                WorkerHandler workerHandler = new WorkerHandler(clientSocket,serverLogger);
+                WorkerHandler workerHandler = new WorkerHandler(clientSocket);
                 workerHandler.start();
             }
 

@@ -14,15 +14,22 @@ import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.apache.log4j.LogManager;
+import org.apache.log4j.Logger;
+
 
 public class HadoopFileReadWrite {
     private static String HDFS_URI = "hdfs://localhost:9000";
+    
+    private static Logger logger;
 
     public synchronized static void setHDFS_URI(String newURI) {
         HDFS_URI = newURI;
     }
 
     private synchronized static void writeToHDFS(String content, String hdfsPath) throws IOException{
+        logger = LogManager.getLogger("it.polimi.Worker");
+        logger.info(Thread.currentThread().getName() + ": Writing to HDFS: " + hdfsPath);
         Configuration conf = new Configuration();
         conf.set("fs.defaultFS", HDFS_URI);
         FileSystem fs = FileSystem.get(conf);
@@ -35,9 +42,12 @@ public class HadoopFileReadWrite {
 
         outputStream.close();
         fs.close();
+        logger.info(Thread.currentThread().getName() + ": Written to HDFS: " + hdfsPath);
     }
 
     private synchronized static List<KeyValuePair> readFromHDFS(String hdfsPath) throws IOException {
+        logger = LogManager.getLogger("it.polimi.Worker");
+        logger.info(Thread.currentThread().getName() + ": Reading from HDFS: " + hdfsPath);
         List<KeyValuePair> result = new ArrayList<>();
 
         Configuration conf = new Configuration();
@@ -53,11 +63,13 @@ public class HadoopFileReadWrite {
         } finally {
             fs.close();
         }
+        logger.info(Thread.currentThread().getName() +": Read from HDFS: " + hdfsPath);
         return result;
     }
 
     public synchronized static void writeKeys(String identifier,List<KeyValuePair> result) throws IOException {
-    
+        logger = LogManager.getLogger("it.polimi.Worker");
+        logger.info(Thread.currentThread().getName() + ": Writing keys to HDFS");
         for (KeyValuePair pair : result) {
             Integer key = pair.getKey();
             Integer value = pair.getValue();
@@ -66,14 +78,17 @@ public class HadoopFileReadWrite {
             writeToHDFS(key + "," + value, fileName);                
             System.out.println("File created for key " + key + ": " + fileName);
         }
+        logger.info(Thread.currentThread().getName() + ": Keys written to HDFS");
     }
 
     public static List<KeyValuePair> readKey(Integer key) throws IOException{
+        logger = LogManager.getLogger("it.polimi.Worker");
+        logger.info(Thread.currentThread().getName() + ": Reading key " + key + " from HDFS");
         List<KeyValuePair> result = new ArrayList<>(); 
         String fileName = "/key" + key;
         List<KeyValuePair> partialResult = readFromHDFS(fileName);
         result.addAll(partialResult);
-        
+        logger.info(Thread.currentThread().getName() + ": Key " + key + " read from HDFS");
         return result;
     }
     private static void uploadFileToHDFS(String localFilePath, String hdfsDestinationPath, Configuration conf) throws IOException {
@@ -116,7 +131,9 @@ public class HadoopFileReadWrite {
         }
     }
     public synchronized static List<KeyValuePair> readInputFile(String path) throws IOException{
-        
+        logger = LogManager.getLogger("it.polimi.Worker");
+        logger.info(Thread.currentThread().getName() + ": Reading input file from HDFS: " + path);
+
         List<KeyValuePair> result = new ArrayList<>();
         Configuration conf = new Configuration();
         conf.set("fs.defaultFS", HDFS_URI);
@@ -138,13 +155,14 @@ public class HadoopFileReadWrite {
                     result.add(new KeyValuePair(key, value));
                 } else {
                     System.out.println("Invalid line in CSV: " + line);
+                    logger.error(Thread.currentThread().getName() + ": Invalid line in CSV: " + line);
                     throw new IOException("Invalid line in CSV: " + line);
                 }
             }
         } finally {
             fs.close();
         }
-
+        logger.info(Thread.currentThread().getName() + ": Input file read from HDFS: " + path);
         return result;
     }
     public static void deleteFiles() {

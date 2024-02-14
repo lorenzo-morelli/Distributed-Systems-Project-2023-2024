@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.commons.lang3.tuple.MutablePair;
+import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 
 import it.polimi.common.HadoopFileReadWrite;
@@ -20,16 +21,16 @@ import it.polimi.worker.operators.ReduceOperator;
 class WorkerHandler extends Thread {
     private Socket clientSocket;
     private Integer taskId;
-    private final Logger logger;
-    public WorkerHandler(Socket clientSocket, Logger logger) {
+    private static final Logger logger = LogManager.getLogger("it.polimi.Worker");
+
+    public WorkerHandler(Socket clientSocket) {
         this.clientSocket = clientSocket;
-        this.logger = logger;
     }
 
     @Override
     public void run() {
-        String socketAddress = clientSocket.getInetAddress().getHostName() +":"+ clientSocket.getPort() + ": ";
-        logger.info(socketAddress + "WorkerHandler started.");
+        logger.info(clientSocket.getInetAddress().getHostName() +":"+ clientSocket.getPort() + ": " + Thread.currentThread().getName());
+        logger.info(Thread.currentThread().getName() + ": WorkerHandler started.");
 
         System.out.println("WorkerHandler started");
         // Create input and output streams for communication
@@ -44,7 +45,7 @@ class WorkerHandler extends Thread {
 
                 // Read the object from the coordinator
                 Object object = inputStream.readObject();
-                logger.info(socketAddress+ "Received object from coordinator: " + object);
+                logger.info(Thread.currentThread().getName()+ ": Received object from coordinator: " + object);
                 if (object instanceof Task) {
                     Task task = (Task) object;
                     taskId = task.getTaskId(); 
@@ -55,7 +56,7 @@ class WorkerHandler extends Thread {
                         result = processTask(task);
                     }
                     catch(IOException e){
-                        logger.error(socketAddress + "Error while processing the task: " + e.getMessage());
+                        logger.error(Thread.currentThread().getName() + ": Error while processing the task: " + e.getMessage());
                         outputStream.writeObject(new ErrorMessage(e.getMessage()));
                         System.out.println("Error while processing the task");
                         break;
@@ -63,35 +64,37 @@ class WorkerHandler extends Thread {
 
                     if (result != null) {
                         if(!task.isPresentStep2()){
-                            logger.info(socketAddress+ "Step 1 is done, sending result back to the coordinator: " + result);
+                            logger.info(Thread.currentThread().getName()+ ": Step 1 is done, sending result back to the coordinator: " + result);
                             // Send the result back to the coordinator
                             outputStream.writeObject(result);
                             break;
                         }else{
                             try{
-                                logger.info(socketAddress + "Writing the keys in HDFS");
+                                logger.info(Thread.currentThread().getName() + ": Writing the keys in HDFS");
                                 HadoopFileReadWrite.writeKeys(
                                     taskId.toString(),
                                     result
                                     );
+                                logger.info(Thread.currentThread().getName() + ": Keys written in HDFS");
                             }catch(IOException e){
-                                logger.error(socketAddress+ "Error while writing the keys in HDFS: " + e.getMessage());
+                                logger.error(Thread.currentThread().getName()+ ": Error while writing the keys in HDFS: " + e.getMessage());
                                 outputStream.writeObject(new ErrorMessage("Error while writing the keys in HDFS"));
                                 break;
                             }
-                            outputStream.writeObject(extractKeys(result));
-                            logger.info(socketAddress + "Keys sent to the coordinator" + extractKeys(result));
+                            List<Integer> keys = extractKeys(result);
+                            outputStream.writeObject(keys);
+                            logger.info(Thread.currentThread().getName() + ": Keys sent to the coordinator" + keys);
 
                         }
                     }else{
                         outputStream.writeObject(new ErrorMessage("Result is null!"));
-                        logger.error(socketAddress + "Result is null!");
+                        logger.error(Thread.currentThread().getName() + ": Result is null!");
                         break;
                     }
                 } else if (object instanceof LastReduce){
                     LastReduce reduceMessage = (LastReduce) object;
 
-                    logger.info(socketAddress + "Received LastReduce message from coordinator, responsible for the keys: " + reduceMessage.getKeys());
+                    logger.info(Thread.currentThread().getName() + ": Received LastReduce message from coordinator, responsible for the keys: " + reduceMessage.getKeys());
                     System.out.println("Responsible for the keys: " + reduceMessage.getKeys());
                     
                     List<KeyValuePair> result = new ArrayList<>(); 
@@ -101,27 +104,27 @@ class WorkerHandler extends Thread {
                     }
                     catch(IOException e){
                         outputStream.writeObject(new ErrorMessage("Error in the reduce phase"));
-                        logger.error(socketAddress + "Error in the reduce phase: " + e.getMessage());
+                        logger.error(Thread.currentThread().getName() + ": Error in the reduce phase: " + e.getMessage());
                         break;
                     }
                     outputStream.writeObject(result);
-                    logger.info(socketAddress + result + " sent to the coordinator");
+                    logger.info(Thread.currentThread().getName()+": " + result + " sent to the coordinator");
                     break;
                 }
                 else {
                     // Handle other types or unexpected objects
                     System.out.println("Received unexpected object type");
                     outputStream.writeObject(new ErrorMessage("Received unexpected object type"));
-                    logger.error(socketAddress + "Received unexpected object type");
+                    logger.error(Thread.currentThread().getName() + ": Received unexpected object type");
                     break;
                 }
             }
         } catch (IOException | ClassNotFoundException e) {
             System.out.println("Coordinator connection lost");
-            logger.error("Coordinator connection lost: " + e.getMessage());
+            logger.error(Thread.currentThread().getName() + ": Coordinator connection lost: " + e.getMessage());
         } finally {
             System.out.println("Closing connection");
-            logger.info("Closing connection");
+            logger.info(Thread.currentThread().getName() + ": Closing connection");
             try {
                 // Close the streams and socket when done
                 if (inputStream != null) {
@@ -134,27 +137,27 @@ class WorkerHandler extends Thread {
                     clientSocket.close();
                 }
             } catch (IOException e) {
-                logger.error("Error while closing the connection: " + e.getMessage());
+                logger.error(Thread.currentThread().getName() + ": Error while closing the connection: " + e.getMessage());
                 System.out.println(e.getMessage());
             }
         }
     }
 
     private List<Operator> handleOperators(List<MutablePair<String, String>> dataFunctions) {
-        logger.info("Handling operators");
+        logger.info(Thread.currentThread().getName() + ": Handling operators");
         List<Operator> operators = new ArrayList<>();
 
         for (MutablePair<String, String> df : dataFunctions) {
             String op = df.getLeft();
             String fun = df.getRight();
             operators.add(CreateOperator.createOperator(op, fun));
+            logger.info(Thread.currentThread().getName()+ ": Operator created: " + op + " with function: " + fun);
         }
-
 
         return operators;
     }
     private List<KeyValuePair> computeReduceMessage(LastReduce reduceMessage) throws IOException{
-        logger.info("Computing reduce message");
+        logger.info(Thread.currentThread().getName()+ ": Computing reduce");
         List<KeyValuePair> result = new ArrayList<>();
         List<KeyValuePair> temp = new ArrayList<>();
 
@@ -163,50 +166,63 @@ class WorkerHandler extends Thread {
         Integer j = 0;
         for(Integer key: reduceMessage.getKeys()){
 
-            List<KeyValuePair> data = HadoopFileReadWrite.readKey(key);
-            
+            logger.info(Thread.currentThread().getName()+ ": Check if a checkpoint exists for key" + key);
             MutablePair<Boolean, List<KeyValuePair>> checkPoint = CheckPointReaderWriter.checkCheckPoint(key,true);
-            
+            logger.info(Thread.currentThread().getName()+ ": CheckPoint read: " + checkPoint.getRight().size() + " elements with key: " + key);
+
             if(checkPoint.getRight().size() == 0){
                 Operator operator = CreateOperator.createOperator(reduceMessage.getReduce().getLeft(), reduceMessage.getReduce().getRight());
+                List<KeyValuePair> data = HadoopFileReadWrite.readKey(key);
+                logger.info(Thread.currentThread().getName()+ ": Data read from HDFS: " + data.size() + " elements with key: " + key);
                 temp.addAll(operator.execute(data));
                 i++;
             }else{
+                logger.info(Thread.currentThread().getName() + ": Checkpoint exists for key: " + key);
                 result.addAll(checkPoint.getRight());
                 j++;
             }
 
-            if(i%sizeCheckPoint == 0 || (i+j) == reduceMessage.getKeys().size() || temp.size() > 0){
-                logger.info("Writing checkpoint, elements: " + temp);
+            if((i%sizeCheckPoint == 0 || (i+j) == reduceMessage.getKeys().size()) && temp.size() > 0){
+                logger.info(Thread.currentThread().getName()+ ": Writing checkpoint, elements: " + temp);
                 CheckPointReaderWriter.writeCheckPointPhase2(temp,true);
+                logger.info(Thread.currentThread().getName() + ": CheckPoint written: " + temp.size() + " elements");
                 result.addAll(temp);
                 temp.clear();
             }
             
         }
+        logger.info(Thread.currentThread().getName() + ": Reduce done with result: " + result);
         return result;
     }
 
     private List<KeyValuePair> processTask(Task task) throws IOException{
-        logger.info("Processing task: " + task.getTaskId());
+        logger.info(Thread.currentThread().getName() +": Processing task: " + task.getTaskId());
 
         List<KeyValuePair> result = null;
                         
-        List<KeyValuePair> data = HadoopFileReadWrite.readInputFile(task.getPathFile());
-        logger.info("Data read from HDFS: " + data.size() + " elements");
+        logger.info(Thread.currentThread().getName() + ": Check if a checkpoint exists for task " + task.getTaskId());
         MutablePair<Boolean, List<KeyValuePair>> checkPoint = CheckPointReaderWriter.checkCheckPoint(task.getTaskId(),false);
-        logger.info("CheckPoint read: " + checkPoint.getRight().size() + " elements");
+        logger.info(Thread.currentThread().getName() + ": CheckPoint read: " + checkPoint.getRight().size() + " elements");
         
         Integer size = checkPoint.getRight().size();
         result = checkPoint.getRight();
         Boolean finished = checkPoint.getLeft();
 
-        List<Operator> operators = handleOperators(task.getOperators());
-        logger.info("Operators: " + operators.size() + " elements");
+   
         Integer sizeCheckPoint = 8;
 
         List<KeyValuePair> tempResult = new ArrayList<>();
-        if(!finished){  
+        if(!finished){
+
+            List<Operator> operators = handleOperators(task.getOperators());
+            logger.info(Thread.currentThread().getName() +": Operators: " + operators.size() + " elements");
+
+            logger.info(Thread.currentThread().getName() +": No checkpoint found for task " + task.getTaskId() + ", processing the task");
+
+            List<KeyValuePair> data = HadoopFileReadWrite.readInputFile(task.getPathFile());
+        
+            logger.info(Thread.currentThread().getName() +": Data read from HDFS: " + data.size() + " elements");
+            
             for(int i = size; i < data.size();){
 
                 Integer end = i+sizeCheckPoint; 
@@ -222,8 +238,9 @@ class WorkerHandler extends Thread {
                     }
                 }
                 result.addAll(tempResult);
+                logger.info(Thread.currentThread().getName() +": Writing checkpoint, elements: " + result.size() + " for task " + task.getTaskId());
                 CheckPointReaderWriter.writeCheckPointPhase1(task.getTaskId(), result,false);
-                logger.info("CheckPoint written: " + result.size() + " elements" + " for task " + task.getTaskId()); 
+                logger.info(Thread.currentThread().getName() +": CheckPoint written: " + result.size() + " elements" + " for task " + task.getTaskId()); 
             }
 
             for(Operator o : operators){
@@ -231,20 +248,21 @@ class WorkerHandler extends Thread {
                     result = o.execute(result);
                 }   
             }
+            logger.info(Thread.currentThread().getName() + ": Writing last checkpoint, elements: " + result.size() + " for task " + task.getTaskId());   
             CheckPointReaderWriter.writeCheckPointPhase1(task.getTaskId(), result,true);
-            logger.info("Last checkpoint written: " + result.size() + " elements" + " for task " + task.getTaskId()); 
+            logger.info(Thread.currentThread().getName() +": Last checkpoint written: " + result.size() + " elements" + " for task " + task.getTaskId()); 
         }
-        logger.info("Task " + task.getTaskId() + " done" + " with result:" + result);
+        logger.info(Thread.currentThread().getName() +": Task " + task.getTaskId() + " done" + " with result:" + result);
         return result;
     }
 
-    public static List<Integer> extractKeys(List<KeyValuePair> keyValuePairs) {
+    public List<Integer> extractKeys(List<KeyValuePair> keyValuePairs) {
         List<Integer> keys = new ArrayList<>();
 
         for (KeyValuePair pair : keyValuePairs) {
             keys.add(pair.getKey());
         }
-
+        logger.info(Thread.currentThread().getName() +": Keys extracted: " + keys);
         return keys;
     }
 }

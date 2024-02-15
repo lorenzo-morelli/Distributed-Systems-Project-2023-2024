@@ -8,6 +8,7 @@ import java.util.Scanner;
 import org.apache.log4j.Logger;
 import org.apache.log4j.PropertyConfigurator;
 
+import it.polimi.common.HadoopFileReadWrite;
 
 import org.apache.log4j.LogManager;
 
@@ -17,14 +18,20 @@ public class Worker{
         public static void main(String[] args){
         
         
-        PropertyConfigurator.configure("src/log4j.properties");
-
+        PropertyConfigurator.configure("conf/log4j.properties");
+        
 
         Scanner scanner = new Scanner(System.in);
-
+        
 
         int port;
         try {
+
+            System.out.println("Insert HDFS address (default: 'localhost:9000'): ");
+            String address = scanner.nextLine();
+            if(!address.equals(""))
+                HadoopFileReadWrite.setHDFS_URI("hdfs://" + address);
+
             System.out.println("Insert a port");
             String portString = scanner.nextLine();
             port = Integer.parseInt(portString);

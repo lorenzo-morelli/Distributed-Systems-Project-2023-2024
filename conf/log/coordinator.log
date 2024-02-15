@@ -1,0 +1,57 @@
+2024-02-15 15:30:19,030 INFO - Starting Coordinator
+2024-02-15 15:30:19,046 INFO - Reading operations file: C:\Users\lucal\OneDrive\Desktop\project_ds\DS_Project\files\operations.json'
+2024-02-15 15:30:19,331 ERROR - java.io.FileNotFoundException: files\operations.json' (Impossibile trovare il file specificato)
+2024-02-15 15:33:01,575 INFO - Starting Coordinator
+2024-02-15 15:33:01,596 INFO - Reading operations file: C:\Users\lucal\OneDrive\Desktop\project_ds\DS_Project\files\operations.json
+2024-02-15 15:33:01,975 INFO - Operations file read: C:\Users\lucal\OneDrive\Desktop\project_ds\DS_Project\files\operations.json
+2024-02-15 15:33:01,975 INFO - Reading configuration file: C:\Users\lucal\OneDrive\Desktop\project_ds\DS_Project\files\configurations.json
+2024-02-15 15:33:01,985 INFO - Configuration file read: C:\Users\lucal\OneDrive\Desktop\project_ds\DS_Project\files\configurations.json
+2024-02-15 15:33:01,994 INFO - Coordinator initialized
+2024-02-15 15:33:01,994 INFO - Initializing connections...
+2024-02-15 15:33:02,035 INFO - Search for a new active socket...
+2024-02-15 15:33:02,035 WARN - Error while creating the new active socket
+2024-02-15 15:33:02,035 INFO - Search for a new active socket...
+2024-02-15 15:33:02,054 INFO - New active socket found localhost:5001
+2024-02-15 15:33:02,054 INFO - Connections initialized
+2024-02-15 15:33:02,054 INFO - Coordinator initialized connections
+2024-02-15 15:33:02,054 INFO - Uploading files to HDFS...
+2024-02-15 15:33:02,090 INFO - Uploading files to HDFS
+2024-02-15 15:33:02,265 INFO - Uploading file to HDFS: files/data1.csv
+2024-02-15 15:33:04,348 INFO - File /input/data1.csv uploaded to HDFS successfully.
+2024-02-15 15:33:04,349 INFO - Uploading file to HDFS: files/data2.csv
+2024-02-15 15:33:04,844 INFO - File /input/data2.csv uploaded to HDFS successfully.
+2024-02-15 15:33:04,849 INFO - Files uploaded to HDFS successfully.
+2024-02-15 15:33:04,849 INFO - Files uploaded to HDFS successfully
+2024-02-15 15:33:04,850 INFO - Coordinator initialized Hadoop
+2024-02-15 15:33:04,855 INFO - Coordinator initialized SocketHandlers
+2024-02-15 15:33:04,885 INFO - localhost:5001: pool-4-thread-1
+2024-02-15 15:33:04,889 INFO - pool-4-thread-1: Starting worker connection
+2024-02-15 15:33:04,942 INFO - Phase 2 exists:true
+2024-02-15 15:33:04,943 INFO - localhost:5001: pool-4-thread-2
+2024-02-15 15:33:04,943 INFO - pool-4-thread-2: Starting worker connection
+2024-02-15 15:33:04,948 INFO - Phase 2 exists:true
+2024-02-15 15:33:04,960 INFO - pool-4-thread-1: Sending task to worker phase1
+2024-02-15 15:33:04,984 INFO - pool-4-thread-2: Sending task to worker phase1
+2024-02-15 15:33:07,774 INFO - Phase 2 exists:true
+2024-02-15 15:33:07,774 INFO - pool-4-thread-2: Received the keys:[9]
+2024-02-15 15:33:07,774 INFO - pool-4-thread-2: Inserting keys...
+2024-02-15 15:33:10,670 INFO - Phase 2 exists:true
+2024-02-15 15:33:10,670 INFO - pool-4-thread-1: Received the keys:[1, 2, 3, 4, 5, 6, 7, 8]
+2024-02-15 15:33:10,670 INFO - pool-4-thread-1: Inserting keys...
+2024-02-15 15:33:10,670 INFO - All workers have been assigned keys
+2024-02-15 15:33:10,670 INFO - Determining new worker assignments with load balancing
+2024-02-15 15:33:10,674 INFO - New worker assignments with load balancing determined
+2024-02-15 15:33:10,674 INFO - Assigning keys to workers
+2024-02-15 15:33:10,674 INFO - Keys assigned to workers
+2024-02-15 15:33:10,674 INFO - pool-4-thread-1: Sending task to worker phase2
+2024-02-15 15:33:10,674 INFO - pool-4-thread-2: Sending task to worker phase2
+2024-02-15 15:33:11,040 INFO - pool-4-thread-1: Received the final result:[(1, 256), (3, 768), (5, 1280), (7, 1792)]
+2024-02-15 15:33:11,040 INFO - pool-4-thread-1: Writing the final result...
+2024-02-15 15:33:11,040 INFO - pool-4-thread-1: Final result written
+2024-02-15 15:33:11,105 INFO - pool-4-thread-2: Received the final result:[(9, 18), (2, 640), (4, 1024), (6, 1536), (8, 2048)]
+2024-02-15 15:33:11,105 INFO - pool-4-thread-2: Writing the final result...
+2024-02-15 15:33:11,105 INFO - Writing the final result...
+2024-02-15 15:33:11,115 INFO - Final result written
+2024-02-15 15:33:11,115 INFO - Deleting files from HDFS
+2024-02-15 15:33:11,307 INFO - Files deleted from HDFS
+2024-02-15 15:33:11,307 INFO - pool-4-thread-2: Final result written

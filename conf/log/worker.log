@@ -1,0 +1,458 @@
+2024-02-15 15:30:05,581 INFO - Server started on port 5001
+2024-02-15 15:33:02,025 INFO - Coordinator opened a connection.
+2024-02-15 15:33:02,035 INFO - Coordinator opened a connection.
+2024-02-15 15:33:02,079 INFO - 127.0.0.1:50778: Thread-1
+2024-02-15 15:33:02,079 INFO - Thread-1: WorkerHandler started.
+2024-02-15 15:33:02,079 INFO - 127.0.0.1:50775: Thread-0
+2024-02-15 15:33:02,079 INFO - Thread-0: WorkerHandler started.
+2024-02-15 15:33:05,148 INFO - Thread-0: Received object from coordinator: it.polimi.common.messages.Task@665c914
+2024-02-15 15:33:05,148 INFO - Thread-0: Processing task: 0
+2024-02-15 15:33:05,148 INFO - Thread-0: Check if a checkpoint exists for task 0
+2024-02-15 15:33:05,148 INFO - Thread-1: Received object from coordinator: it.polimi.common.messages.Task@119a267b
+2024-02-15 15:33:05,154 INFO - Thread-1: Processing task: 1
+2024-02-15 15:33:05,154 INFO - Thread-1: Check if a checkpoint exists for task 1
+2024-02-15 15:33:05,169 INFO - Thread-1: Check if checkpoint exists for task1.json
+2024-02-15 15:33:05,184 INFO - Thread-0: Check if checkpoint exists for task0.json
+2024-02-15 15:33:05,200 INFO - Thread-1: CheckPoint : 0 elements
+2024-02-15 15:33:05,201 INFO - Thread-1: Handling operators
+2024-02-15 15:33:05,205 INFO - Thread-0: CheckPoint : 0 elements
+2024-02-15 15:33:05,205 INFO - Thread-0: Handling operators
+2024-02-15 15:33:05,232 INFO - Thread-0: Operator created: FILTER with function: GT(0)
+2024-02-15 15:33:05,237 INFO - Thread-0: Operator created: CHANGEKEY with function: DIVIDE(2)
+2024-02-15 15:33:05,241 INFO - Thread-0: Operator created: REDUCE with function: SUM
+2024-02-15 15:33:05,241 INFO - Thread-0: Operators: 3 elements
+2024-02-15 15:33:05,242 INFO - Thread-0: No checkpoint found for task 0, processing the task
+2024-02-15 15:33:05,293 INFO - Thread-1: Operator created: FILTER with function: GT(0)
+2024-02-15 15:33:05,294 INFO - Thread-1: Operator created: CHANGEKEY with function: DIVIDE(2)
+2024-02-15 15:33:05,294 INFO - Thread-1: Operator created: REDUCE with function: SUM
+2024-02-15 15:33:05,294 INFO - Thread-1: Operators: 3 elements
+2024-02-15 15:33:05,294 INFO - Thread-1: No checkpoint found for task 1, processing the task
+2024-02-15 15:33:05,311 INFO - Thread-1: Reading input file from HDFS: /input/data2.csv
+2024-02-15 15:33:07,520 INFO - Thread-1: Input file read from HDFS: /input/data2.csv
+2024-02-15 15:33:07,520 INFO - Thread-0: Reading input file from HDFS: /input/data1.csv
+2024-02-15 15:33:07,520 INFO - Thread-1: Checkpoint every 1 elements
+2024-02-15 15:33:07,522 INFO - Thread-1: Data read from HDFS: 1 elements
+2024-02-15 15:33:07,525 INFO - Thread-1: Writing checkpoint, elements: 1 for task 1
+2024-02-15 15:33:07,525 INFO - Thread-1: Creating checkpoint phase 1 for task 1
+2024-02-15 15:33:07,525 INFO - Setting the output directory for the checkpoint file to 'checkpoints' directory.
+2024-02-15 15:33:07,530 INFO - Thread-1: Writing the checkpoint to file checkpoints/task1.json
+2024-02-15 15:33:07,535 INFO - Thread-1: Creating checkpoint file: checkpoints/task1.json
+2024-02-15 15:33:07,543 INFO - Thread-1: Writing temp checkpoint file: checkpoints/task1_temp.json
+2024-02-15 15:33:07,559 INFO - Thread-0: Input file read from HDFS: /input/data1.csv
+2024-02-15 15:33:07,560 INFO - Thread-0: Checkpoint every 102 elements
+2024-02-15 15:33:07,560 INFO - Thread-0: Data read from HDFS: 1024 elements
+2024-02-15 15:33:07,560 INFO - Thread-0: Writing checkpoint, elements: 8 for task 0
+2024-02-15 15:33:07,561 INFO - Thread-0: Creating checkpoint phase 1 for task 0
+2024-02-15 15:33:07,569 INFO - Thread-1: Temp checkpoint file written: checkpoints/task1_temp.json
+2024-02-15 15:33:07,569 INFO - Thread-1: Moving temp checkpoint file to: checkpoints/task1.json
+2024-02-15 15:33:07,572 INFO - Thread-1: Temp checkpoint file moved to: checkpoints/task1.json
+2024-02-15 15:33:07,573 INFO - Thread-1: Temp checkpoint file deleted: checkpoints/task1_temp.json
+2024-02-15 15:33:07,573 INFO - Thread-1: Checkpoint written to file checkpoints/task1.json
+2024-02-15 15:33:07,574 INFO - Setting the output directory for the checkpoint file to 'checkpoints' directory.
+2024-02-15 15:33:07,574 INFO - Thread-1: Checkpoint phase 1 created for task 1
+2024-02-15 15:33:07,574 INFO - Thread-0: Writing the checkpoint to file checkpoints/task0.json
+2024-02-15 15:33:07,574 INFO - Thread-0: Creating checkpoint file: checkpoints/task0.json
+2024-02-15 15:33:07,574 INFO - Thread-0: Writing temp checkpoint file: checkpoints/task0_temp.json
+2024-02-15 15:33:07,574 INFO - Thread-1: CheckPoint written: 1 elements for task 1
+2024-02-15 15:33:07,574 INFO - Thread-1: Writing last checkpoint, elements: 1 for task 1
+2024-02-15 15:33:07,574 INFO - Thread-1: Creating checkpoint phase 1 for task 1
+2024-02-15 15:33:07,575 INFO - Thread-0: Temp checkpoint file written: checkpoints/task0_temp.json
+2024-02-15 15:33:07,575 INFO - Thread-0: Moving temp checkpoint file to: checkpoints/task0.json
+2024-02-15 15:33:07,577 INFO - Thread-0: Temp checkpoint file moved to: checkpoints/task0.json
+2024-02-15 15:33:07,577 INFO - Thread-0: Temp checkpoint file deleted: checkpoints/task0_temp.json
+2024-02-15 15:33:07,578 INFO - Thread-0: Checkpoint written to file checkpoints/task0.json
+2024-02-15 15:33:07,578 INFO - Thread-0: Checkpoint phase 1 created for task 0
+2024-02-15 15:33:07,578 INFO - Thread-0: CheckPoint written: 8 elements for task 0
+2024-02-15 15:33:07,579 INFO - Setting the output directory for the checkpoint file to 'checkpoints' directory.
+2024-02-15 15:33:07,579 INFO - Thread-0: Writing checkpoint, elements: 16 for task 0
+2024-02-15 15:33:07,579 INFO - Thread-1: Writing the checkpoint to file checkpoints/task1.json
+2024-02-15 15:33:07,579 INFO - Thread-0: Creating checkpoint phase 1 for task 0
+2024-02-15 15:33:07,579 INFO - Thread-1: Creating checkpoint file: checkpoints/task1.json
+2024-02-15 15:33:07,579 INFO - Thread-1: Writing temp checkpoint file: checkpoints/task1_temp.json
+2024-02-15 15:33:07,579 INFO - Thread-1: Temp checkpoint file written: checkpoints/task1_temp.json
+2024-02-15 15:33:07,580 INFO - Thread-1: Moving temp checkpoint file to: checkpoints/task1.json
+2024-02-15 15:33:07,582 INFO - Thread-1: Temp checkpoint file moved to: checkpoints/task1.json
+2024-02-15 15:33:07,582 INFO - Thread-1: Temp checkpoint file deleted: checkpoints/task1_temp.json
+2024-02-15 15:33:07,582 INFO - Thread-1: Checkpoint written to file checkpoints/task1.json
+2024-02-15 15:33:07,582 INFO - Thread-1: Checkpoint phase 1 created for task 1
+2024-02-15 15:33:07,582 INFO - Setting the output directory for the checkpoint file to 'checkpoints' directory.
+2024-02-15 15:33:07,583 INFO - Thread-0: Writing the checkpoint to file checkpoints/task0.json
+2024-02-15 15:33:07,583 INFO - Thread-1: Last checkpoint written: 1 elements for task 1
+2024-02-15 15:33:07,583 INFO - Thread-0: Creating checkpoint file: checkpoints/task0.json
+2024-02-15 15:33:07,583 INFO - Thread-0: Writing temp checkpoint file: checkpoints/task0_temp.json
+2024-02-15 15:33:07,583 INFO - Thread-1: Task 1 done with result:[(9, 18)]
+2024-02-15 15:33:07,583 INFO - Thread-1: Writing the keys in HDFS
+2024-02-15 15:33:07,583 INFO - Thread-1: Writing keys to HDFS
+2024-02-15 15:33:07,585 INFO - Thread-1: Writing to HDFS: /key9/1.csv
+2024-02-15 15:33:07,585 INFO - Thread-0: Temp checkpoint file written: checkpoints/task0_temp.json
+2024-02-15 15:33:07,585 INFO - Thread-0: Moving temp checkpoint file to: checkpoints/task0.json
+2024-02-15 15:33:07,585 INFO - Thread-0: Temp checkpoint file moved to: checkpoints/task0.json
+2024-02-15 15:33:07,585 INFO - Thread-0: Temp checkpoint file deleted: checkpoints/task0_temp.json
+2024-02-15 15:33:07,585 INFO - Thread-0: Checkpoint written to file checkpoints/task0.json
+2024-02-15 15:33:07,585 INFO - Thread-0: Checkpoint phase 1 created for task 0
+2024-02-15 15:33:07,585 INFO - Thread-0: CheckPoint written: 16 elements for task 0
+2024-02-15 15:33:07,585 INFO - Thread-0: Writing checkpoint, elements: 24 for task 0
+2024-02-15 15:33:07,585 INFO - Thread-0: Creating checkpoint phase 1 for task 0
+2024-02-15 15:33:07,585 INFO - Setting the output directory for the checkpoint file to 'checkpoints' directory.
+2024-02-15 15:33:07,585 INFO - Thread-0: Writing the checkpoint to file checkpoints/task0.json
+2024-02-15 15:33:07,585 INFO - Thread-0: Creating checkpoint file: checkpoints/task0.json
+2024-02-15 15:33:07,585 INFO - Thread-0: Writing temp checkpoint file: checkpoints/task0_temp.json
+2024-02-15 15:33:07,590 INFO - Thread-0: Temp checkpoint file written: checkpoints/task0_temp.json
+2024-02-15 15:33:07,590 INFO - Thread-0: Moving temp checkpoint file to: checkpoints/task0.json
+2024-02-15 15:33:07,590 INFO - Thread-0: Temp checkpoint file moved to: checkpoints/task0.json
+2024-02-15 15:33:07,590 INFO - Thread-0: Temp checkpoint file deleted: checkpoints/task0_temp.json
+2024-02-15 15:33:07,590 INFO - Thread-0: Checkpoint written to file checkpoints/task0.json
+2024-02-15 15:33:07,590 INFO - Thread-0: Checkpoint phase 1 created for task 0
+2024-02-15 15:33:07,590 INFO - Thread-0: CheckPoint written: 24 elements for task 0
+2024-02-15 15:33:07,595 INFO - Thread-0: Writing checkpoint, elements: 32 for task 0
+2024-02-15 15:33:07,595 INFO - Thread-0: Creating checkpoint phase 1 for task 0
+2024-02-15 15:33:07,595 INFO - Setting the output directory for the checkpoint file to 'checkpoints' directory.
+2024-02-15 15:33:07,595 INFO - Thread-0: Writing the checkpoint to file checkpoints/task0.json
+2024-02-15 15:33:07,595 INFO - Thread-0: Creating checkpoint file: checkpoints/task0.json
+2024-02-15 15:33:07,595 INFO - Thread-0: Writing temp checkpoint file: checkpoints/task0_temp.json
+2024-02-15 15:33:07,595 INFO - Thread-0: Temp checkpoint file written: checkpoints/task0_temp.json
+2024-02-15 15:33:07,595 INFO - Thread-0: Moving temp checkpoint file to: checkpoints/task0.json
+2024-02-15 15:33:07,600 INFO - Thread-0: Temp checkpoint file moved to: checkpoints/task0.json
+2024-02-15 15:33:07,600 INFO - Thread-0: Temp checkpoint file deleted: checkpoints/task0_temp.json
+2024-02-15 15:33:07,600 INFO - Thread-0: Checkpoint written to file checkpoints/task0.json
+2024-02-15 15:33:07,600 INFO - Thread-0: Checkpoint phase 1 created for task 0
+2024-02-15 15:33:07,600 INFO - Thread-0: CheckPoint written: 32 elements for task 0
+2024-02-15 15:33:07,605 INFO - Thread-0: Writing checkpoint, elements: 40 for task 0
+2024-02-15 15:33:07,605 INFO - Thread-0: Creating checkpoint phase 1 for task 0
+2024-02-15 15:33:07,605 INFO - Setting the output directory for the checkpoint file to 'checkpoints' directory.
+2024-02-15 15:33:07,605 INFO - Thread-0: Writing the checkpoint to file checkpoints/task0.json
+2024-02-15 15:33:07,605 INFO - Thread-0: Creating checkpoint file: checkpoints/task0.json
+2024-02-15 15:33:07,605 INFO - Thread-0: Writing temp checkpoint file: checkpoints/task0_temp.json
+2024-02-15 15:33:07,605 INFO - Thread-0: Temp checkpoint file written: checkpoints/task0_temp.json
+2024-02-15 15:33:07,605 INFO - Thread-0: Moving temp checkpoint file to: checkpoints/task0.json
+2024-02-15 15:33:07,610 INFO - Thread-0: Temp checkpoint file moved to: checkpoints/task0.json
+2024-02-15 15:33:07,610 INFO - Thread-0: Temp checkpoint file deleted: checkpoints/task0_temp.json
+2024-02-15 15:33:07,610 INFO - Thread-0: Checkpoint written to file checkpoints/task0.json
+2024-02-15 15:33:07,610 INFO - Thread-0: Checkpoint phase 1 created for task 0
+2024-02-15 15:33:07,610 INFO - Thread-0: CheckPoint written: 40 elements for task 0
+2024-02-15 15:33:07,610 INFO - Thread-0: Writing checkpoint, elements: 48 for task 0
+2024-02-15 15:33:07,615 INFO - Thread-0: Creating checkpoint phase 1 for task 0
+2024-02-15 15:33:07,615 INFO - Setting the output directory for the checkpoint file to 'checkpoints' directory.
+2024-02-15 15:33:07,615 INFO - Thread-0: Writing the checkpoint to file checkpoints/task0.json
+2024-02-15 15:33:07,615 INFO - Thread-0: Creating checkpoint file: checkpoints/task0.json
+2024-02-15 15:33:07,615 INFO - Thread-0: Writing temp checkpoint file: checkpoints/task0_temp.json
+2024-02-15 15:33:07,620 INFO - Thread-0: Temp checkpoint file written: checkpoints/task0_temp.json
+2024-02-15 15:33:07,623 INFO - Thread-0: Moving temp checkpoint file to: checkpoints/task0.json
+2024-02-15 15:33:07,625 INFO - Thread-0: Temp checkpoint file moved to: checkpoints/task0.json
+2024-02-15 15:33:07,625 INFO - Thread-0: Temp checkpoint file deleted: checkpoints/task0_temp.json
+2024-02-15 15:33:07,625 INFO - Thread-0: Checkpoint written to file checkpoints/task0.json
+2024-02-15 15:33:07,625 INFO - Thread-0: Checkpoint phase 1 created for task 0
+2024-02-15 15:33:07,625 INFO - Thread-0: CheckPoint written: 48 elements for task 0
+2024-02-15 15:33:07,625 INFO - Thread-0: Writing checkpoint, elements: 56 for task 0
+2024-02-15 15:33:07,625 INFO - Thread-0: Creating checkpoint phase 1 for task 0
+2024-02-15 15:33:07,625 INFO - Setting the output directory for the checkpoint file to 'checkpoints' directory.
+2024-02-15 15:33:07,625 INFO - Thread-0: Writing the checkpoint to file checkpoints/task0.json
+2024-02-15 15:33:07,625 INFO - Thread-0: Creating checkpoint file: checkpoints/task0.json
+2024-02-15 15:33:07,625 INFO - Thread-0: Writing temp checkpoint file: checkpoints/task0_temp.json
+2024-02-15 15:33:07,630 INFO - Thread-0: Temp checkpoint file written: checkpoints/task0_temp.json
+2024-02-15 15:33:07,630 INFO - Thread-0: Moving temp checkpoint file to: checkpoints/task0.json
+2024-02-15 15:33:07,630 INFO - Thread-0: Temp checkpoint file moved to: checkpoints/task0.json
+2024-02-15 15:33:07,630 INFO - Thread-0: Temp checkpoint file deleted: checkpoints/task0_temp.json
+2024-02-15 15:33:07,630 INFO - Thread-0: Checkpoint written to file checkpoints/task0.json
+2024-02-15 15:33:07,630 INFO - Thread-0: Checkpoint phase 1 created for task 0
+2024-02-15 15:33:07,630 INFO - Thread-0: CheckPoint written: 56 elements for task 0
+2024-02-15 15:33:07,630 INFO - Thread-0: Writing checkpoint, elements: 64 for task 0
+2024-02-15 15:33:07,630 INFO - Thread-0: Creating checkpoint phase 1 for task 0
+2024-02-15 15:33:07,630 INFO - Setting the output directory for the checkpoint file to 'checkpoints' directory.
+2024-02-15 15:33:07,630 INFO - Thread-0: Writing the checkpoint to file checkpoints/task0.json
+2024-02-15 15:33:07,630 INFO - Thread-0: Creating checkpoint file: checkpoints/task0.json
+2024-02-15 15:33:07,630 INFO - Thread-0: Writing temp checkpoint file: checkpoints/task0_temp.json
+2024-02-15 15:33:07,635 INFO - Thread-0: Temp checkpoint file written: checkpoints/task0_temp.json
+2024-02-15 15:33:07,635 INFO - Thread-0: Moving temp checkpoint file to: checkpoints/task0.json
+2024-02-15 15:33:07,640 INFO - Thread-0: Temp checkpoint file moved to: checkpoints/task0.json
+2024-02-15 15:33:07,640 INFO - Thread-0: Temp checkpoint file deleted: checkpoints/task0_temp.json
+2024-02-15 15:33:07,640 INFO - Thread-0: Checkpoint written to file checkpoints/task0.json
+2024-02-15 15:33:07,640 INFO - Thread-0: Checkpoint phase 1 created for task 0
+2024-02-15 15:33:07,640 INFO - Thread-0: CheckPoint written: 64 elements for task 0
+2024-02-15 15:33:07,640 INFO - Thread-0: Writing checkpoint, elements: 72 for task 0
+2024-02-15 15:33:07,640 INFO - Thread-0: Creating checkpoint phase 1 for task 0
+2024-02-15 15:33:07,640 INFO - Setting the output directory for the checkpoint file to 'checkpoints' directory.
+2024-02-15 15:33:07,640 INFO - Thread-0: Writing the checkpoint to file checkpoints/task0.json
+2024-02-15 15:33:07,640 INFO - Thread-0: Creating checkpoint file: checkpoints/task0.json
+2024-02-15 15:33:07,640 INFO - Thread-0: Writing temp checkpoint file: checkpoints/task0_temp.json
+2024-02-15 15:33:07,650 INFO - Thread-0: Temp checkpoint file written: checkpoints/task0_temp.json
+2024-02-15 15:33:07,650 INFO - Thread-0: Moving temp checkpoint file to: checkpoints/task0.json
+2024-02-15 15:33:07,650 INFO - Thread-0: Temp checkpoint file moved to: checkpoints/task0.json
+2024-02-15 15:33:07,650 INFO - Thread-0: Temp checkpoint file deleted: checkpoints/task0_temp.json
+2024-02-15 15:33:07,654 INFO - Thread-0: Checkpoint written to file checkpoints/task0.json
+2024-02-15 15:33:07,654 INFO - Thread-0: Checkpoint phase 1 created for task 0
+2024-02-15 15:33:07,654 INFO - Thread-0: CheckPoint written: 72 elements for task 0
+2024-02-15 15:33:07,654 INFO - Thread-0: Writing checkpoint, elements: 80 for task 0
+2024-02-15 15:33:07,654 INFO - Thread-0: Creating checkpoint phase 1 for task 0
+2024-02-15 15:33:07,654 INFO - Setting the output directory for the checkpoint file to 'checkpoints' directory.
+2024-02-15 15:33:07,654 INFO - Thread-0: Writing the checkpoint to file checkpoints/task0.json
+2024-02-15 15:33:07,654 INFO - Thread-0: Creating checkpoint file: checkpoints/task0.json
+2024-02-15 15:33:07,654 INFO - Thread-0: Writing temp checkpoint file: checkpoints/task0_temp.json
+2024-02-15 15:33:07,659 INFO - Thread-0: Temp checkpoint file written: checkpoints/task0_temp.json
+2024-02-15 15:33:07,659 INFO - Thread-0: Moving temp checkpoint file to: checkpoints/task0.json
+2024-02-15 15:33:07,664 INFO - Thread-0: Temp checkpoint file moved to: checkpoints/task0.json
+2024-02-15 15:33:07,664 INFO - Thread-0: Temp checkpoint file deleted: checkpoints/task0_temp.json
+2024-02-15 15:33:07,664 INFO - Thread-0: Checkpoint written to file checkpoints/task0.json
+2024-02-15 15:33:07,664 INFO - Thread-0: Checkpoint phase 1 created for task 0
+2024-02-15 15:33:07,664 INFO - Thread-0: CheckPoint written: 80 elements for task 0
+2024-02-15 15:33:07,664 INFO - Thread-0: Writing checkpoint, elements: 84 for task 0
+2024-02-15 15:33:07,664 INFO - Thread-0: Creating checkpoint phase 1 for task 0
+2024-02-15 15:33:07,664 INFO - Setting the output directory for the checkpoint file to 'checkpoints' directory.
+2024-02-15 15:33:07,664 INFO - Thread-0: Writing the checkpoint to file checkpoints/task0.json
+2024-02-15 15:33:07,664 INFO - Thread-0: Creating checkpoint file: checkpoints/task0.json
+2024-02-15 15:33:07,664 INFO - Thread-0: Writing temp checkpoint file: checkpoints/task0_temp.json
+2024-02-15 15:33:07,669 INFO - Thread-0: Temp checkpoint file written: checkpoints/task0_temp.json
+2024-02-15 15:33:07,669 INFO - Thread-0: Moving temp checkpoint file to: checkpoints/task0.json
+2024-02-15 15:33:07,674 INFO - Thread-0: Temp checkpoint file moved to: checkpoints/task0.json
+2024-02-15 15:33:07,674 INFO - Thread-0: Temp checkpoint file deleted: checkpoints/task0_temp.json
+2024-02-15 15:33:07,674 INFO - Thread-0: Checkpoint written to file checkpoints/task0.json
+2024-02-15 15:33:07,674 INFO - Thread-0: Checkpoint phase 1 created for task 0
+2024-02-15 15:33:07,674 INFO - Thread-0: CheckPoint written: 84 elements for task 0
+2024-02-15 15:33:07,674 INFO - Thread-0: Writing last checkpoint, elements: 8 for task 0
+2024-02-15 15:33:07,674 INFO - Thread-0: Creating checkpoint phase 1 for task 0
+2024-02-15 15:33:07,674 INFO - Setting the output directory for the checkpoint file to 'checkpoints' directory.
+2024-02-15 15:33:07,674 INFO - Thread-0: Writing the checkpoint to file checkpoints/task0.json
+2024-02-15 15:33:07,674 INFO - Thread-0: Creating checkpoint file: checkpoints/task0.json
+2024-02-15 15:33:07,674 INFO - Thread-0: Writing temp checkpoint file: checkpoints/task0_temp.json
+2024-02-15 15:33:07,678 INFO - Thread-0: Temp checkpoint file written: checkpoints/task0_temp.json
+2024-02-15 15:33:07,678 INFO - Thread-0: Moving temp checkpoint file to: checkpoints/task0.json
+2024-02-15 15:33:07,680 INFO - Thread-0: Temp checkpoint file moved to: checkpoints/task0.json
+2024-02-15 15:33:07,680 INFO - Thread-0: Temp checkpoint file deleted: checkpoints/task0_temp.json
+2024-02-15 15:33:07,680 INFO - Thread-0: Checkpoint written to file checkpoints/task0.json
+2024-02-15 15:33:07,680 INFO - Thread-0: Checkpoint phase 1 created for task 0
+2024-02-15 15:33:07,680 INFO - Thread-0: Last checkpoint written: 8 elements for task 0
+2024-02-15 15:33:07,681 INFO - Thread-0: Task 0 done with result:[(1, 256), (2, 640), (3, 768), (4, 1024), (5, 1280), (6, 1536), (7, 1792), (8, 2048)]
+2024-02-15 15:33:07,681 INFO - Thread-0: Writing the keys in HDFS
+2024-02-15 15:33:07,771 INFO - Thread-1: Written to HDFS: /key9/1.csv
+2024-02-15 15:33:07,771 INFO - Thread-1: Keys written to HDFS
+2024-02-15 15:33:07,772 INFO - Thread-0: Writing keys to HDFS
+2024-02-15 15:33:07,772 INFO - Thread-1: Keys written in HDFS
+2024-02-15 15:33:07,773 INFO - Thread-0: Writing to HDFS: /key1/0.csv
+2024-02-15 15:33:07,773 INFO - Thread-1: Keys extracted: [9]
+2024-02-15 15:33:07,774 INFO - Thread-1: Keys sent to the coordinator[9]
+2024-02-15 15:33:08,271 INFO - Thread-0: Written to HDFS: /key1/0.csv
+2024-02-15 15:33:08,271 INFO - Thread-0: Writing to HDFS: /key2/0.csv
+2024-02-15 15:33:08,744 INFO - Thread-0: Written to HDFS: /key2/0.csv
+2024-02-15 15:33:08,757 INFO - Thread-0: Writing to HDFS: /key3/0.csv
+2024-02-15 15:33:09,225 INFO - Thread-0: Written to HDFS: /key3/0.csv
+2024-02-15 15:33:09,225 INFO - Thread-0: Writing to HDFS: /key4/0.csv
+2024-02-15 15:33:09,688 INFO - Thread-0: Written to HDFS: /key4/0.csv
+2024-02-15 15:33:09,689 INFO - Thread-0: Writing to HDFS: /key5/0.csv
+2024-02-15 15:33:10,138 INFO - Thread-0: Written to HDFS: /key5/0.csv
+2024-02-15 15:33:10,138 INFO - Thread-0: Writing to HDFS: /key6/0.csv
+2024-02-15 15:33:10,175 INFO - Thread-0: Written to HDFS: /key6/0.csv
+2024-02-15 15:33:10,175 INFO - Thread-0: Writing to HDFS: /key7/0.csv
+2024-02-15 15:33:10,222 INFO - Thread-0: Written to HDFS: /key7/0.csv
+2024-02-15 15:33:10,222 INFO - Thread-0: Writing to HDFS: /key8/0.csv
+2024-02-15 15:33:10,665 INFO - Thread-0: Written to HDFS: /key8/0.csv
+2024-02-15 15:33:10,665 INFO - Thread-0: Keys written to HDFS
+2024-02-15 15:33:10,665 INFO - Thread-0: Keys written in HDFS
+2024-02-15 15:33:10,665 INFO - Thread-0: Keys extracted: [1, 2, 3, 4, 5, 6, 7, 8]
+2024-02-15 15:33:10,670 INFO - Thread-0: Keys sent to the coordinator[1, 2, 3, 4, 5, 6, 7, 8]
+2024-02-15 15:33:10,682 INFO - Thread-0: Received object from coordinator: it.polimi.common.messages.LastReduce@436a1993
+2024-02-15 15:33:10,682 INFO - Thread-1: Received object from coordinator: it.polimi.common.messages.LastReduce@5d11d13a
+2024-02-15 15:33:10,682 INFO - Thread-0: Received LastReduce message from coordinator, responsible for the keys: [1, 3, 5, 7]
+2024-02-15 15:33:10,682 INFO - Thread-1: Received LastReduce message from coordinator, responsible for the keys: [9, 2, 4, 6, 8]
+2024-02-15 15:33:10,682 INFO - Thread-0: Computing reduce
+2024-02-15 15:33:10,682 INFO - Thread-1: Computing reduce
+2024-02-15 15:33:10,683 INFO - Thread-0: Checkpoint every 4 keys
+2024-02-15 15:33:10,683 INFO - Thread-1: Checkpoint every 5 keys
+2024-02-15 15:33:10,683 INFO - Thread-0: Check if a checkpoint exists for key1
+2024-02-15 15:33:10,683 INFO - Thread-1: Check if a checkpoint exists for key9
+2024-02-15 15:33:10,683 INFO - Thread-0: Check if checkpoint exists for key1.json
+2024-02-15 15:33:10,683 INFO - Thread-1: Check if checkpoint exists for key9.json
+2024-02-15 15:33:10,683 INFO - Thread-0: CheckPoint read: 0 elements with key: 1
+2024-02-15 15:33:10,683 INFO - Thread-1: CheckPoint read: 0 elements with key: 9
+2024-02-15 15:33:10,684 INFO - Thread-1: Reading key 9 from HDFS
+2024-02-15 15:33:10,684 INFO - Thread-0: Reading key 1 from HDFS
+2024-02-15 15:33:10,684 INFO - Thread-1: Reading from HDFS: /key9
+2024-02-15 15:33:10,726 INFO - Thread-1: Reading input file from HDFS: hdfs://localhost:9000/key9/1.csv
+2024-02-15 15:33:10,756 INFO - Thread-1: Input file read from HDFS: hdfs://localhost:9000/key9/1.csv
+2024-02-15 15:33:10,756 INFO - Thread-1: Read from HDFS: /key9
+2024-02-15 15:33:10,757 INFO - Thread-0: Reading from HDFS: /key1
+2024-02-15 15:33:10,757 INFO - Thread-1: Key 9 read from HDFS
+2024-02-15 15:33:10,757 INFO - Thread-1: Data read from HDFS: 1 elements with key: 9
+2024-02-15 15:33:10,757 INFO - Thread-1: Check if a checkpoint exists for key2
+2024-02-15 15:33:10,757 INFO - Thread-1: Check if checkpoint exists for key2.json
+2024-02-15 15:33:10,757 INFO - Thread-1: CheckPoint read: 0 elements with key: 2
+2024-02-15 15:33:10,757 INFO - Thread-1: Reading key 2 from HDFS
+2024-02-15 15:33:10,772 INFO - Thread-0: Reading input file from HDFS: hdfs://localhost:9000/key1/0.csv
+2024-02-15 15:33:10,789 INFO - Thread-0: Input file read from HDFS: hdfs://localhost:9000/key1/0.csv
+2024-02-15 15:33:10,789 INFO - Thread-0: Read from HDFS: /key1
+2024-02-15 15:33:10,789 INFO - Thread-0: Key 1 read from HDFS
+2024-02-15 15:33:10,789 INFO - Thread-0: Data read from HDFS: 1 elements with key: 1
+2024-02-15 15:33:10,789 INFO - Thread-1: Reading from HDFS: /key2
+2024-02-15 15:33:10,789 INFO - Thread-0: Check if a checkpoint exists for key3
+2024-02-15 15:33:10,789 INFO - Thread-0: Check if checkpoint exists for key3.json
+2024-02-15 15:33:10,789 INFO - Thread-0: CheckPoint read: 0 elements with key: 3
+2024-02-15 15:33:10,790 INFO - Thread-0: Reading key 3 from HDFS
+2024-02-15 15:33:10,807 INFO - Thread-1: Reading input file from HDFS: hdfs://localhost:9000/key2/0.csv
+2024-02-15 15:33:10,822 INFO - Thread-1: Input file read from HDFS: hdfs://localhost:9000/key2/0.csv
+2024-02-15 15:33:10,822 INFO - Thread-1: Read from HDFS: /key2
+2024-02-15 15:33:10,822 INFO - Thread-1: Key 2 read from HDFS
+2024-02-15 15:33:10,823 INFO - Thread-1: Data read from HDFS: 1 elements with key: 2
+2024-02-15 15:33:10,823 INFO - Thread-0: Reading from HDFS: /key3
+2024-02-15 15:33:10,823 INFO - Thread-1: Check if a checkpoint exists for key4
+2024-02-15 15:33:10,823 INFO - Thread-1: Check if checkpoint exists for key4.json
+2024-02-15 15:33:10,823 INFO - Thread-1: CheckPoint read: 0 elements with key: 4
+2024-02-15 15:33:10,823 INFO - Thread-1: Reading key 4 from HDFS
+2024-02-15 15:33:10,840 INFO - Thread-0: Reading input file from HDFS: hdfs://localhost:9000/key3/0.csv
+2024-02-15 15:33:10,857 INFO - Thread-0: Input file read from HDFS: hdfs://localhost:9000/key3/0.csv
+2024-02-15 15:33:10,857 INFO - Thread-0: Read from HDFS: /key3
+2024-02-15 15:33:10,858 INFO - Thread-0: Key 3 read from HDFS
+2024-02-15 15:33:10,859 INFO - Thread-1: Reading from HDFS: /key4
+2024-02-15 15:33:10,859 INFO - Thread-0: Data read from HDFS: 1 elements with key: 3
+2024-02-15 15:33:10,859 INFO - Thread-0: Check if a checkpoint exists for key5
+2024-02-15 15:33:10,859 INFO - Thread-0: Check if checkpoint exists for key5.json
+2024-02-15 15:33:10,859 INFO - Thread-0: CheckPoint read: 0 elements with key: 5
+2024-02-15 15:33:10,859 INFO - Thread-0: Reading key 5 from HDFS
+2024-02-15 15:33:10,872 INFO - Thread-1: Reading input file from HDFS: hdfs://localhost:9000/key4/0.csv
+2024-02-15 15:33:10,893 INFO - Thread-1: Input file read from HDFS: hdfs://localhost:9000/key4/0.csv
+2024-02-15 15:33:10,893 INFO - Thread-1: Read from HDFS: /key4
+2024-02-15 15:33:10,893 INFO - Thread-1: Key 4 read from HDFS
+2024-02-15 15:33:10,894 INFO - Thread-0: Reading from HDFS: /key5
+2024-02-15 15:33:10,894 INFO - Thread-1: Data read from HDFS: 1 elements with key: 4
+2024-02-15 15:33:10,894 INFO - Thread-1: Check if a checkpoint exists for key6
+2024-02-15 15:33:10,894 INFO - Thread-1: Check if checkpoint exists for key6.json
+2024-02-15 15:33:10,894 INFO - Thread-1: CheckPoint read: 0 elements with key: 6
+2024-02-15 15:33:10,894 INFO - Thread-1: Reading key 6 from HDFS
+2024-02-15 15:33:10,911 INFO - Thread-0: Reading input file from HDFS: hdfs://localhost:9000/key5/0.csv
+2024-02-15 15:33:10,931 INFO - Thread-0: Input file read from HDFS: hdfs://localhost:9000/key5/0.csv
+2024-02-15 15:33:10,931 INFO - Thread-0: Read from HDFS: /key5
+2024-02-15 15:33:10,931 INFO - Thread-0: Key 5 read from HDFS
+2024-02-15 15:33:10,931 INFO - Thread-0: Data read from HDFS: 1 elements with key: 5
+2024-02-15 15:33:10,931 INFO - Thread-1: Reading from HDFS: /key6
+2024-02-15 15:33:10,931 INFO - Thread-0: Check if a checkpoint exists for key7
+2024-02-15 15:33:10,931 INFO - Thread-0: Check if checkpoint exists for key7.json
+2024-02-15 15:33:10,931 INFO - Thread-0: CheckPoint read: 0 elements with key: 7
+2024-02-15 15:33:10,931 INFO - Thread-0: Reading key 7 from HDFS
+2024-02-15 15:33:10,948 INFO - Thread-1: Reading input file from HDFS: hdfs://localhost:9000/key6/0.csv
+2024-02-15 15:33:10,966 INFO - Thread-1: Input file read from HDFS: hdfs://localhost:9000/key6/0.csv
+2024-02-15 15:33:10,966 INFO - Thread-1: Read from HDFS: /key6
+2024-02-15 15:33:10,966 INFO - Thread-1: Key 6 read from HDFS
+2024-02-15 15:33:10,967 INFO - Thread-0: Reading from HDFS: /key7
+2024-02-15 15:33:10,967 INFO - Thread-1: Data read from HDFS: 1 elements with key: 6
+2024-02-15 15:33:10,967 INFO - Thread-1: Check if a checkpoint exists for key8
+2024-02-15 15:33:10,967 INFO - Thread-1: Check if checkpoint exists for key8.json
+2024-02-15 15:33:10,967 INFO - Thread-1: CheckPoint read: 0 elements with key: 8
+2024-02-15 15:33:10,967 INFO - Thread-1: Reading key 8 from HDFS
+2024-02-15 15:33:10,988 INFO - Thread-0: Reading input file from HDFS: hdfs://localhost:9000/key7/0.csv
+2024-02-15 15:33:11,017 INFO - Thread-0: Input file read from HDFS: hdfs://localhost:9000/key7/0.csv
+2024-02-15 15:33:11,017 INFO - Thread-0: Read from HDFS: /key7
+2024-02-15 15:33:11,017 INFO - Thread-0: Key 7 read from HDFS
+2024-02-15 15:33:11,017 INFO - Thread-0: Data read from HDFS: 1 elements with key: 7
+2024-02-15 15:33:11,018 INFO - Thread-0: Writing checkpoint, elements: [(1, 256), (3, 768), (5, 1280), (7, 1792)]
+2024-02-15 15:33:11,018 INFO - Thread-0: Creating checkpoint phase 2 for key 1
+2024-02-15 15:33:11,018 INFO - Setting the output directory for the checkpoint file to 'checkpoints' directory.
+2024-02-15 15:33:11,018 INFO - Thread-0: Writing the checkpoint to file checkpoints/key1.json
+2024-02-15 15:33:11,018 INFO - Thread-0: Creating checkpoint file: checkpoints/key1.json
+2024-02-15 15:33:11,018 INFO - Thread-0: Writing temp checkpoint file: checkpoints/key1_temp.json
+2024-02-15 15:33:11,020 INFO - Thread-1: Reading from HDFS: /key8
+2024-02-15 15:33:11,020 INFO - Thread-0: Temp checkpoint file written: checkpoints/key1_temp.json
+2024-02-15 15:33:11,020 INFO - Thread-0: Moving temp checkpoint file to: checkpoints/key1.json
+2024-02-15 15:33:11,020 INFO - Thread-0: Temp checkpoint file moved to: checkpoints/key1.json
+2024-02-15 15:33:11,020 INFO - Thread-0: Temp checkpoint file deleted: checkpoints/key1_temp.json
+2024-02-15 15:33:11,020 INFO - Thread-0: Checkpoint written to file checkpoints/key1.json
+2024-02-15 15:33:11,020 INFO - Thread-0: Checkpoint created for phase 2 for key 1
+2024-02-15 15:33:11,020 INFO - Thread-0: Creating checkpoint phase 2 for key 3
+2024-02-15 15:33:11,020 INFO - Setting the output directory for the checkpoint file to 'checkpoints' directory.
+2024-02-15 15:33:11,020 INFO - Thread-0: Writing the checkpoint to file checkpoints/key3.json
+2024-02-15 15:33:11,020 INFO - Thread-0: Creating checkpoint file: checkpoints/key3.json
+2024-02-15 15:33:11,020 INFO - Thread-0: Writing temp checkpoint file: checkpoints/key3_temp.json
+2024-02-15 15:33:11,020 INFO - Thread-0: Temp checkpoint file written: checkpoints/key3_temp.json
+2024-02-15 15:33:11,020 INFO - Thread-0: Moving temp checkpoint file to: checkpoints/key3.json
+2024-02-15 15:33:11,024 INFO - Thread-0: Temp checkpoint file moved to: checkpoints/key3.json
+2024-02-15 15:33:11,024 INFO - Thread-0: Temp checkpoint file deleted: checkpoints/key3_temp.json
+2024-02-15 15:33:11,024 INFO - Thread-0: Checkpoint written to file checkpoints/key3.json
+2024-02-15 15:33:11,024 INFO - Thread-0: Checkpoint created for phase 2 for key 3
+2024-02-15 15:33:11,024 INFO - Thread-0: Creating checkpoint phase 2 for key 5
+2024-02-15 15:33:11,024 INFO - Setting the output directory for the checkpoint file to 'checkpoints' directory.
+2024-02-15 15:33:11,024 INFO - Thread-0: Writing the checkpoint to file checkpoints/key5.json
+2024-02-15 15:33:11,024 INFO - Thread-0: Creating checkpoint file: checkpoints/key5.json
+2024-02-15 15:33:11,027 INFO - Thread-0: Writing temp checkpoint file: checkpoints/key5_temp.json
+2024-02-15 15:33:11,027 INFO - Thread-0: Temp checkpoint file written: checkpoints/key5_temp.json
+2024-02-15 15:33:11,027 INFO - Thread-0: Moving temp checkpoint file to: checkpoints/key5.json
+2024-02-15 15:33:11,027 INFO - Thread-0: Temp checkpoint file moved to: checkpoints/key5.json
+2024-02-15 15:33:11,027 INFO - Thread-0: Temp checkpoint file deleted: checkpoints/key5_temp.json
+2024-02-15 15:33:11,027 INFO - Thread-0: Checkpoint written to file checkpoints/key5.json
+2024-02-15 15:33:11,027 INFO - Thread-0: Checkpoint created for phase 2 for key 5
+2024-02-15 15:33:11,027 INFO - Thread-0: Creating checkpoint phase 2 for key 7
+2024-02-15 15:33:11,027 INFO - Setting the output directory for the checkpoint file to 'checkpoints' directory.
+2024-02-15 15:33:11,027 INFO - Thread-0: Writing the checkpoint to file checkpoints/key7.json
+2024-02-15 15:33:11,027 INFO - Thread-0: Creating checkpoint file: checkpoints/key7.json
+2024-02-15 15:33:11,027 INFO - Thread-0: Writing temp checkpoint file: checkpoints/key7_temp.json
+2024-02-15 15:33:11,027 INFO - Thread-0: Temp checkpoint file written: checkpoints/key7_temp.json
+2024-02-15 15:33:11,027 INFO - Thread-0: Moving temp checkpoint file to: checkpoints/key7.json
+2024-02-15 15:33:11,027 INFO - Thread-0: Temp checkpoint file moved to: checkpoints/key7.json
+2024-02-15 15:33:11,027 INFO - Thread-0: Temp checkpoint file deleted: checkpoints/key7_temp.json
+2024-02-15 15:33:11,027 INFO - Thread-0: Checkpoint written to file checkpoints/key7.json
+2024-02-15 15:33:11,027 INFO - Thread-0: Checkpoint created for phase 2 for key 7
+2024-02-15 15:33:11,035 INFO - Thread-0: CheckPoint written: 4 elements
+2024-02-15 15:33:11,035 INFO - Thread-0: Reduce done with result: [(1, 256), (3, 768), (5, 1280), (7, 1792)]
+2024-02-15 15:33:11,035 INFO - Thread-0: [(1, 256), (3, 768), (5, 1280), (7, 1792)] sent to the coordinator
+2024-02-15 15:33:11,050 INFO - Thread-0: Closing connection
+2024-02-15 15:33:11,068 INFO - Thread-1: Reading input file from HDFS: hdfs://localhost:9000/key8/0.csv
+2024-02-15 15:33:11,085 INFO - Thread-1: Input file read from HDFS: hdfs://localhost:9000/key8/0.csv
+2024-02-15 15:33:11,085 INFO - Thread-1: Read from HDFS: /key8
+2024-02-15 15:33:11,085 INFO - Thread-1: Key 8 read from HDFS
+2024-02-15 15:33:11,085 INFO - Thread-1: Data read from HDFS: 1 elements with key: 8
+2024-02-15 15:33:11,085 INFO - Thread-1: Writing checkpoint, elements: [(9, 18), (2, 640), (4, 1024), (6, 1536), (8, 2048)]
+2024-02-15 15:33:11,085 INFO - Thread-1: Creating checkpoint phase 2 for key 9
+2024-02-15 15:33:11,085 INFO - Setting the output directory for the checkpoint file to 'checkpoints' directory.
+2024-02-15 15:33:11,085 INFO - Thread-1: Writing the checkpoint to file checkpoints/key9.json
+2024-02-15 15:33:11,085 INFO - Thread-1: Creating checkpoint file: checkpoints/key9.json
+2024-02-15 15:33:11,085 INFO - Thread-1: Writing temp checkpoint file: checkpoints/key9_temp.json
+2024-02-15 15:33:11,085 INFO - Thread-1: Temp checkpoint file written: checkpoints/key9_temp.json
+2024-02-15 15:33:11,085 INFO - Thread-1: Moving temp checkpoint file to: checkpoints/key9.json
+2024-02-15 15:33:11,090 INFO - Thread-1: Temp checkpoint file moved to: checkpoints/key9.json
+2024-02-15 15:33:11,090 INFO - Thread-1: Temp checkpoint file deleted: checkpoints/key9_temp.json
+2024-02-15 15:33:11,090 INFO - Thread-1: Checkpoint written to file checkpoints/key9.json
+2024-02-15 15:33:11,090 INFO - Thread-1: Checkpoint created for phase 2 for key 9
+2024-02-15 15:33:11,090 INFO - Thread-1: Creating checkpoint phase 2 for key 2
+2024-02-15 15:33:11,090 INFO - Setting the output directory for the checkpoint file to 'checkpoints' directory.
+2024-02-15 15:33:11,090 INFO - Thread-1: Writing the checkpoint to file checkpoints/key2.json
+2024-02-15 15:33:11,090 INFO - Thread-1: Creating checkpoint file: checkpoints/key2.json
+2024-02-15 15:33:11,090 INFO - Thread-1: Writing temp checkpoint file: checkpoints/key2_temp.json
+2024-02-15 15:33:11,090 INFO - Thread-1: Temp checkpoint file written: checkpoints/key2_temp.json
+2024-02-15 15:33:11,090 INFO - Thread-1: Moving temp checkpoint file to: checkpoints/key2.json
+2024-02-15 15:33:11,090 INFO - Thread-1: Temp checkpoint file moved to: checkpoints/key2.json
+2024-02-15 15:33:11,095 INFO - Thread-1: Temp checkpoint file deleted: checkpoints/key2_temp.json
+2024-02-15 15:33:11,095 INFO - Thread-1: Checkpoint written to file checkpoints/key2.json
+2024-02-15 15:33:11,095 INFO - Thread-1: Checkpoint created for phase 2 for key 2
+2024-02-15 15:33:11,095 INFO - Thread-1: Creating checkpoint phase 2 for key 4
+2024-02-15 15:33:11,095 INFO - Setting the output directory for the checkpoint file to 'checkpoints' directory.
+2024-02-15 15:33:11,095 INFO - Thread-1: Writing the checkpoint to file checkpoints/key4.json
+2024-02-15 15:33:11,095 INFO - Thread-1: Creating checkpoint file: checkpoints/key4.json
+2024-02-15 15:33:11,095 INFO - Thread-1: Writing temp checkpoint file: checkpoints/key4_temp.json
+2024-02-15 15:33:11,095 INFO - Thread-1: Temp checkpoint file written: checkpoints/key4_temp.json
+2024-02-15 15:33:11,095 INFO - Thread-1: Moving temp checkpoint file to: checkpoints/key4.json
+2024-02-15 15:33:11,095 INFO - Thread-1: Temp checkpoint file moved to: checkpoints/key4.json
+2024-02-15 15:33:11,095 INFO - Thread-1: Temp checkpoint file deleted: checkpoints/key4_temp.json
+2024-02-15 15:33:11,095 INFO - Thread-1: Checkpoint written to file checkpoints/key4.json
+2024-02-15 15:33:11,100 INFO - Thread-1: Checkpoint created for phase 2 for key 4
+2024-02-15 15:33:11,100 INFO - Thread-1: Creating checkpoint phase 2 for key 6
+2024-02-15 15:33:11,100 INFO - Setting the output directory for the checkpoint file to 'checkpoints' directory.
+2024-02-15 15:33:11,100 INFO - Thread-1: Writing the checkpoint to file checkpoints/key6.json
+2024-02-15 15:33:11,100 INFO - Thread-1: Creating checkpoint file: checkpoints/key6.json
+2024-02-15 15:33:11,100 INFO - Thread-1: Writing temp checkpoint file: checkpoints/key6_temp.json
+2024-02-15 15:33:11,100 INFO - Thread-1: Temp checkpoint file written: checkpoints/key6_temp.json
+2024-02-15 15:33:11,100 INFO - Thread-1: Moving temp checkpoint file to: checkpoints/key6.json
+2024-02-15 15:33:11,100 INFO - Thread-1: Temp checkpoint file moved to: checkpoints/key6.json
+2024-02-15 15:33:11,100 INFO - Thread-1: Temp checkpoint file deleted: checkpoints/key6_temp.json
+2024-02-15 15:33:11,100 INFO - Thread-1: Checkpoint written to file checkpoints/key6.json
+2024-02-15 15:33:11,100 INFO - Thread-1: Checkpoint created for phase 2 for key 6
+2024-02-15 15:33:11,100 INFO - Thread-1: Creating checkpoint phase 2 for key 8
+2024-02-15 15:33:11,100 INFO - Setting the output directory for the checkpoint file to 'checkpoints' directory.
+2024-02-15 15:33:11,100 INFO - Thread-1: Writing the checkpoint to file checkpoints/key8.json
+2024-02-15 15:33:11,100 INFO - Thread-1: Creating checkpoint file: checkpoints/key8.json
+2024-02-15 15:33:11,100 INFO - Thread-1: Writing temp checkpoint file: checkpoints/key8_temp.json
+2024-02-15 15:33:11,105 INFO - Thread-1: Temp checkpoint file written: checkpoints/key8_temp.json
+2024-02-15 15:33:11,105 INFO - Thread-1: Moving temp checkpoint file to: checkpoints/key8.json
+2024-02-15 15:33:11,105 INFO - Thread-1: Temp checkpoint file moved to: checkpoints/key8.json
+2024-02-15 15:33:11,105 INFO - Thread-1: Temp checkpoint file deleted: checkpoints/key8_temp.json
+2024-02-15 15:33:11,105 INFO - Thread-1: Checkpoint written to file checkpoints/key8.json
+2024-02-15 15:33:11,105 INFO - Thread-1: Checkpoint created for phase 2 for key 8
+2024-02-15 15:33:11,105 INFO - Thread-1: CheckPoint written: 5 elements
+2024-02-15 15:33:11,105 INFO - Thread-1: Reduce done with result: [(9, 18), (2, 640), (4, 1024), (6, 1536), (8, 2048)]
+2024-02-15 15:33:11,105 INFO - Thread-1: [(9, 18), (2, 640), (4, 1024), (6, 1536), (8, 2048)] sent to the coordinator
+2024-02-15 15:33:11,105 INFO - Thread-1: Closing connection

@@ -12,6 +12,5 @@
       "operator": "REDUCE",
       "function": "SUM"
     }
-  ],
-  "partitions": 2
+  ]
 }

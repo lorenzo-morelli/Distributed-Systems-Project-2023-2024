@@ -24,18 +24,16 @@ public class ConfigFileReader {
     
     private static Logger logger;
 
-    public static MutablePair<Integer, List<MutablePair<String, String>>> readOperations(File file) throws Exception {
+    public static List<MutablePair<String, String>> readOperations(File file) throws Exception {
         logger = LogManager.getLogger("it.polimi.Coordinator");
 
         logger.info("Reading operations file: " + file.getAbsolutePath().toString());
-        int partitions = 0;
         List<MutablePair<String, String>> dataFunctions = new ArrayList<>();
 
         try {
             ObjectMapper objectMapper = new ObjectMapper();
             Map<String, Object> jsonData = objectMapper.readValue(file, new TypeReference<Map<String, Object>>() {
             });
-            partitions = (int) jsonData.get("partitions");
 
             List<Map<String, String>> operations = objectMapper.convertValue(jsonData.get("operations"), new TypeReference<List<Map<String, String>>>() {
             });
@@ -51,7 +49,7 @@ public class ConfigFileReader {
             throw new Exception("Not possible to read the operations file:\n" + file.getAbsolutePath() + "\nCheck the path and the format of the file!");
         }
         logger.info("Operations file read: " + file.getAbsolutePath().toString());
-        return new MutablePair<>(partitions, dataFunctions);
+        return dataFunctions;
     }
 
     public static MutablePair<List<String>, List<Address>> readConfigurations(File file) throws Exception {

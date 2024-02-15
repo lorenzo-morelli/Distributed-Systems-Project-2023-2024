@@ -37,10 +37,10 @@ public class Coordinator {
     private static final Logger logger = LogManager.getLogger("it.polimi.Coordinator");
 
 
-    public Coordinator(MutablePair<Integer, List<MutablePair<String, String>>> operations, MutablePair<List<String>, List<Address>> filesAddresses ) {
+    public Coordinator(List<MutablePair<String, String>> operations, MutablePair<List<String>, List<Address>> filesAddresses ) {
         this.clientSockets = new ArrayList<>();
-        this.operations = operations.getRight();
-        this.numPartitions = operations.getLeft();
+        
+        this.operations = operations;
 
         this.localFiles = filesAddresses.getLeft();
         this.addresses = filesAddresses.getRight();
@@ -48,12 +48,13 @@ public class Coordinator {
          for(int i = 0; i < localFiles.size(); i++){
                 files.add("/input/" + new Path(localFiles.get(i)).getName());
         }
-
+        this.numPartitions = files.size();
 
         this.fileSocketMap = new HashMap<>();
         this.lastReduce = new MutablePair<>();
         this.keyManager = new KeyAssignmentManager();
-        if(this.numPartitions == 0 || this.operations.size() == 0 || this.files.size() == 0 || this.files.size() != this.numPartitions){
+        
+        if(this.numPartitions == 0 || this.operations.size() == 0){
             logger.error("Invalid input parameters!");
             throw new IllegalArgumentException("Invalid input parameters!");
         }

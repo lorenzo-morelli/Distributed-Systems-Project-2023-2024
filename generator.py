@@ -156,8 +156,8 @@ def validate_data():
         print("Data not available. Please generate data and apply operations first.")
         return
     
-    gen = gen.sort_values(by='key').reset_index(drop=True)
-    real = real.sort_values(by='key').reset_index(drop=True)
+    gen = gen.sort_values(by=['key','value']).reset_index(drop=True)
+    real = real.sort_values(by=['key','value']).reset_index(drop=True)
     if (gen.equals(real)):
         print("Congrats, data is correct!")
     else:

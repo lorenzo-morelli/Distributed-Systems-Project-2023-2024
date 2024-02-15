@@ -161,7 +161,7 @@ class WorkerHandler extends Thread {
         List<KeyValuePair> result = new ArrayList<>();
         List<KeyValuePair> temp = new ArrayList<>();
 
-        Integer sizeCheckPoint = 2;
+        Integer sizeCheckPoint = 80;
         Integer i = 0;
         Integer j = 0;
         for(Integer key: reduceMessage.getKeys()){
@@ -209,7 +209,7 @@ class WorkerHandler extends Thread {
         Boolean finished = checkPoint.getLeft();
 
    
-        Integer sizeCheckPoint = 8;
+        Integer sizeCheckPoint = 10000;
 
         List<KeyValuePair> tempResult = new ArrayList<>();
         if(!finished){

@@ -6,7 +6,7 @@ import pandas as pd
 partitions = 0
 PART_GEN_PATH = "gen_files/part"
 RESULT_GEN_PATH = "gen_files/result.csv"
-RESULT_REAL_PATH = "original.csv"
+RESULT_REAL_PATH = "result.csv"
 OPERATIONS_PATH = "files/operations.json"
 
 
@@ -59,13 +59,13 @@ def map_data(data, function):
     function_name, parameter = parse_function(function)
 
     if function_name == "ADD":
-        return pd.DataFrame({'key': int(data['key']), 'value': (data['value'] + int(parameter)).astype(int)})
+        return pd.DataFrame({'key': data['key'], 'value': (data['value'] + int(parameter)).astype(int)})
     elif function_name == "MULTIPLY":
-        return pd.DataFrame({'key': int(data['key']), 'value': (data['value'] * int(parameter)).astype(int)})
+        return pd.DataFrame({'key': data['key'], 'value': (data['value'] * int(parameter)).astype(int)})
     elif function_name == "SUBTRACT":
-        return pd.DataFrame({'key': int(data['key']), 'value': (data['value'] - int(parameter)).astype(int)})
+        return pd.DataFrame({'key': data['key'], 'value': (data['value'] - int(parameter)).astype(int)})
     elif function_name == "DIVIDE":
-        return pd.DataFrame({'key': int(data['key']), 'value': (data['value'] / int(parameter)).astype(int)})
+        return pd.DataFrame({'key': data['key'], 'value': (data['value'] / int(parameter)).astype(int)})
     else:
         raise ValueError(f"Unsupported map function: {function_name}")
 
@@ -150,21 +150,19 @@ def operations():
 
 def validate_data():
     try:
-        gen = pd.read_csv(RESULT_GEN_PATH)
-        real = pd.read_csv(RESULT_REAL_PATH)
+        gen = pd.read_csv(RESULT_GEN_PATH,header=None, names=['key', 'value'])
+        real = pd.read_csv(RESULT_REAL_PATH,header=None, names=['key', 'value'])
     except FileNotFoundError:
         print("Data not available. Please generate data and apply operations first.")
         return
-    for index, row in gen.iterrows():
-        if row not in real:
-            print("Data is not valid.")
-            return
-    for index, row in real.iterrows():
-        if row not in gen:
-            print("Data is not valid.")
-            return
-    print("Congrats, data is valid!")
-
+    
+    gen = gen.sort_values(by='key').reset_index(drop=True)
+    real = real.sort_values(by='key').reset_index(drop=True)
+    if (gen.equals(real)):
+        print("Congrats, data is correct!")
+    else:
+        print("Sorry, data is incorrect")
+    
 
 def welcome():
     print("Please select an option:")

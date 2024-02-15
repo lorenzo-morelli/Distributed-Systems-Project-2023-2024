@@ -54,8 +54,6 @@ public class CheckPointReaderWriter {
         logger.info(Thread.currentThread().getName() + ": Creating checkpoint phase 1 for task " + taskId);
         createCheckpoint(result, fileName,finished,false);
         logger.info(Thread.currentThread().getName() +": Checkpoint phase 1 created for task " + taskId);
-
-        System.out.println("Checkpoint created for task " + taskId);
         
     }
     public static void writeCheckPointPhase2(List<KeyValuePair> result, boolean finished) {

@@ -69,7 +69,6 @@ public class SocketHandler implements Runnable {
                             // Process or print the list
                             if (!coordinator.checkChangeKeyReduce()) {
                                 logger.info(Thread.currentThread().getName() + ": Received the final result:" + list);
-                                System.out.println(list);
                                 end(object);
                                 isProcessing = false;
                             } else {
@@ -98,7 +97,6 @@ public class SocketHandler implements Runnable {
                                 System.exit(0);
                             }else if (finalObject instanceof List<?>) {
                                 logger.info(Thread.currentThread().getName() + ": Received the final result:" + finalObject);  
-                                System.out.println(finalObject);
                                 end(finalObject);
                             }            
                             isProcessing = false;

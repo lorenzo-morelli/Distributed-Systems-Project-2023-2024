@@ -160,7 +160,15 @@ class WorkerHandler extends Thread {
         List<KeyValuePair> result = new ArrayList<>();
         List<KeyValuePair> temp = new ArrayList<>();
 
-        Integer sizeCheckPoint = 80;
+        
+        Integer sizeCheckPoint = 0;
+
+        if(reduceMessage.getKeys().size() > 10){
+            sizeCheckPoint = reduceMessage.getKeys().size()/10;
+        }else{
+            sizeCheckPoint = reduceMessage.getKeys().size();
+        }
+        logger.info(Thread.currentThread().getName()+ ": Checkpoint every " + sizeCheckPoint + " keys");
         Integer i = 0;
         Integer j = 0;
         for(Integer key: reduceMessage.getKeys()){
@@ -201,14 +209,14 @@ class WorkerHandler extends Thread {
                         
         logger.info(Thread.currentThread().getName() + ": Check if a checkpoint exists for task " + task.getTaskId());
         MutablePair<Boolean, List<KeyValuePair>> checkPoint = CheckPointReaderWriter.checkCheckPoint(task.getTaskId(),false);
-        logger.info(Thread.currentThread().getName() + ": CheckPoint read: " + checkPoint.getRight().size() + " elements");
+        logger.info(Thread.currentThread().getName() + ": CheckPoint : " + checkPoint.getRight().size() + " elements");
         
         Integer size = checkPoint.getRight().size();
         result = checkPoint.getRight();
         Boolean finished = checkPoint.getLeft();
 
    
-        Integer sizeCheckPoint = 10000;
+        
 
         List<KeyValuePair> tempResult = new ArrayList<>();
         if(!finished){
@@ -219,7 +227,15 @@ class WorkerHandler extends Thread {
             logger.info(Thread.currentThread().getName() +": No checkpoint found for task " + task.getTaskId() + ", processing the task");
 
             List<KeyValuePair> data = HadoopFileReadWrite.readInputFile(task.getPathFile());
-        
+            
+            Integer sizeCheckPoint = 0;
+
+            if(data.size() > 10){
+                sizeCheckPoint = data.size()/10;
+            }else{
+                sizeCheckPoint = data.size();
+            }
+            logger.info(Thread.currentThread().getName() +": Checkpoint every " + sizeCheckPoint + " elements");
             logger.info(Thread.currentThread().getName() +": Data read from HDFS: " + data.size() + " elements");
             
             for(int i = size; i < data.size();){

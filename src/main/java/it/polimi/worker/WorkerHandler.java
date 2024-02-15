@@ -10,7 +10,6 @@ import java.util.List;
 import org.apache.commons.lang3.tuple.MutablePair;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
-
 import it.polimi.common.HadoopFileReadWrite;
 import it.polimi.common.KeyValuePair;
 import it.polimi.common.messages.ErrorMessage;
@@ -55,10 +54,10 @@ class WorkerHandler extends Thread {
                         // Process the Task
                         result = processTask(task);
                     }
-                    catch(IOException e){
+                    catch(IOException | IllegalArgumentException e ){
                         logger.error(Thread.currentThread().getName() + ": Error while processing the task: " + e.getMessage());
                         outputStream.writeObject(new ErrorMessage(e.getMessage()));
-                        System.out.println("Error while processing the task");
+                        System.out.println("Error while processing the task\n" + e.getMessage());
                         break;
                     }
 

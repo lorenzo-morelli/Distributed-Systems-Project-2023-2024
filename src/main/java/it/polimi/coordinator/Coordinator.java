@@ -182,8 +182,8 @@ public class Coordinator {
             HadoopFileReadWrite.uploadFiles(localFiles,"/input/");
             logger.info("Files uploaded to HDFS successfully");
         }catch(Exception e){
-            logger.error("Error while uploading files to HDFS");
-            throw new RuntimeException("Not possible to connect to the HDFS server. Check the address of the server and if it is running!");
+            logger.error("Error while uploading files to HDFS\n" + e.getMessage());
+            throw new RuntimeException("Not possible to connect to the HDFS server. Check the address of the server and if it is running!\nCheck also if files exist!\n" + e.getMessage());
         }
     }
 }

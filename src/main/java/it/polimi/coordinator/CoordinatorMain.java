@@ -46,6 +46,7 @@ public class CoordinatorMain {
             coordinator.initializeHadoop();
         }catch(Exception e){
             System.out.println(e.getMessage());
+            return;
         }
         logger.info("Coordinator initialized Hadoop");
 
@@ -60,6 +61,7 @@ public class CoordinatorMain {
             executorService.shutdown();
         }catch(Exception e){
             System.out.println(e.getMessage());
+            return;
         }
         logger.info("Coordinator initialized SocketHandlers");
     }

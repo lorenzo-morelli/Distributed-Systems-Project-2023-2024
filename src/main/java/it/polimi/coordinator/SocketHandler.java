@@ -214,8 +214,9 @@ public class SocketHandler implements Runnable {
             try {
                 List<Address> addresses = new ArrayList<>(coordinator.getAddresses());
                 addresses.remove(new Address(clientSocket.getInetAddress().getHostName(), clientSocket.getPort()));
-                for(Address a: addresses){
-                    System.out.println(a.getHostname() + " " + a.getPort());
+                logger.info(Thread.currentThread().getName() + ": Searching for a new worker, among" + addresses.size() + " available workers..." + addresses);
+                if(addresses.size() == 0){
+                    return false;
                 }
                 clientSocket = coordinator.getNewActiveSocket(addresses);
                 reconnected = true;

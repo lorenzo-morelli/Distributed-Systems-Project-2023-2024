@@ -42,6 +42,10 @@ public class SocketHandler implements Runnable {
 
     @Override
     public void run() {
+        Thread.currentThread().setName(clientSocket.getInetAddress().getHostName() +":"+ clientSocket.getLocalPort());
+
+
+
         logger.info(clientSocket.getInetAddress().getHostName() +":"+ clientSocket.getPort() + ": " + Thread.currentThread().getName());
         logger.info(Thread.currentThread().getName() + ": Starting worker connection");
         try {

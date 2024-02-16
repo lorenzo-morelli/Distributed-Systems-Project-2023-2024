@@ -28,7 +28,8 @@ class WorkerHandler extends Thread {
 
     @Override
     public void run() {
-        logger.info(clientSocket.getInetAddress().getHostName() +":"+ clientSocket.getPort() + ": " + Thread.currentThread().getName());
+        Thread.currentThread().setName(clientSocket.getInetAddress().getHostName() +":"+ clientSocket.getPort());
+
         logger.info(Thread.currentThread().getName() + ": WorkerHandler started.");
 
         System.out.println("WorkerHandler started");

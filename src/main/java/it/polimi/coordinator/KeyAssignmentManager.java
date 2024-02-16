@@ -9,7 +9,7 @@ public class KeyAssignmentManager {
 
     private Map<SocketHandler, List<Integer>> currentAssignments;
     private Map<SocketHandler, List<Integer>> finalAssignments;
-    private Boolean canProceed;
+    private volatile Boolean canProceed;
     private static final Logger logger = LogManager.getLogger("it.polimi.Coordinator");
 
     public KeyAssignmentManager() {

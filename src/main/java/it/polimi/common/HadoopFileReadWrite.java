@@ -32,6 +32,7 @@ public class HadoopFileReadWrite {
         logger.info(Thread.currentThread().getName() + ": Writing to HDFS: " + hdfsPath);
         Configuration conf = new Configuration();
         conf.set("fs.defaultFS", HDFS_URI);
+        conf.set("fs.hdfs.impl", "org.apache.hadoop.hdfs.DistributedFileSystem");
         FileSystem fs = FileSystem.get(conf);
 
         Path outputPath = new Path(hdfsPath);
@@ -52,6 +53,7 @@ public class HadoopFileReadWrite {
 
         Configuration conf = new Configuration();
         conf.set("fs.defaultFS", HDFS_URI);
+        conf.set("fs.hdfs.impl", "org.apache.hadoop.hdfs.DistributedFileSystem");
         FileSystem fs = FileSystem.get(conf);
 
         try {
@@ -128,7 +130,7 @@ public class HadoopFileReadWrite {
         logger.info("Uploading files to HDFS");
         Configuration conf = new Configuration();
         conf.set("fs.defaultFS", HDFS_URI);
-        
+        conf.set("fs.hdfs.impl", "org.apache.hadoop.hdfs.DistributedFileSystem");
         for(String localFilePath : list){
             uploadFileToHDFS(localFilePath,hdfsDestinationPath, conf);
         }
@@ -141,6 +143,7 @@ public class HadoopFileReadWrite {
         List<KeyValuePair> result = new ArrayList<>();
         Configuration conf = new Configuration();
         conf.set("fs.defaultFS", HDFS_URI);
+        conf.set("fs.hdfs.impl", "org.apache.hadoop.hdfs.DistributedFileSystem");
         FileSystem fs = FileSystem.get(conf);
 
 
@@ -174,6 +177,7 @@ public class HadoopFileReadWrite {
         logger.info("Deleting files from HDFS");
         Configuration conf = new Configuration();
         conf.set("fs.defaultFS", HDFS_URI);
+        conf.set("fs.hdfs.impl", "org.apache.hadoop.hdfs.DistributedFileSystem");
         FileSystem fs = null;
         try {
             fs = FileSystem.get(conf);

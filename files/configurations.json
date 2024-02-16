@@ -4,7 +4,6 @@
       "files/data2.csv"
     ],
     "workers": [
-      "localhost:5001",
-      "localhost:5002"
+      "localhost:5001"
     ]
   }

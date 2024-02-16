@@ -18,24 +18,29 @@ public class CoordinatorMain {
     public static void main(String[] args) {
 
         PropertyConfigurator.configure("conf/log4j.properties");
+        String operations_path;
+        String conf_path;
+        try{
+            Scanner scanner = new Scanner(System.in);
 
-        Scanner scanner = new Scanner(System.in);
+            System.out.println("Insert HDFS address (default: 'localhost:9000'): ");
+            String address = scanner.nextLine();
+            if(!address.equals(""))
+                HadoopFileReadWrite.setHDFS_URI("hdfs://" + address);
 
-        System.out.println("Insert HDFS address (default: 'localhost:9000'): ");
-        String address = scanner.nextLine();
-        if(!address.equals(""))
-            HadoopFileReadWrite.setHDFS_URI("hdfs://" + address);
+            System.out.println("Insert operations file path (default: 'files/operations.json'): ");
+            String temp = scanner.nextLine();
+            operations_path = temp.equals("") ? "files/operations.json" : temp;
 
-        System.out.println("Insert operations file path (default: 'files/operations.json'): ");
-        String temp = scanner.nextLine();
-        String operations_path = temp.equals("") ? "files/operations.json" : temp;
+            System.out.println("Insert operations file path (default: 'files/configurations.json'): ");
+            temp = scanner.nextLine();
+            conf_path = temp.equals("") ? "files/configurations.json" : temp;
 
-        System.out.println("Insert operations file path (default: 'files/configurations.json'): ");
-        temp = scanner.nextLine();
-        String conf_path = temp.equals("") ? "files/configurations.json" : temp;
-
-        scanner.close();
-        
+            scanner.close();
+        }catch(Exception e){
+            System.out.println("Error while reading input: " + e.getMessage());
+            return;
+        }
 
         logger.info("Starting Coordinator");
 

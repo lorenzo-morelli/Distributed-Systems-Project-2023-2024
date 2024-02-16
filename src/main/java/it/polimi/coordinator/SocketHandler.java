@@ -52,8 +52,8 @@ public class SocketHandler implements Runnable {
                 switch (phase) {
                     case INIT:
                         Task t = new Task(coordinator.getOperations(), file,coordinator.checkChangeKeyReduce(),taskId);
-                        System.out.println("Sending task to worker phase1");
-                        logger.info(Thread.currentThread().getName() + ": Sending task to worker phase1");
+                        System.out.println("Sending task to worker phase1: " + clientSocket.getInetAddress().getHostName() +":"+ clientSocket.getPort());
+                        logger.info(Thread.currentThread().getName() + ": Sending task to worker phase1: "+ clientSocket.getInetAddress().getHostName() +":"+ clientSocket.getPort());
                         outputStream.writeObject(t);
                         Object object = inputStream.readObject();
                         if (object == null){ 
@@ -80,8 +80,9 @@ public class SocketHandler implements Runnable {
             
                     case FINAL:
                         if(keyManager.canProceed()){
-                            logger.info(Thread.currentThread().getName() + ": Sending task to worker phase2");
-                            System.out.println("Sending task to worker phase2");
+
+                            logger.info(Thread.currentThread().getName() + ": Sending task to worker phase2: " + clientSocket.getInetAddress().getHostName() +":"+ clientSocket.getPort());
+                            System.out.println("Sending task to worker phase2: " + clientSocket.getInetAddress().getHostName() +":"+ clientSocket.getPort());
                             LastReduce lastReduce = new LastReduce(coordinator.getLastReduce(), keyManager.getFinalAssignments().get(this));
                             outputStream.writeObject(lastReduce);
         

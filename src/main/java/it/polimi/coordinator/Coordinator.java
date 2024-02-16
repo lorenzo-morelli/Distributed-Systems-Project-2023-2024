@@ -97,8 +97,12 @@ public class Coordinator {
                     clientSockets.add(clientSocket);
                     fileSocketMap.put(f, clientSocket);
                 }else{
-                    logger.error("No workers available");
-                    throw new RuntimeException("No workers available");
+                    try{
+                        fileSocketMap.put(f, getNewActiveSocket(new ArrayList<>(addresses)));
+                    }catch(Exception e){
+                        logger.error("No workers available");
+                        throw new RuntimeException("No workers available");
+                    }
                 }
             } catch (IOException e) {
                 fileSocketMap.put(f, getNewActiveSocket(new ArrayList<>(addresses)));

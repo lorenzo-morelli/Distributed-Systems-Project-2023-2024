@@ -21,9 +21,10 @@ class WorkerHandler extends Thread {
     private Socket clientSocket;
     private Integer taskId;
     private static final Logger logger = LogManager.getLogger("it.polimi.Worker");
-
+    private CheckPointReaderWriter CheckPointReaderWriter;
     public WorkerHandler(Socket clientSocket) {
         this.clientSocket = clientSocket;
+        this.CheckPointReaderWriter = new CheckPointReaderWriter();
     }
 
     @Override

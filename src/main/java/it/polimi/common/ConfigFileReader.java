@@ -3,7 +3,9 @@ package it.polimi.common;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.nio.file.StandardCopyOption;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -12,12 +14,10 @@ import org.apache.commons.lang3.tuple.MutablePair;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 
-import java.nio.file.Files;
-import java.nio.file.Path;
+
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.nimbusds.jose.shaded.json.JSONObject;
 
 
 public class ConfigFileReader {
@@ -80,59 +80,6 @@ public class ConfigFileReader {
         return new MutablePair<>(files, addresses);
     }
     
-    public static synchronized MutablePair<Boolean, List<KeyValuePair>> readCheckPoint(File file, Boolean phase2) throws IOException {
-        logger = LogManager.getLogger("it.polimi.Worker");
-        logger.info(Thread.currentThread().getName() + ": Reading checkpoint file: " + file.getAbsolutePath().toString());
-        List<KeyValuePair> result = new ArrayList<>();
-        Boolean end = false;
-        
-        try {
-            ObjectMapper objectMapper = new ObjectMapper();
-            Map<String, Object> jsonData = objectMapper.readValue(file, new TypeReference<Map<String, Object>>() {});
-    
-            result = objectMapper.convertValue(jsonData.get("values"), new TypeReference<List<KeyValuePair>>() {});    
-            if(!phase2){
-                end = (Boolean) jsonData.get("end");
-            }
-        } catch (IOException e) {
-            logger.error(e);
-            throw new IOException("Not possible to read the checkpoint file:\n" + file.getAbsolutePath().toString());
-        }
-        logger.info(Thread.currentThread().getName() + ": Checkpoint file read: " + file.getAbsolutePath().toString());
-        return new MutablePair<>(end, result);
-    }
-    
-
-    public static synchronized void createCheckpoint(List<KeyValuePair> result, String fileName, boolean finished, boolean phase2) throws IOException {
-        logger = LogManager.getLogger("it.polimi.Worker");
-        logger.info(Thread.currentThread().getName() + ": Creating checkpoint file: " + fileName);
-        JSONObject jsonObject = new JSONObject();
-        jsonObject.put("values", result);
-    
-        if (!phase2) {
-            jsonObject.put("end", finished);
-        }
-        
-        String tempFileName = fileName.split("\\.")[0] + "_temp.json";
-
-        logger.info(Thread.currentThread().getName() + ": Writing temp checkpoint file: " + tempFileName);
-       // Write the JSON object to a file
-        try (FileWriter fileWriter = new FileWriter(tempFileName)) {
-            fileWriter.write(jsonObject.toJSONString());
-        } catch (IOException e) {
-            logger.error(e);
-            throw new IOException("Not possible to write the checkpoint file:\n" + tempFileName);
-        }
-        logger.info(Thread.currentThread().getName() + ": Temp checkpoint file written: " + tempFileName);
-
-        Path sourcePath = Path.of(tempFileName);
-        Path destinationPath = Path.of(fileName);
-        logger.info(Thread.currentThread().getName() + ": Moving temp checkpoint file to: " + fileName);
-        Files.copy(sourcePath, destinationPath, StandardCopyOption.REPLACE_EXISTING);
-        logger.info(Thread.currentThread().getName() + ": Temp checkpoint file moved to: " + fileName);
-        Files.deleteIfExists(sourcePath);
-        logger.info(Thread.currentThread().getName() + ": Temp checkpoint file deleted: " + tempFileName);
-    }
 
     public static void writeResult(List<KeyValuePair> finalResult) throws IOException {
         String fileName = "result.csv";
@@ -143,6 +90,20 @@ public class ConfigFileReader {
             }
         } catch (IOException e) {
             throw new IOException("Not possible to write the finalResult:\n" + fileName);
+        }
+    }
+    public static synchronized void createOutputDirectory(String OUTPUT_DIRECTORY) {
+        logger = LogManager.getLogger("it.polimi.Worker");
+
+        Path outputDirectoryPath = Paths.get(OUTPUT_DIRECTORY);
+
+        if (Files.notExists(outputDirectoryPath)) {
+            try {
+                Files.createDirectories(outputDirectoryPath);
+                System.out.println(Thread.currentThread().getName() +"Created 'checkpoints' directory.");
+            } catch (IOException e) {
+                System.out.println(e.getMessage());
+            }
         }
     }
     

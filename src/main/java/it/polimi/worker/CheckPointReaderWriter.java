@@ -76,7 +76,7 @@ public class CheckPointReaderWriter {
     }
    
     private void createCheckpoint(List<KeyValuePair> result, String fileName,boolean finished, boolean phase2) {
-        logger.info(Thread.currentThread().getName() +"Setting the output directory for the checkpoint file to 'checkpoints' directory.");
+        logger.info(Thread.currentThread().getName() +": Setting the output directory for the checkpoint file to 'checkpoints' directory.");
         ConfigFileReader.createOutputDirectory(OUTPUT_DIRECTORY); // Ensure the 'OUTPUT_DIRECTORY' directory exists
 
         try{

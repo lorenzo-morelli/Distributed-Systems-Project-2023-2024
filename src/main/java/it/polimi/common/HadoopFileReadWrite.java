@@ -27,13 +27,20 @@ public class HadoopFileReadWrite {
         HDFS_URI = newURI;
     }
 
-    private synchronized static void writeToHDFS(String content, String hdfsPath) throws IOException{
-        logger = LogManager.getLogger("it.polimi.Worker");
-        logger.info(Thread.currentThread().getName() + ": Writing to HDFS: " + hdfsPath);
-        Configuration conf = new Configuration();
+    private synchronized static FileSystem initialize() throws IOException{
+		Configuration conf = new Configuration();
         conf.set("fs.defaultFS", HDFS_URI);
         conf.set("fs.hdfs.impl", "org.apache.hadoop.hdfs.DistributedFileSystem");
         FileSystem fs = FileSystem.get(conf);
+		return fs;
+	}
+
+
+    private synchronized static void writeToHDFS(String content, String hdfsPath) throws IOException{
+        logger = LogManager.getLogger("it.polimi.Worker");
+        logger.info(Thread.currentThread().getName() + ": Writing to HDFS: " + hdfsPath);
+       
+        FileSystem fs = initialize();
 
         Path outputPath = new Path(hdfsPath);
         FSDataOutputStream outputStream = fs.create(outputPath);
@@ -51,10 +58,8 @@ public class HadoopFileReadWrite {
         logger.info(Thread.currentThread().getName() + ": Reading from HDFS: " + hdfsPath);
         List<KeyValuePair> result = new ArrayList<>();
 
-        Configuration conf = new Configuration();
-        conf.set("fs.defaultFS", HDFS_URI);
-        conf.set("fs.hdfs.impl", "org.apache.hadoop.hdfs.DistributedFileSystem");
-        FileSystem fs = FileSystem.get(conf);
+        
+        FileSystem fs = initialize();
 
         try {
             FileStatus[] fileStatuses = fs.listStatus(new Path(hdfsPath));
@@ -141,10 +146,8 @@ public class HadoopFileReadWrite {
         logger.info(Thread.currentThread().getName() + ": Reading input file from HDFS: " + path);
 
         List<KeyValuePair> result = new ArrayList<>();
-        Configuration conf = new Configuration();
-        conf.set("fs.defaultFS", HDFS_URI);
-        conf.set("fs.hdfs.impl", "org.apache.hadoop.hdfs.DistributedFileSystem");
-        FileSystem fs = FileSystem.get(conf);
+       
+        FileSystem fs = initialize();
 
 
         Path filePath = new Path(path);
@@ -175,12 +178,10 @@ public class HadoopFileReadWrite {
     public static void deleteFiles() {
         logger = LogManager.getLogger("it.polimi.Coordinator");
         logger.info("Deleting files from HDFS");
-        Configuration conf = new Configuration();
-        conf.set("fs.defaultFS", HDFS_URI);
-        conf.set("fs.hdfs.impl", "org.apache.hadoop.hdfs.DistributedFileSystem");
+     
         FileSystem fs = null;
         try {
-            fs = FileSystem.get(conf);
+            fs =initialize();
 
             fs.delete(new Path("/input"), true);
             

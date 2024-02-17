@@ -100,8 +100,11 @@ public class ConfigFileReader {
         if (Files.notExists(outputDirectoryPath)) {
             try {
                 Files.createDirectories(outputDirectoryPath);
-                System.out.println(Thread.currentThread().getName() +"Created 'checkpoints' directory.");
+                System.out.println("Created 'checkpoints' directory.");
+                logger.info(Thread.currentThread().getName() + ": Created 'checkpoints' directory.");
             } catch (IOException e) {
+                logger.error(Thread.currentThread().getName()+ ": Error while creating 'checkpoints' directory");
+                System.out.println("Error while creating 'checkpoints' directory");
                 System.out.println(e.getMessage());
             }
         }

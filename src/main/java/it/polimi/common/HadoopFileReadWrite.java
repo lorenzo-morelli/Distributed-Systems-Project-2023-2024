@@ -83,7 +83,6 @@ public class HadoopFileReadWrite {
             String fileName = "/key" + key +"/"+identifier+".csv"; 
     
             writeToHDFS(key + "," + value, fileName);                
-            System.out.println("File created for key " + key + ": " + fileName);
         }
         logger.info(Thread.currentThread().getName() + ": Keys written to HDFS");
     }

@@ -96,7 +96,6 @@ class WorkerHandler extends Thread {
                     LastReduce reduceMessage = (LastReduce) object;
 
                     logger.info(Thread.currentThread().getName() + ": Received LastReduce message from coordinator, responsible for the keys: " + reduceMessage.getKeys());
-                    System.out.println("Responsible for the keys: " + reduceMessage.getKeys());
                     
                     List<KeyValuePair> result = new ArrayList<>(); 
                     try{

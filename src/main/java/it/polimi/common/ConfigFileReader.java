@@ -24,12 +24,12 @@ public class ConfigFileReader {
     
     private static Logger logger;
 
-    public static List<MutablePair<String, String>> readOperations(File file) throws Exception {
+    public static MutablePair<List<MutablePair<String, String>>,List<String>> readOperations(File file) throws Exception {
         logger = LogManager.getLogger("it.polimi.Coordinator");
 
         logger.info("Reading operations file: " + file.getAbsolutePath().toString());
         List<MutablePair<String, String>> dataFunctions = new ArrayList<>();
-
+        List<String> files = null;
         try {
             ObjectMapper objectMapper = new ObjectMapper();
             Map<String, Object> jsonData = objectMapper.readValue(file, new TypeReference<Map<String, Object>>() {
@@ -37,7 +37,8 @@ public class ConfigFileReader {
 
             List<Map<String, String>> operations = objectMapper.convertValue(jsonData.get("operations"), new TypeReference<List<Map<String, String>>>() {
             });
-
+            files = objectMapper.convertValue(jsonData.get("files"), new TypeReference<List<String>>() {
+            });
             for (Map<String, String> operation : operations) {
                 String operator = operation.get("operator");
                 String function = operation.get("function");
@@ -49,20 +50,20 @@ public class ConfigFileReader {
             throw new Exception("Not possible to read the operations file:\n" + file.getAbsolutePath() + "\nCheck the path and the format of the file!");
         }
         logger.info("Operations file read: " + file.getAbsolutePath().toString());
-        return dataFunctions;
+        return new MutablePair<>(dataFunctions,files);
     }
 
     public static MutablePair<List<String>, List<Address>> readConfigurations(File file) throws Exception {
         logger = LogManager.getLogger("it.polimi.Coordinator");
         logger.info("Reading configuration file: " + file.getAbsolutePath().toString());
         List<Address> addresses = new ArrayList<>();
-        List<String> files = new ArrayList<>();
+        List<String> programsPaths = new ArrayList<>();
 
         try {
             ObjectMapper objectMapper = new ObjectMapper();
             Map<String, Object> jsonData = objectMapper.readValue(file, new TypeReference<Map<String, Object>>() {});
 
-            files = objectMapper.convertValue(jsonData.get("files"), new TypeReference<List<String>>() {});
+            programsPaths = objectMapper.convertValue(jsonData.get("programs"), new TypeReference<List<String>>() {});
             
             List<String> workers = objectMapper.convertValue(jsonData.get("workers"), new TypeReference<List<String>>() {});
             
@@ -77,12 +78,12 @@ public class ConfigFileReader {
             throw new Exception("Not possible to read the configuration file:\n" + file.getAbsolutePath().toString() + "\nCheck the path and the format of the file!");
         }
         logger.info("Configuration file read: " + file.getAbsolutePath().toString());
-        return new MutablePair<>(files, addresses);
+        return new MutablePair<>(programsPaths, addresses);
     }
     
 
-    public static void writeResult(List<KeyValuePair> finalResult) throws IOException {
-        String fileName = "result.csv";
+    public static void writeResult(Integer id,List<KeyValuePair> finalResult) throws IOException {
+        String fileName = "result-"+id+".csv";
 
         try (FileWriter fileWriter = new FileWriter(fileName)) {
             for (KeyValuePair pair : finalResult) {

@@ -73,6 +73,7 @@ class WorkerHandler extends Thread {
                             try{
                                 logger.info(Thread.currentThread().getName() + ": Writing the keys in HDFS");
                                 HadoopFileReadWrite.writeKeys(
+                                    task.getId(),
                                     taskId.toString(),
                                     result
                                     );
@@ -175,12 +176,12 @@ class WorkerHandler extends Thread {
         for(Integer key: reduceMessage.getKeys()){
 
             logger.info(Thread.currentThread().getName()+ ": Check if a checkpoint exists for key" + key);
-            MutablePair<Boolean, List<KeyValuePair>> checkPoint = CheckPointReaderWriter.checkCheckPoint(key,true);
+            MutablePair<Boolean, List<KeyValuePair>> checkPoint = CheckPointReaderWriter.checkCheckPoint(key,reduceMessage.getId(),true);
             logger.info(Thread.currentThread().getName()+ ": CheckPoint read: " + checkPoint.getRight().size() + " elements with key: " + key);
 
             if(checkPoint.getRight().size() == 0){
                 Operator operator = CreateOperator.createOperator(reduceMessage.getReduce().getLeft(), reduceMessage.getReduce().getRight());
-                List<KeyValuePair> data = HadoopFileReadWrite.readKey(key);
+                List<KeyValuePair> data = HadoopFileReadWrite.readKey(reduceMessage.getId(),key);
                 logger.info(Thread.currentThread().getName()+ ": Data read from HDFS: " + data.size() + " elements with key: " + key);
                 temp.addAll(operator.execute(data));
                 i++;
@@ -192,7 +193,7 @@ class WorkerHandler extends Thread {
 
             if((i%sizeCheckPoint == 0 || (i+j) == reduceMessage.getKeys().size()) && temp.size() > 0){
                 logger.info(Thread.currentThread().getName()+ ": Writing checkpoint, elements: " + temp);
-                CheckPointReaderWriter.writeCheckPointPhase2(temp,true);
+                CheckPointReaderWriter.writeCheckPointPhase2(temp,reduceMessage.getId(),true);
                 logger.info(Thread.currentThread().getName() + ": CheckPoint written: " + temp.size() + " elements");
                 result.addAll(temp);
                 temp.clear();
@@ -209,7 +210,7 @@ class WorkerHandler extends Thread {
         List<KeyValuePair> result = null;
                         
         logger.info(Thread.currentThread().getName() + ": Check if a checkpoint exists for task " + task.getTaskId());
-        MutablePair<Boolean, List<KeyValuePair>> checkPoint = CheckPointReaderWriter.checkCheckPoint(task.getTaskId(),false);
+        MutablePair<Boolean, List<KeyValuePair>> checkPoint = CheckPointReaderWriter.checkCheckPoint(task.getTaskId(),task.getId(),false);
         logger.info(Thread.currentThread().getName() + ": CheckPoint : " + checkPoint.getRight().size() + " elements");
         
         Integer size = checkPoint.getRight().size();
@@ -255,7 +256,7 @@ class WorkerHandler extends Thread {
                 }
                 result.addAll(tempResult);
                 logger.info(Thread.currentThread().getName() +": Writing checkpoint, elements: " + result.size() + " for task " + task.getTaskId());
-                CheckPointReaderWriter.writeCheckPointPhase1(task.getTaskId(), result,false);
+                CheckPointReaderWriter.writeCheckPointPhase1(task.getTaskId(),task.getId(), result,false);
                 logger.info(Thread.currentThread().getName() +": CheckPoint written: " + result.size() + " elements" + " for task " + task.getTaskId()); 
             }
 
@@ -265,7 +266,7 @@ class WorkerHandler extends Thread {
                 }   
             }
             logger.info(Thread.currentThread().getName() + ": Writing last checkpoint, elements: " + result.size() + " for task " + task.getTaskId());   
-            CheckPointReaderWriter.writeCheckPointPhase1(task.getTaskId(), result,true);
+            CheckPointReaderWriter.writeCheckPointPhase1(task.getTaskId(),task.getId(), result,true);
             logger.info(Thread.currentThread().getName() +": Last checkpoint written: " + result.size() + " elements" + " for task " + task.getTaskId()); 
         }
         logger.info(Thread.currentThread().getName() +": Task " + task.getTaskId() + " done" + " with result:" + result);

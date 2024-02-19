@@ -12,5 +12,9 @@
       "operator": "REDUCE",
       "function": "SUM"
     }
+  ],
+  "files": [
+    "files/data1.csv",
+    "files/data2.csv"
   ]
 }

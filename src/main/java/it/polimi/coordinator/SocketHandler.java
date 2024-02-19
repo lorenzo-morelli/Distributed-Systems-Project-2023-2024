@@ -27,10 +27,10 @@ public class SocketHandler implements Runnable {
     private ObjectInputStream inputStream = null;
     private ObjectOutputStream outputStream = null;
     private boolean isProcessing;
-    
+    private Integer id;
     private static final Logger logger = LogManager.getLogger("it.polimi.Coordinator");
 
-    public SocketHandler(Coordinator coordinator, String file, Integer taskId,CoordinatorPhase phase) {
+    public SocketHandler(Coordinator coordinator, String file, Integer taskId,CoordinatorPhase phase, Integer id) {
         this.clientSocket = coordinator.getFileSocketMap().get(file);
         this.keyManager = coordinator.getKeyManager();
         this.file = file;
@@ -38,6 +38,7 @@ public class SocketHandler implements Runnable {
         this.coordinator = coordinator;
         this.phase = phase;
         this.isProcessing = true;
+        this.id = id;
     }
 
     @Override
@@ -55,7 +56,7 @@ public class SocketHandler implements Runnable {
             while (isProcessing) {
                 switch (phase) {
                     case INIT:
-                        Task t = new Task(coordinator.getOperations(), file,coordinator.checkChangeKeyReduce(),taskId);
+                        Task t = new Task(id,coordinator.getOperations(), file,coordinator.checkChangeKeyReduce(),taskId);
                         System.out.println("Sending task to worker phase1: " + clientSocket.getInetAddress().getHostName() +":"+ clientSocket.getPort());
                         logger.info(Thread.currentThread().getName() + ": Sending task to worker phase1: "+ clientSocket.getInetAddress().getHostName() +":"+ clientSocket.getPort());
                         outputStream.writeObject(t);
@@ -87,7 +88,7 @@ public class SocketHandler implements Runnable {
 
                             logger.info(Thread.currentThread().getName() + ": Sending task to worker phase2: " + clientSocket.getInetAddress().getHostName() +":"+ clientSocket.getPort());
                             System.out.println("Sending task to worker phase2: " + clientSocket.getInetAddress().getHostName() +":"+ clientSocket.getPort());
-                            LastReduce lastReduce = new LastReduce(coordinator.getLastReduce(), keyManager.getFinalAssignments().get(this));
+                            LastReduce lastReduce = new LastReduce(id,coordinator.getLastReduce(), keyManager.getFinalAssignments().get(this));
                             outputStream.writeObject(lastReduce);
         
                         
@@ -248,7 +249,7 @@ public class SocketHandler implements Runnable {
     private void performReconnectedActions() {
         coordinator.getClientSockets().add(clientSocket);
         coordinator.getFileSocketMap().put(file, clientSocket);
-        SocketHandler newSocketHandler = new SocketHandler(coordinator, file, taskId, phase);
+        SocketHandler newSocketHandler = new SocketHandler(coordinator, file, taskId, phase,id);
         if (keyManager.getFinalAssignments().get(this) != null) {
             System.out.println("Reassigning keys to the new worker...");
             logger.info(Thread.currentThread().getName() + ": Reassigning keys to the new worker...");

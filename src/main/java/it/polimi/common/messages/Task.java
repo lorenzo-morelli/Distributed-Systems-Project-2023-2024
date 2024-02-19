@@ -11,11 +11,13 @@ public class Task implements Serializable{
     private final String pathFile;
     private final boolean isPresentStep2;
     private final Integer taskId;
-    public Task(List<MutablePair<String, String>> list, String pathFile,boolean isPresentStep2,Integer taskId) {
+    private final Integer id;
+    public Task(Integer id, List<MutablePair<String, String>> list, String pathFile,boolean isPresentStep2,Integer taskId) {
         this.operators = list;
         this.pathFile = pathFile;
         this.isPresentStep2 = isPresentStep2;
         this.taskId = taskId;
+        this.id = id;
     }
     public List<MutablePair<String, String>> getOperators(){
         return operators;
@@ -29,5 +31,8 @@ public class Task implements Serializable{
     public Integer getTaskId(){
         return taskId;
     }
+    public Integer getId(){
+        return id;
+    }   
 
 }

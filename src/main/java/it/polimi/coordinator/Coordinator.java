@@ -7,6 +7,8 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import org.apache.commons.lang3.tuple.MutablePair;
 import org.apache.hadoop.fs.Path;
@@ -18,7 +20,7 @@ import it.polimi.common.ConfigFileReader;
 import it.polimi.common.HadoopFileReadWrite;
 import it.polimi.common.KeyValuePair;
 
-public class Coordinator {
+public class Coordinator extends Thread{
 
     private Integer numPartitions;
     private List<MutablePair<String, String>> operations;
@@ -35,18 +37,18 @@ public class Coordinator {
     private Integer endedTasks;
     private List<KeyValuePair> finalResult;
     private static final Logger logger = LogManager.getLogger("it.polimi.Coordinator");
+    private Integer id;
 
-
-    public Coordinator(List<MutablePair<String, String>> operations, MutablePair<List<String>, List<Address>> filesAddresses ) {
+    public Coordinator(Integer id,MutablePair<List<MutablePair<String, String>>,List<String>> operations,List<Address> addresses ) {
         this.clientSockets = new ArrayList<>();
-        
-        this.operations = operations;
+        this.id = id;
+        this.operations = operations.getLeft();
 
-        this.localFiles = filesAddresses.getLeft();
-        this.addresses = filesAddresses.getRight();
+        this.localFiles = operations.getRight();
+        this.addresses = addresses;
         this.files = new ArrayList<>();
          for(int i = 0; i < localFiles.size(); i++){
-                files.add("/input/" + new Path(localFiles.get(i)).getName());
+                files.add("/input"+id+"/" + new Path(localFiles.get(i)).getName());
         }
         this.numPartitions = files.size();
 
@@ -170,7 +172,7 @@ public class Coordinator {
             System.out.println("Writing the final result...");
             logger.info("Writing the final result...");
             try{
-                ConfigFileReader.writeResult(finalResult);
+                ConfigFileReader.writeResult(id,finalResult);
                 logger.info("Final result written");
             }
             catch(Exception e){
@@ -178,17 +180,50 @@ public class Coordinator {
                 logger.error("Error while writing the final result");
                 System.out.println(e.getMessage());
             }
-            HadoopFileReadWrite.deleteFiles();
+            HadoopFileReadWrite.deleteFiles(id);
         }
     }
     public void initializeHadoop(){
         try{
             logger.info("Uploading files to HDFS...");
-            HadoopFileReadWrite.uploadFiles(localFiles,"/input/");
+            HadoopFileReadWrite.uploadFiles(localFiles,"/input" + id + "/");
             logger.info("Files uploaded to HDFS successfully");
         }catch(Exception e){
             logger.error("Error while uploading files to HDFS\n" + e.getMessage());
             throw new RuntimeException("Not possible to connect to the HDFS server. Check the address of the server and if it is running!\nCheck also if files exist!\n" + e.getMessage());
         }
+    }
+    @Override
+    public void run(){
+        try {
+            this.initializeConnections();
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
+            return;
+        }
+        logger.info("Coordinator initialized connections");
+
+        try{
+            this.initializeHadoop();
+        }catch(Exception e){
+            System.out.println(e.getMessage());
+            return;
+        }
+        logger.info("Coordinator initialized Hadoop");
+
+        ExecutorService executorService = Executors.newFixedThreadPool(this.getFileSocketMap().size());
+        try{
+            int i = 0;
+            
+            for (String f : this.getFileSocketMap().keySet()) {
+                executorService.submit(new SocketHandler(this,f,i,CoordinatorPhase.INIT,id));
+                i++;
+            }
+            executorService.shutdown();
+        }catch(Exception e){
+            System.out.println(e.getMessage());
+            return;
+        }
+        logger.info("Coordinator initialized SocketHandlers");
     }
 }

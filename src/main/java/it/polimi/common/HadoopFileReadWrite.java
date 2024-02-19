@@ -74,30 +74,30 @@ public class HadoopFileReadWrite {
         return result;
     }
 
-    public synchronized static void writeKeys(String identifier,List<KeyValuePair> result) throws IOException {
+    public synchronized static void writeKeys(Integer id, String identifier,List<KeyValuePair> result) throws IOException {
         logger = LogManager.getLogger("it.polimi.Worker");
         logger.info(Thread.currentThread().getName() + ": Writing keys to HDFS");
         for (KeyValuePair pair : result) {
             Integer key = pair.getKey();
             Integer value = pair.getValue();
-            String fileName = "/key" + key +"/"+identifier+".csv"; 
+            String fileName = "/"+id+"key" + key +"/"+identifier+".csv"; 
     
             writeToHDFS(key + "," + value, fileName);                
         }
         logger.info(Thread.currentThread().getName() + ": Keys written to HDFS");
     }
 
-    public static List<KeyValuePair> readKey(Integer key) throws IOException{
+    public static List<KeyValuePair> readKey(Integer id, Integer key) throws IOException{
         logger = LogManager.getLogger("it.polimi.Worker");
         logger.info(Thread.currentThread().getName() + ": Reading key " + key + " from HDFS");
         List<KeyValuePair> result = new ArrayList<>(); 
-        String fileName = "/key" + key;
+        String fileName = "/"+ id + "key" + key;
         List<KeyValuePair> partialResult = readFromHDFS(fileName);
         result.addAll(partialResult);
         logger.info(Thread.currentThread().getName() + ": Key " + key + " read from HDFS");
         return result;
     }
-    private static void uploadFileToHDFS(String localFilePath, String hdfsDestinationPath, Configuration conf) throws IOException {
+    private synchronized static void uploadFileToHDFS(String localFilePath, String hdfsDestinationPath, Configuration conf) throws IOException {
         logger = LogManager.getLogger("it.polimi.Coordinator");
         logger.info("Uploading file to HDFS: " + localFilePath);
         String finalName =  hdfsDestinationPath + new Path(localFilePath).getName();
@@ -174,7 +174,7 @@ public class HadoopFileReadWrite {
         logger.info(Thread.currentThread().getName() + ": Input file read from HDFS: " + path);
         return result;
     }
-    public static void deleteFiles() {
+    public synchronized static void deleteFiles(Integer id) {
         logger = LogManager.getLogger("it.polimi.Coordinator");
         logger.info("Deleting files from HDFS");
      
@@ -182,9 +182,9 @@ public class HadoopFileReadWrite {
         try {
             fs =initialize();
 
-            fs.delete(new Path("/input"), true);
+            fs.delete(new Path("/input" + id), true);
             
-            FileStatus[] keyFileStatus = fs.globStatus(new Path("/key*"));
+            FileStatus[] keyFileStatus = fs.globStatus(new Path("/"+ id + "*"));
             if (keyFileStatus != null) {
                 for (FileStatus fileStatus : keyFileStatus) {
                     fs.delete(fileStatus.getPath(), true);

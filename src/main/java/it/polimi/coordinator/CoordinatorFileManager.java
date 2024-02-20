@@ -1,11 +1,9 @@
-package it.polimi.common;
+package it.polimi.coordinator;
 
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -19,13 +17,15 @@ import org.apache.log4j.Logger;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import it.polimi.common.Address;
+import it.polimi.common.KeyValuePair;
 
-public class ConfigFileReader {
+
+public class CoordinatorFileManager {
     
-    private static Logger logger;
+    private final static Logger logger = LogManager.getLogger("it.polimi.Coordinator");
 
     public static MutablePair<List<MutablePair<String, String>>,List<String>> readOperations(File file) throws Exception {
-        logger = LogManager.getLogger("it.polimi.Coordinator");
 
         logger.info("Reading operations file: " + file.getAbsolutePath().toString());
         List<MutablePair<String, String>> dataFunctions = new ArrayList<>();
@@ -54,7 +54,6 @@ public class ConfigFileReader {
     }
 
     public static MutablePair<List<String>, List<Address>> readConfigurations(File file) throws Exception {
-        logger = LogManager.getLogger("it.polimi.Coordinator");
         logger.info("Reading configuration file: " + file.getAbsolutePath().toString());
         List<Address> addresses = new ArrayList<>();
         List<String> programsPaths = new ArrayList<>();
@@ -82,8 +81,8 @@ public class ConfigFileReader {
     }
     
 
-    public static void writeResult(Integer id,List<KeyValuePair> finalResult) throws IOException {
-        String fileName = "result-"+id+".csv";
+    public static void writeResult(Integer programId,List<KeyValuePair> finalResult) throws IOException {
+        String fileName = "result-"+programId+".csv";
 
         try (FileWriter fileWriter = new FileWriter(fileName)) {
             for (KeyValuePair pair : finalResult) {
@@ -93,22 +92,6 @@ public class ConfigFileReader {
             throw new IOException("Not possible to write the finalResult:\n" + fileName);
         }
     }
-    public static synchronized void createOutputDirectory(String OUTPUT_DIRECTORY) {
-        logger = LogManager.getLogger("it.polimi.Worker");
-
-        Path outputDirectoryPath = Paths.get(OUTPUT_DIRECTORY);
-
-        if (Files.notExists(outputDirectoryPath)) {
-            try {
-                Files.createDirectories(outputDirectoryPath);
-                System.out.println("Created 'checkpoints' directory.");
-                logger.info(Thread.currentThread().getName() + ": Created 'checkpoints' directory.");
-            } catch (IOException e) {
-                logger.error(Thread.currentThread().getName()+ ": Error while creating 'checkpoints' directory");
-                System.out.println("Error while creating 'checkpoints' directory");
-                System.out.println(e.getMessage());
-            }
-        }
-    }
+   
     
 }

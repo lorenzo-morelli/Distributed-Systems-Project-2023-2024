@@ -10,7 +10,7 @@ import java.util.List;
 import org.apache.commons.lang3.tuple.MutablePair;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
-import it.polimi.common.HadoopFileReadWrite;
+import it.polimi.common.HadoopFileManager;
 import it.polimi.common.KeyValuePair;
 import it.polimi.common.messages.ErrorMessage;
 import it.polimi.common.messages.LastReduce;
@@ -21,10 +21,10 @@ class WorkerHandler extends Thread {
     private Socket clientSocket;
     private Integer taskId;
     private static final Logger logger = LogManager.getLogger("it.polimi.Worker");
-    private CheckPointReaderWriter CheckPointReaderWriter;
+    private CheckPointManager checkPointManager;
     public WorkerHandler(Socket clientSocket) {
         this.clientSocket = clientSocket;
-        this.CheckPointReaderWriter = new CheckPointReaderWriter();
+        this.checkPointManager = new CheckPointManager();
     }
 
     @Override
@@ -72,8 +72,8 @@ class WorkerHandler extends Thread {
                         }else{
                             try{
                                 logger.info(Thread.currentThread().getName() + ": Writing the keys in HDFS");
-                                HadoopFileReadWrite.writeKeys(
-                                    task.getId(),
+                                HadoopFileManager.writeKeys(
+                                    task.getProgramId(),
                                     taskId.toString(),
                                     result
                                     );
@@ -176,12 +176,12 @@ class WorkerHandler extends Thread {
         for(Integer key: reduceMessage.getKeys()){
 
             logger.info(Thread.currentThread().getName()+ ": Check if a checkpoint exists for key" + key);
-            MutablePair<Boolean, List<KeyValuePair>> checkPoint = CheckPointReaderWriter.checkCheckPoint(key,reduceMessage.getId(),true);
+            MutablePair<Boolean, List<KeyValuePair>> checkPoint = checkPointManager.checkCheckPoint(key,reduceMessage.getProgramId(),true);
             logger.info(Thread.currentThread().getName()+ ": CheckPoint read: " + checkPoint.getRight().size() + " elements with key: " + key);
 
             if(checkPoint.getRight().size() == 0){
                 Operator operator = CreateOperator.createOperator(reduceMessage.getReduce().getLeft(), reduceMessage.getReduce().getRight());
-                List<KeyValuePair> data = HadoopFileReadWrite.readKey(reduceMessage.getId(),key);
+                List<KeyValuePair> data = HadoopFileManager.readKey(reduceMessage.getProgramId(),key);
                 logger.info(Thread.currentThread().getName()+ ": Data read from HDFS: " + data.size() + " elements with key: " + key);
                 temp.addAll(operator.execute(data));
                 i++;
@@ -193,7 +193,7 @@ class WorkerHandler extends Thread {
 
             if((i%sizeCheckPoint == 0 || (i+j) == reduceMessage.getKeys().size()) && temp.size() > 0){
                 logger.info(Thread.currentThread().getName()+ ": Writing checkpoint, elements: " + temp);
-                CheckPointReaderWriter.writeCheckPointPhase2(temp,reduceMessage.getId(),true);
+                checkPointManager.writeCheckPointPhase2(temp,reduceMessage.getProgramId(),true);
                 logger.info(Thread.currentThread().getName() + ": CheckPoint written: " + temp.size() + " elements");
                 result.addAll(temp);
                 temp.clear();
@@ -210,7 +210,7 @@ class WorkerHandler extends Thread {
         List<KeyValuePair> result = null;
                         
         logger.info(Thread.currentThread().getName() + ": Check if a checkpoint exists for task " + task.getTaskId());
-        MutablePair<Boolean, List<KeyValuePair>> checkPoint = CheckPointReaderWriter.checkCheckPoint(task.getTaskId(),task.getId(),false);
+        MutablePair<Boolean, List<KeyValuePair>> checkPoint = checkPointManager.checkCheckPoint(task.getTaskId(),task.getProgramId(),false);
         logger.info(Thread.currentThread().getName() + ": CheckPoint : " + checkPoint.getRight().size() + " elements");
         
         Integer size = checkPoint.getRight().size();
@@ -228,7 +228,7 @@ class WorkerHandler extends Thread {
 
             logger.info(Thread.currentThread().getName() +": No checkpoint found for task " + task.getTaskId() + ", processing the task");
 
-            List<KeyValuePair> data = HadoopFileReadWrite.readInputFile(task.getPathFile());
+            List<KeyValuePair> data = HadoopFileManager.readInputFile(task.getPathFile());
             
             Integer sizeCheckPoint = 0;
 
@@ -256,7 +256,7 @@ class WorkerHandler extends Thread {
                 }
                 result.addAll(tempResult);
                 logger.info(Thread.currentThread().getName() +": Writing checkpoint, elements: " + result.size() + " for task " + task.getTaskId());
-                CheckPointReaderWriter.writeCheckPointPhase1(task.getTaskId(),task.getId(), result,false);
+                checkPointManager.writeCheckPointPhase1(task.getTaskId(),task.getProgramId(), result,false);
                 logger.info(Thread.currentThread().getName() +": CheckPoint written: " + result.size() + " elements" + " for task " + task.getTaskId()); 
             }
 
@@ -266,7 +266,7 @@ class WorkerHandler extends Thread {
                 }   
             }
             logger.info(Thread.currentThread().getName() + ": Writing last checkpoint, elements: " + result.size() + " for task " + task.getTaskId());   
-            CheckPointReaderWriter.writeCheckPointPhase1(task.getTaskId(),task.getId(), result,true);
+            checkPointManager.writeCheckPointPhase1(task.getTaskId(),task.getProgramId(), result,true);
             logger.info(Thread.currentThread().getName() +": Last checkpoint written: " + result.size() + " elements" + " for task " + task.getTaskId()); 
         }
         logger.info(Thread.currentThread().getName() +": Task " + task.getTaskId() + " done" + " with result:" + result);

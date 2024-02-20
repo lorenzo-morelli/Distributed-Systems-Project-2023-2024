@@ -18,7 +18,7 @@ import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 
 
-public class HadoopFileReadWrite {
+public class HadoopFileManager {
     private static String HDFS_URI = "hdfs://localhost:9000";
     
     private static Logger logger;
@@ -74,24 +74,24 @@ public class HadoopFileReadWrite {
         return result;
     }
 
-    public synchronized static void writeKeys(Integer id, String identifier,List<KeyValuePair> result) throws IOException {
+    public synchronized static void writeKeys(Integer programId, String identifier,List<KeyValuePair> result) throws IOException {
         logger = LogManager.getLogger("it.polimi.Worker");
         logger.info(Thread.currentThread().getName() + ": Writing keys to HDFS");
         for (KeyValuePair pair : result) {
             Integer key = pair.getKey();
             Integer value = pair.getValue();
-            String fileName = "/"+id+"key" + key +"/"+identifier+".csv"; 
+            String fileName = "/"+programId+"key" + key +"/"+identifier+".csv"; 
     
             writeToHDFS(key + "," + value, fileName);                
         }
         logger.info(Thread.currentThread().getName() + ": Keys written to HDFS");
     }
 
-    public static List<KeyValuePair> readKey(Integer id, Integer key) throws IOException{
+    public static List<KeyValuePair> readKey(Integer programId, Integer key) throws IOException{
         logger = LogManager.getLogger("it.polimi.Worker");
         logger.info(Thread.currentThread().getName() + ": Reading key " + key + " from HDFS");
         List<KeyValuePair> result = new ArrayList<>(); 
-        String fileName = "/"+ id + "key" + key;
+        String fileName = "/"+ programId + "key" + key;
         List<KeyValuePair> partialResult = readFromHDFS(fileName);
         result.addAll(partialResult);
         logger.info(Thread.currentThread().getName() + ": Key " + key + " read from HDFS");
@@ -174,7 +174,7 @@ public class HadoopFileReadWrite {
         logger.info(Thread.currentThread().getName() + ": Input file read from HDFS: " + path);
         return result;
     }
-    public synchronized static void deleteFiles(Integer id) {
+    public synchronized static void deleteFiles(Integer programId) {
         logger = LogManager.getLogger("it.polimi.Coordinator");
         logger.info("Deleting files from HDFS");
      
@@ -182,9 +182,9 @@ public class HadoopFileReadWrite {
         try {
             fs =initialize();
 
-            fs.delete(new Path("/input" + id), true);
+            fs.delete(new Path("/input" + programId), true);
             
-            FileStatus[] keyFileStatus = fs.globStatus(new Path("/"+ id + "*"));
+            FileStatus[] keyFileStatus = fs.globStatus(new Path("/"+ programId + "*"));
             if (keyFileStatus != null) {
                 for (FileStatus fileStatus : keyFileStatus) {
                     fs.delete(fileStatus.getPath(), true);

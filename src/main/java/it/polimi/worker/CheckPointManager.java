@@ -9,7 +9,7 @@ import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-
+import java.nio.file.Paths;
 import org.apache.commons.lang3.tuple.MutablePair;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
@@ -18,16 +18,15 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nimbusds.jose.shaded.json.JSONObject;
 
-import it.polimi.common.ConfigFileReader;
 import it.polimi.common.KeyValuePair;
 
-public class CheckPointReaderWriter {
+public class CheckPointManager {
 
     private final String OUTPUT_DIRECTORY = "checkpoints-";
     private static final Logger logger = LogManager.getLogger("it.polimi.Worker");
 
 
-    public MutablePair<Boolean, List<KeyValuePair>> checkCheckPoint(Integer taskId, Integer id, Boolean phase2){
+    public MutablePair<Boolean, List<KeyValuePair>> checkCheckPoint(Integer taskId, Integer programId, Boolean phase2){
         String fileName;
 
         if(phase2){
@@ -36,7 +35,7 @@ public class CheckPointReaderWriter {
             fileName = "task" + taskId + ".json";
         }
 
-        String path = OUTPUT_DIRECTORY+id+"/"+ fileName;
+        String path = OUTPUT_DIRECTORY+programId+"/"+ fileName;
         File file = new File(path);
         MutablePair<Boolean, List<KeyValuePair>> result = new MutablePair<>(false, new ArrayList<>());
         
@@ -54,30 +53,30 @@ public class CheckPointReaderWriter {
         return result;
     }
     
-    public void writeCheckPointPhase1(Integer taskId,Integer id, List<KeyValuePair> result, boolean finished) {
-        String fileName = OUTPUT_DIRECTORY+id+"/"+ "task" + taskId + ".json";
+    public void writeCheckPointPhase1(Integer taskId,Integer programId, List<KeyValuePair> result, boolean finished) {
+        String fileName = OUTPUT_DIRECTORY+programId+"/"+ "task" + taskId + ".json";
         
         logger.info(Thread.currentThread().getName() + ": Creating checkpoint phase 1 for task " + taskId);
-        createCheckpoint(result, fileName,finished,false,id);
+        createCheckpoint(result, fileName,finished,false,programId);
         logger.info(Thread.currentThread().getName() +": Checkpoint phase 1 created for task " + taskId);
         
     }
-    public void writeCheckPointPhase2(List<KeyValuePair> result,Integer id, boolean finished) {
+    public void writeCheckPointPhase2(List<KeyValuePair> result,Integer programId, boolean finished) {
         
         ArrayList<KeyValuePair> temp = new ArrayList<>();      
         for(KeyValuePair k : result){
-            String fileName = OUTPUT_DIRECTORY+id+"/" + "key" + k.getKey() + ".json";
+            String fileName = OUTPUT_DIRECTORY+programId+"/" + "key" + k.getKey() + ".json";
             temp.add(k);
             logger.info(Thread.currentThread().getName() + ": Creating checkpoint phase 2" + " for key " + k.getKey());
-            createCheckpoint(temp, fileName,finished,true,id);
+            createCheckpoint(temp, fileName,finished,true,programId);
             logger.info(Thread.currentThread().getName() +": Checkpoint created for phase 2" + " for key " + k.getKey());
             temp.remove(k);
         }        
     }
    
-    private void createCheckpoint(List<KeyValuePair> result, String fileName,boolean finished, boolean phase2, Integer id) {
+    private void createCheckpoint(List<KeyValuePair> result, String fileName,boolean finished, boolean phase2, Integer programId) {
         logger.info(Thread.currentThread().getName() +": Setting the output directory for the checkpoint file to 'checkpoints' directory.");
-        ConfigFileReader.createOutputDirectory(OUTPUT_DIRECTORY+id+"/"); // Ensure the 'OUTPUT_DIRECTORY' directory exists
+        CheckPointManager.createOutputDirectory(OUTPUT_DIRECTORY+programId+"/"); // Ensure the 'OUTPUT_DIRECTORY' directory exists
 
         try{
             logger.info(Thread.currentThread().getName() + ": Writing the checkpoint to file " + fileName);
@@ -141,5 +140,20 @@ public class CheckPointReaderWriter {
         Files.deleteIfExists(sourcePath);
         logger.info(Thread.currentThread().getName() + ": Temp checkpoint file deleted: " + tempFileName);
     }
-    
+    public static synchronized void createOutputDirectory(String OUTPUT_DIRECTORY) {
+
+        Path outputDirectoryPath = Paths.get(OUTPUT_DIRECTORY);
+
+        if (Files.notExists(outputDirectoryPath)) {
+            try {
+                Files.createDirectories(outputDirectoryPath);
+                System.out.println("Created 'checkpoints' directory.");
+                logger.info(Thread.currentThread().getName() + ": Created 'checkpoints' directory.");
+            } catch (IOException e) {
+                logger.error(Thread.currentThread().getName()+ ": Error while creating 'checkpoints' directory");
+                System.out.println("Error while creating 'checkpoints' directory");
+                System.out.println(e.getMessage());
+            }
+        }
+    }
 }

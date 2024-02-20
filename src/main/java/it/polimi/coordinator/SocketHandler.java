@@ -20,25 +20,25 @@ import it.polimi.common.messages.Task;
 public class SocketHandler implements Runnable {
     public Socket clientSocket;
     private Integer taskId;
-    private Coordinator coordinator;
+    private ProgramExecutor programExecutor;
     private String file;
     private KeyAssignmentManager keyManager;
     private CoordinatorPhase phase;
     private ObjectInputStream inputStream = null;
     private ObjectOutputStream outputStream = null;
     private boolean isProcessing;
-    private Integer id;
+    private Integer programId;
     private static final Logger logger = LogManager.getLogger("it.polimi.Coordinator");
 
-    public SocketHandler(Coordinator coordinator, String file, Integer taskId,CoordinatorPhase phase, Integer id) {
-        this.clientSocket = coordinator.getFileSocketMap().get(file);
-        this.keyManager = coordinator.getKeyManager();
+    public SocketHandler(ProgramExecutor programExecutor, String file, Integer taskId,CoordinatorPhase phase, Integer programId) {
+        this.clientSocket = programExecutor.getFileSocketMap().get(file);
+        this.keyManager = programExecutor.getKeyManager();
         this.file = file;
         this.taskId = taskId;
-        this.coordinator = coordinator;
+        this.programExecutor = programExecutor;
         this.phase = phase;
         this.isProcessing = true;
-        this.id = id;
+        this.programId = programId;
     }
 
     @Override
@@ -56,7 +56,7 @@ public class SocketHandler implements Runnable {
             while (isProcessing) {
                 switch (phase) {
                     case INIT:
-                        Task t = new Task(id,coordinator.getOperations(), file,coordinator.checkChangeKeyReduce(),taskId);
+                        Task t = new Task(programId,programExecutor.getOperations(), file,programExecutor.checkChangeKeyReduce(),taskId);
                         System.out.println("Sending task to worker phase1: " + clientSocket.getInetAddress().getHostName() +":"+ clientSocket.getPort());
                         logger.info(Thread.currentThread().getName() + ": Sending task to worker phase1: "+ clientSocket.getInetAddress().getHostName() +":"+ clientSocket.getPort());
                         outputStream.writeObject(t);
@@ -72,7 +72,7 @@ public class SocketHandler implements Runnable {
                         }else if (object instanceof List<?>) {
                             List<?> list = (List<?>) object;
                             // Process or print the list
-                            if (!coordinator.checkChangeKeyReduce()) {
+                            if (!programExecutor.checkChangeKeyReduce()) {
                                 logger.info(Thread.currentThread().getName() + ": Received the final result:" + list);
                                 end(object);
                                 isProcessing = false;
@@ -88,7 +88,7 @@ public class SocketHandler implements Runnable {
 
                             logger.info(Thread.currentThread().getName() + ": Sending task to worker phase2: " + clientSocket.getInetAddress().getHostName() +":"+ clientSocket.getPort());
                             System.out.println("Sending task to worker phase2: " + clientSocket.getInetAddress().getHostName() +":"+ clientSocket.getPort());
-                            LastReduce lastReduce = new LastReduce(id,coordinator.getLastReduce(), keyManager.getFinalAssignments().get(this));
+                            LastReduce lastReduce = new LastReduce(programId,programExecutor.getLastReduce(), keyManager.getFinalAssignments().get(this));
                             outputStream.writeObject(lastReduce);
         
                         
@@ -125,7 +125,7 @@ public class SocketHandler implements Runnable {
     private void end(Object object){
         try{
             logger.info(Thread.currentThread().getName() + ": Writing the final result...");
-            coordinator.writeResult(convertObjectToListKeyValuePairs(object));
+            programExecutor.writeResult(convertObjectToListKeyValuePairs(object));
             logger.info(Thread.currentThread().getName() + ": Final result written");
         }catch(Exception e){
             System.out.println("Error while writing the final result");
@@ -152,14 +152,14 @@ public class SocketHandler implements Runnable {
             }
         }
         logger.info(Thread.currentThread().getName() + ": Inserting keys...");
-        keyManager.insertAssignment(this, integerList,coordinator.getNumPartitions());
+        keyManager.insertAssignment(this, integerList,programExecutor.getNumPartitions());
         this.phase = CoordinatorPhase.FINAL;
     }
     private void handleSocketException() {
         logger.info(Thread.currentThread().getName() + ": Handling socket exception...");
         
-        coordinator.getClientSockets().remove(clientSocket);
-        coordinator.getFileSocketMap().put(file, null);
+        programExecutor.getClientSockets().remove(clientSocket);
+        programExecutor.getFileSocketMap().put(file, null);
     
         if (isProcessing) {
             boolean reconnected = attemptReconnection(clientSocket, 3, 5000);
@@ -217,13 +217,13 @@ public class SocketHandler implements Runnable {
 
         while (!reconnected && attempts < maxAttempts) {
             try {
-                List<Address> addresses = new ArrayList<>(coordinator.getAddresses());
+                List<Address> addresses = new ArrayList<>(programExecutor.getAddresses());
                 addresses.remove(new Address(clientSocket.getInetAddress().getHostName(), clientSocket.getPort()));
                 logger.info(Thread.currentThread().getName() + ": Searching for a new worker, among" + addresses.size() + " available workers..." + addresses);
                 if(addresses.size() == 0){
                     return false;
                 }
-                clientSocket = coordinator.getNewActiveSocket(addresses);
+                clientSocket = programExecutor.getNewActiveSocket(addresses);
                 reconnected = true;
                 logger.info(Thread.currentThread().getName() + ": Reconnected to a new worker" + clientSocket.getInetAddress().getHostName() +":"+ clientSocket.getPort() + ". Resuming operations...");
             } catch (Exception e) {
@@ -247,9 +247,9 @@ public class SocketHandler implements Runnable {
     }
     
     private void performReconnectedActions() {
-        coordinator.getClientSockets().add(clientSocket);
-        coordinator.getFileSocketMap().put(file, clientSocket);
-        SocketHandler newSocketHandler = new SocketHandler(coordinator, file, taskId, phase,id);
+        programExecutor.getClientSockets().add(clientSocket);
+        programExecutor.getFileSocketMap().put(file, clientSocket);
+        SocketHandler newSocketHandler = new SocketHandler(programExecutor, file, taskId, phase,programId);
         if (keyManager.getFinalAssignments().get(this) != null) {
             System.out.println("Reassigning keys to the new worker...");
             logger.info(Thread.currentThread().getName() + ": Reassigning keys to the new worker...");

@@ -8,7 +8,7 @@ import java.util.Scanner;
 import org.apache.log4j.Logger;
 import org.apache.log4j.PropertyConfigurator;
 
-import it.polimi.common.HadoopFileReadWrite;
+import it.polimi.common.HadoopFileManager;
 
 import org.apache.log4j.LogManager;
 
@@ -30,7 +30,7 @@ public class Worker{
             System.out.println("Insert HDFS address (default: 'localhost:9000'): ");
             String address = scanner.nextLine();
             if(!address.equals(""))
-                HadoopFileReadWrite.setHDFS_URI("hdfs://" + address);
+                HadoopFileManager.setHDFS_URI("hdfs://" + address);
 
             System.out.println("Insert a port");
             String portString = scanner.nextLine();

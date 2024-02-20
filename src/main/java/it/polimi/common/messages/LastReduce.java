@@ -8,11 +8,11 @@ import org.apache.commons.lang3.tuple.MutablePair;
 public class LastReduce implements Serializable {
     private final MutablePair<String, String> reduce;
     private final List<Integer> keys;
-    private Integer id;
-    public LastReduce(Integer id,MutablePair<String, String> reduce, List<Integer> keys) {
+    private Integer programId;
+    public LastReduce(Integer programId,MutablePair<String, String> reduce, List<Integer> keys) {
         this.reduce = reduce;
         this.keys = keys;
-        this.id = id;
+        this.programId = programId;
     }
     public MutablePair<String, String> getReduce(){
         return reduce;
@@ -20,7 +20,7 @@ public class LastReduce implements Serializable {
     public List<Integer> getKeys(){
         return keys;
     }
-    public Integer getId(){
-        return id;
+    public Integer getProgramId(){
+        return programId;
     }   
 }

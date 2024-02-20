@@ -99,7 +99,7 @@ public class HadoopFileManager {
     }
     private synchronized static void uploadFileToHDFS(String localFilePath, String hdfsDestinationPath, Configuration conf) throws IOException {
         logger = LogManager.getLogger("it.polimi.Coordinator");
-        logger.info("Uploading file to HDFS: " + localFilePath);
+        logger.info(Thread.currentThread().getName() + ": Uploading file to HDFS: " + localFilePath);
         String finalName =  hdfsDestinationPath + new Path(localFilePath).getName();
         // Get the Hadoop FileSystem object
         FileSystem fs = FileSystem.get(conf);
@@ -125,20 +125,20 @@ public class HadoopFileManager {
             // Close the FileSystem object
             fs.close();
         }
-        logger.info("File "+finalName +" uploaded to HDFS successfully.");
-        System.out.println("File "+finalName +" uploaded to HDFS successfully.");
+        logger.info(Thread.currentThread().getName() + ": File "+finalName +" uploaded to HDFS successfully.");
+        System.out.println(Thread.currentThread().getName() +": File "+finalName +" uploaded to HDFS successfully.");
     }
     
     public static void uploadFiles(List<String> list, String hdfsDestinationPath) throws IOException{
         logger = LogManager.getLogger("it.polimi.Coordinator");
-        logger.info("Uploading files to HDFS");
+        logger.info(Thread.currentThread().getName() +": Uploading files to HDFS");
         Configuration conf = new Configuration();
         conf.set("fs.defaultFS", HDFS_URI);
         conf.set("fs.hdfs.impl", "org.apache.hadoop.hdfs.DistributedFileSystem");
         for(String localFilePath : list){
             uploadFileToHDFS(localFilePath,hdfsDestinationPath, conf);
         }
-        logger.info("Files uploaded to HDFS successfully.");
+        logger.info(Thread.currentThread().getName() +": Files uploaded to HDFS successfully.");
     }
     public synchronized static List<KeyValuePair> readInputFile(String path) throws IOException{
         logger = LogManager.getLogger("it.polimi.Worker");

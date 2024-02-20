@@ -56,7 +56,7 @@ public class ProgramExecutor extends Thread{
         this.keyManager = new KeyAssignmentManager();
         
         if(this.numPartitions == 0 || this.operations.size() == 0){
-            logger.error("Invalid input parameters!");
+            logger.error(Thread.currentThread().getName() + ": Invalid input parameters!");
             throw new IllegalArgumentException("Invalid input parameters!");
         }
         this.endedTasks = 0;
@@ -87,8 +87,12 @@ public class ProgramExecutor extends Thread{
     public MutablePair<String,String> getLastReduce(){
         return lastReduce;
     }   
+    public Integer getProgramId(){
+        return programId;
+    }
+
     public void initializeConnections(){
-        logger.info("Initializing connections...");
+        logger.info(Thread.currentThread().getName()+ ": Initializing connections...");
         int i = 0;
         for (String f : files) {
             try {
@@ -101,7 +105,7 @@ public class ProgramExecutor extends Thread{
                     try{
                         fileSocketMap.put(f, getNewActiveSocket(new ArrayList<>(addresses)));
                     }catch(Exception e){
-                        logger.error("No workers available");
+                        logger.error(Thread.currentThread().getName()+ ": No workers available");
                         throw new RuntimeException("No workers available");
                     }
                 }
@@ -110,7 +114,7 @@ public class ProgramExecutor extends Thread{
             }
             i++;
         }
-        logger.info("Connections initialized");
+        logger.info(Thread.currentThread().getName()+ ": Connections initialized");
 
     }
     public boolean checkChangeKeyReduce(){
@@ -129,14 +133,14 @@ public class ProgramExecutor extends Thread{
                 }
             }
         }
-        logger.info("Phase 2 exists:" + (changeKey && reduce));
+        logger.info(Thread.currentThread().getName() + ": Phase 2 exists:" + (changeKey && reduce));
         return changeKey && reduce;
     }
 
     public Socket getNewActiveSocket(List<Address> addressesTocheck){
-        logger.info("Search for a new active socket...");
+        logger.info(Thread.currentThread().getName()+ ": Search for a new active socket...");
         if(addressesTocheck.size() == 0){
-            logger.error("No workers available");
+            logger.error(Thread.currentThread().getName()+ ": No workers available");
             throw new RuntimeException("No workers available");
         }
 
@@ -156,10 +160,10 @@ public class ProgramExecutor extends Thread{
         
         try{
             result = new Socket(finalAddress.getHostname(), finalAddress.getPort());
-            logger.info("New active socket found " + finalAddress.getHostname() + ":" + finalAddress.getPort());
+            logger.info(Thread.currentThread().getName()+ ": New active socket found " + finalAddress.getHostname() + ":" + finalAddress.getPort());
             return result;
         }catch(Exception e){
-            logger.warn("Error while creating the new active socket");
+            logger.warn(Thread.currentThread().getName() + ": Error while creating the new active socket");
             addressesTocheck.remove(finalAddress);
             return getNewActiveSocket(addressesTocheck);
         }
@@ -168,15 +172,15 @@ public class ProgramExecutor extends Thread{
         endedTasks++;
         finalResult.addAll(result);
         if(endedTasks == numPartitions){
-            System.out.println("Writing the final result...");
-            logger.info("Writing the final result...");
+            System.out.println(Thread.currentThread().getName()+ ": Writing the final result...");
+            logger.info(Thread.currentThread().getName() + ": Writing the final result...");
             try{
                 CoordinatorFileManager.writeResult(programId,finalResult);
-                logger.info("Final result written");
+                logger.info(Thread.currentThread().getName() +": Final result written");
             }
             catch(Exception e){
-                System.out.println("Error while writing the final result");
-                logger.error("Error while writing the final result");
+                System.out.println(Thread.currentThread().getName() + ": Error while writing the final result");
+                logger.error(Thread.currentThread().getName()+ ": Error while writing the final result");
                 System.out.println(e.getMessage());
             }
             HadoopFileManager.deleteFiles(programId);
@@ -184,23 +188,26 @@ public class ProgramExecutor extends Thread{
     }
     public void initializeHadoop(){
         try{
-            logger.info("Uploading files to HDFS...");
+            logger.info(Thread.currentThread().getName()+ ": Uploading files to HDFS...");
             HadoopFileManager.uploadFiles(localFiles,"/input" + programId + "/");
-            logger.info("Files uploaded to HDFS successfully");
+            logger.info(Thread.currentThread().getName() + ": Files uploaded to HDFS successfully");
         }catch(Exception e){
-            logger.error("Error while uploading files to HDFS\n" + e.getMessage());
+            logger.error(Thread.currentThread().getName() + ": Error while uploading files to HDFS\n" + e.getMessage());
             throw new RuntimeException("Not possible to connect to the HDFS server. Check the address of the server and if it is running!\nCheck also if files exist!\n" + e.getMessage());
         }
     }
     @Override
     public void run(){
+
+        Thread.currentThread().setName("ProgramExecutor" + programId);
+
         try {
             this.initializeConnections();
         } catch (Exception e) {
             System.out.println(e.getMessage());
             return;
         }
-        logger.info("Coordinator initialized connections");
+        logger.info(Thread.currentThread().getName() + " initialized connections");
 
         try{
             this.initializeHadoop();
@@ -208,14 +215,14 @@ public class ProgramExecutor extends Thread{
             System.out.println(e.getMessage());
             return;
         }
-        logger.info("Coordinator initialized Hadoop");
+        logger.info(Thread.currentThread().getName() + " initialized Hadoop");
 
         ExecutorService executorService = Executors.newFixedThreadPool(this.getFileSocketMap().size());
         try{
             int i = 0;
             
             for (String f : this.getFileSocketMap().keySet()) {
-                executorService.submit(new SocketHandler(this,f,i,CoordinatorPhase.INIT,programId));
+                executorService.submit(new SocketHandler(this,f,i,CoordinatorPhase.INIT));
                 i++;
             }
             executorService.shutdown();
@@ -223,6 +230,6 @@ public class ProgramExecutor extends Thread{
             System.out.println(e.getMessage());
             return;
         }
-        logger.info("Coordinator initialized SocketHandlers");
+        logger.info(Thread.currentThread().getName() + " initialized SocketHandlers");
     }
 }

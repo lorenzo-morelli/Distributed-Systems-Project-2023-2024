@@ -40,14 +40,14 @@ public class CheckPointManager {
         MutablePair<Boolean, List<KeyValuePair>> result = new MutablePair<>(false, new ArrayList<>());
         
         
-        logger.info(Thread.currentThread().getName() +": Check if checkpoint exists for " + path);
+        logger.info(Thread.currentThread().getName() +": Check if checkpoint exists :" + path);
         if(file.exists()){
             try{
                 result = readCheckPoint(file,phase2);
                 logger.info(Thread.currentThread().getName() + ": Checkpoint found for " + path);
             }catch(IOException e){
                 logger.warn(Thread.currentThread().getName() + ": Error while reading the checkpoint");
-                System.out.println(e.getMessage());
+                System.out.println(Thread.currentThread().getName() + " :" + e.getMessage());
             }
         }
         return result;
@@ -75,8 +75,7 @@ public class CheckPointManager {
     }
    
     private void createCheckpoint(List<KeyValuePair> result, String fileName,boolean finished, boolean phase2, Integer programId) {
-        logger.info(Thread.currentThread().getName() +": Setting the output directory for the checkpoint file to 'checkpoints' directory.");
-        CheckPointManager.createOutputDirectory(OUTPUT_DIRECTORY+programId+"/"); // Ensure the 'OUTPUT_DIRECTORY' directory exists
+        CheckPointManager.createOutputDirectory(OUTPUT_DIRECTORY+programId+"/");
 
         try{
             logger.info(Thread.currentThread().getName() + ": Writing the checkpoint to file " + fileName);
@@ -85,7 +84,7 @@ public class CheckPointManager {
         }
         catch(IOException e){
             logger.error(Thread.currentThread().getName() + ": Error while writing the checkpoint");
-            System.out.println("Error while writing the checkpoint");
+            System.out.println(Thread.currentThread().getName() + ": Error while writing the checkpoint");
             System.out.println(e.getMessage());
         }
     }
@@ -105,7 +104,7 @@ public class CheckPointManager {
                 end = (Boolean) jsonData.get("end");
             }
         } catch (IOException e) {
-            logger.error(e);
+            logger.warn(e);
             throw new IOException("Not possible to read the checkpoint file:\n" + file.getAbsolutePath().toString());
         }
         logger.info(Thread.currentThread().getName() + ": Checkpoint file read: " + file.getAbsolutePath().toString());
@@ -147,11 +146,11 @@ public class CheckPointManager {
         if (Files.notExists(outputDirectoryPath)) {
             try {
                 Files.createDirectories(outputDirectoryPath);
-                System.out.println("Created 'checkpoints' directory.");
-                logger.info(Thread.currentThread().getName() + ": Created 'checkpoints' directory.");
+                System.out.println(Thread.currentThread().getName() + ": Created '"+outputDirectoryPath+"' directory.");
+                logger.info(Thread.currentThread().getName() + ": Created '"+outputDirectoryPath+"' directory.");
             } catch (IOException e) {
-                logger.error(Thread.currentThread().getName()+ ": Error while creating 'checkpoints' directory");
-                System.out.println("Error while creating 'checkpoints' directory");
+                logger.error(Thread.currentThread().getName()+ ": Error while creating '"+outputDirectoryPath+"' directory");
+                System.out.println(Thread.currentThread().getName() + ": Error while creating '"+outputDirectoryPath+"' directory");
                 System.out.println(e.getMessage());
             }
         }

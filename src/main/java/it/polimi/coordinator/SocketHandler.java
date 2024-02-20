@@ -30,7 +30,7 @@ public class SocketHandler implements Runnable {
     private Integer programId;
     private static final Logger logger = LogManager.getLogger("it.polimi.Coordinator");
 
-    public SocketHandler(ProgramExecutor programExecutor, String file, Integer taskId,CoordinatorPhase phase, Integer programId) {
+    public SocketHandler(ProgramExecutor programExecutor, String file, Integer taskId,CoordinatorPhase phase) {
         this.clientSocket = programExecutor.getFileSocketMap().get(file);
         this.keyManager = programExecutor.getKeyManager();
         this.file = file;
@@ -38,12 +38,12 @@ public class SocketHandler implements Runnable {
         this.programExecutor = programExecutor;
         this.phase = phase;
         this.isProcessing = true;
-        this.programId = programId;
+        this.programId = programExecutor.getProgramId();
     }
 
     @Override
     public void run() {
-        Thread.currentThread().setName(clientSocket.getInetAddress().getHostName() +":"+ clientSocket.getLocalPort());
+        Thread.currentThread().setName(clientSocket.getInetAddress().getHostName() +":"+ clientSocket.getLocalPort() + ":" + programId);
 
 
 
@@ -57,17 +57,17 @@ public class SocketHandler implements Runnable {
                 switch (phase) {
                     case INIT:
                         Task t = new Task(programId,programExecutor.getOperations(), file,programExecutor.checkChangeKeyReduce(),taskId);
-                        System.out.println("Sending task to worker phase1: " + clientSocket.getInetAddress().getHostName() +":"+ clientSocket.getPort());
+                        System.out.println(Thread.currentThread().getName() + ": Sending task to worker phase1: " + clientSocket.getInetAddress().getHostName() +":"+ clientSocket.getPort());
                         logger.info(Thread.currentThread().getName() + ": Sending task to worker phase1: "+ clientSocket.getInetAddress().getHostName() +":"+ clientSocket.getPort());
                         outputStream.writeObject(t);
                         Object object = inputStream.readObject();
                         if (object == null){ 
                             logger.error(Thread.currentThread().getName() +": Received a null object!");
-                            System.out.println("Received a null object!");
+                            System.out.println(Thread.currentThread().getName() + ": Received a null object!");
                             System.exit(0);
                         }else if (object instanceof ErrorMessage) {
                             logger.error(Thread.currentThread().getName() +": Received an error message!" + ((ErrorMessage) object).getMessage());
-                            System.out.println(((ErrorMessage) object).getMessage());
+                            System.out.println(Thread.currentThread().getName() + ": " + ((ErrorMessage) object).getMessage());
                             System.exit(0);
                         }else if (object instanceof List<?>) {
                             List<?> list = (List<?>) object;
@@ -87,7 +87,7 @@ public class SocketHandler implements Runnable {
                         if(keyManager.canProceed()){
 
                             logger.info(Thread.currentThread().getName() + ": Sending task to worker phase2: " + clientSocket.getInetAddress().getHostName() +":"+ clientSocket.getPort());
-                            System.out.println("Sending task to worker phase2: " + clientSocket.getInetAddress().getHostName() +":"+ clientSocket.getPort());
+                            System.out.println(Thread.currentThread().getName() + ": Sending task to worker phase2: " + clientSocket.getInetAddress().getHostName() +":"+ clientSocket.getPort());
                             LastReduce lastReduce = new LastReduce(programId,programExecutor.getLastReduce(), keyManager.getFinalAssignments().get(this));
                             outputStream.writeObject(lastReduce);
         
@@ -95,11 +95,11 @@ public class SocketHandler implements Runnable {
                             Object finalObject = inputStream.readObject();
                             if (finalObject == null ) {
                                 logger.error(Thread.currentThread().getName() + ": Something went wrong with the reduce phase!");
-                                System.out.println("Something went wrong with the reduce phase!");
+                                System.out.println(Thread.currentThread().getName() + ": Something went wrong with the reduce phase!");
                                 System.exit(0);
                             }else if (finalObject instanceof ErrorMessage){
                                 logger.error(Thread.currentThread().getName() + ": Received an error message!" + ((ErrorMessage) finalObject).getMessage());
-                                System.out.println(((ErrorMessage) finalObject).getMessage());
+                                System.out.println(Thread.currentThread().getName()+ ": " + ((ErrorMessage) finalObject).getMessage());
                                 System.exit(0);
                             }else if (finalObject instanceof List<?>) {
                                 logger.info(Thread.currentThread().getName() + ": Received the final result:" + finalObject);  
@@ -117,7 +117,7 @@ public class SocketHandler implements Runnable {
             outputStream.close();
             clientSocket.close();
         } catch (Exception e) {  
-            System.out.println("Worker connection lost");
+            System.out.println(Thread.currentThread().getName() + ": Worker connection lost");
             logger.error(Thread.currentThread().getName() + ": Worker connection lost");
             handleSocketException();
         }
@@ -166,12 +166,12 @@ public class SocketHandler implements Runnable {
     
             if (!reconnected) {
                 logger.error(Thread.currentThread().getName() + ": Not possible to reconnect to the failed worker. Assigning to another worker...");
-                System.out.println("Not possible to reconnect to the failed worker. Assigning to another worker...");
+                System.out.println(Thread.currentThread().getName()+ ": Not possible to reconnect to the failed worker. Assigning to another worker...");
                 reconnected = attemptReconnectionFromPool(3, 5000);
     
                 if (!reconnected) {
                     logger.error(Thread.currentThread().getName() + ": Not possible to connect to any worker.");
-                    System.out.println("Not possible to connect to any worker.");
+                    System.out.println(Thread.currentThread().getName() + ": Not possible to connect to any worker.");
                     System.exit(0);
                 } else {
                     performReconnectedActions();
@@ -193,13 +193,13 @@ public class SocketHandler implements Runnable {
                 logger.info(Thread.currentThread().getName() + ": Reconnected to the failed worker. Resuming operations...");
             } catch (IOException e) {
                 attempts++;
-                System.out.println("Reconnection attempt " + attempts + " failed. Retrying...");
+                System.out.println(Thread.currentThread().getName() + ": Reconnection attempt " + attempts + " failed. Retrying...");
                 logger.error(Thread.currentThread().getName() + ": Reconnection attempt " + attempts + " failed. Retrying...");
     
                 try {
                     Thread.sleep(reconnectDelayMillis);
                 } catch (InterruptedException interruptedException) {
-                    System.out.println("Reconnection attempt interrupted.");
+                    System.out.println(Thread.currentThread().getName() + ": Reconnection attempt interrupted.");
                     logger.error(Thread.currentThread().getName() + ": Reconnection attempt interrupted.");
                     Thread.currentThread().interrupt();
                 }
@@ -231,12 +231,12 @@ public class SocketHandler implements Runnable {
 
 
                 attempts++;
-                System.out.println("Reconnection attempt " + attempts + " failed. Retrying...");
+                System.out.println(Thread.currentThread().getName() + ": Reconnection attempt " + attempts + " failed. Retrying...");
                 logger.error(Thread.currentThread().getName() + ": Reconnection attempt " + attempts + " failed. Retrying...");
                 try {
                     Thread.sleep(reconnectDelayMillis);
                 } catch (InterruptedException interruptedException) {
-                    System.out.println("Reconnection attempt interrupted.");
+                    System.out.println(Thread.currentThread().getName()+ ": Reconnection attempt interrupted.");
                     logger.error(Thread.currentThread().getName() + ": Reconnection attempt interrupted.");
                     Thread.currentThread().interrupt();
                 }
@@ -249,15 +249,15 @@ public class SocketHandler implements Runnable {
     private void performReconnectedActions() {
         programExecutor.getClientSockets().add(clientSocket);
         programExecutor.getFileSocketMap().put(file, clientSocket);
-        SocketHandler newSocketHandler = new SocketHandler(programExecutor, file, taskId, phase,programId);
+        SocketHandler newSocketHandler = new SocketHandler(programExecutor, file, taskId, phase);
         if (keyManager.getFinalAssignments().get(this) != null) {
-            System.out.println("Reassigning keys to the new worker...");
+            System.out.println(Thread.currentThread().getName() + ": Reassigning keys to the new worker...");
             logger.info(Thread.currentThread().getName() + ": Reassigning keys to the new worker...");
             List<Integer> keys= keyManager.getFinalAssignments().get(this);
             keyManager.getFinalAssignments().remove(this);            
             keyManager.getFinalAssignments().put(newSocketHandler, keys);
         }
-        System.out.println("Reconnected to a new worker. Resuming operations...");
+        System.out.println(Thread.currentThread().getName() + ": Reconnected to a new worker. Resuming operations...");
         logger.info(Thread.currentThread().getName() + ": Reconnected to a new worker. Resuming operations...");    
         newSocketHandler.run();
     }

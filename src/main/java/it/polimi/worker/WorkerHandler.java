@@ -33,7 +33,7 @@ class WorkerHandler extends Thread {
 
         logger.info(Thread.currentThread().getName() + ": WorkerHandler started.");
 
-        System.out.println("WorkerHandler started");
+        System.out.println(Thread.currentThread().getName() + ": WorkerHandler started");
         // Create input and output streams for communication
         ObjectInputStream inputStream = null;
         ObjectOutputStream outputStream = null;
@@ -59,7 +59,7 @@ class WorkerHandler extends Thread {
                     catch(IOException | IllegalArgumentException e ){
                         logger.error(Thread.currentThread().getName() + ": Error while processing the task: " + e.getMessage());
                         outputStream.writeObject(new ErrorMessage(e.getMessage()));
-                        System.out.println("Error while processing the task\n" + e.getMessage());
+                        System.out.println(Thread.currentThread().getName() + ": Error while processing the task\n" + e.getMessage());
                         break;
                     }
 
@@ -85,7 +85,7 @@ class WorkerHandler extends Thread {
                             }
                             List<Integer> keys = extractKeys(result);
                             outputStream.writeObject(keys);
-                            logger.info(Thread.currentThread().getName() + ": Keys sent to the coordinator" + keys);
+                            logger.info(Thread.currentThread().getName() + ": Keys sent to the coordinator :" + keys);
 
                         }
                     }else{
@@ -114,17 +114,17 @@ class WorkerHandler extends Thread {
                 }
                 else {
                     // Handle other types or unexpected objects
-                    System.out.println("Received unexpected object type");
+                    System.out.println(Thread.currentThread().getName() + ": Received unexpected object type");
                     outputStream.writeObject(new ErrorMessage("Received unexpected object type"));
                     logger.error(Thread.currentThread().getName() + ": Received unexpected object type");
                     break;
                 }
             }
         } catch (IOException | ClassNotFoundException e) {
-            System.out.println("Coordinator connection lost");
+            System.out.println(Thread.currentThread().getName()+": Coordinator connection lost");
             logger.error(Thread.currentThread().getName() + ": Coordinator connection lost: " + e.getMessage());
         } finally {
-            System.out.println("Closing connection");
+            System.out.println(Thread.currentThread().getName() + ": Closing connection");
             logger.info(Thread.currentThread().getName() + ": Closing connection");
             try {
                 // Close the streams and socket when done
@@ -139,7 +139,7 @@ class WorkerHandler extends Thread {
                 }
             } catch (IOException e) {
                 logger.error(Thread.currentThread().getName() + ": Error while closing the connection: " + e.getMessage());
-                System.out.println(e.getMessage());
+                System.out.println(Thread.currentThread().getName() + ": "+ e.getMessage());
             }
         }
     }
@@ -158,6 +158,8 @@ class WorkerHandler extends Thread {
         return operators;
     }
     private List<KeyValuePair> computeReduceMessage(LastReduce reduceMessage) throws IOException{
+        Thread.currentThread().setName(Thread.currentThread().getName() + ":" + reduceMessage.getProgramId());
+
         logger.info(Thread.currentThread().getName()+ ": Computing reduce");
         List<KeyValuePair> result = new ArrayList<>();
         List<KeyValuePair> temp = new ArrayList<>();
@@ -170,7 +172,7 @@ class WorkerHandler extends Thread {
         }else{
             sizeCheckPoint = reduceMessage.getKeys().size();
         }
-        logger.info(Thread.currentThread().getName()+ ": Checkpoint every " + sizeCheckPoint + " keys");
+        logger.info(Thread.currentThread().getName()+ ": Checkpointing every " + sizeCheckPoint + " keys");
         Integer i = 0;
         Integer j = 0;
         for(Integer key: reduceMessage.getKeys()){
@@ -205,6 +207,8 @@ class WorkerHandler extends Thread {
     }
 
     private List<KeyValuePair> processTask(Task task) throws IOException{
+        Thread.currentThread().setName(Thread.currentThread().getName() + ":" + task.getProgramId());
+
         logger.info(Thread.currentThread().getName() +": Processing task: " + task.getTaskId());
 
         List<KeyValuePair> result = null;
@@ -237,7 +241,7 @@ class WorkerHandler extends Thread {
             }else{
                 sizeCheckPoint = data.size();
             }
-            logger.info(Thread.currentThread().getName() +": Checkpoint every " + sizeCheckPoint + " elements");
+            logger.info(Thread.currentThread().getName() +": Checkpointing every " + sizeCheckPoint + " elements");
             logger.info(Thread.currentThread().getName() +": Data read from HDFS: " + data.size() + " elements");
             
             for(int i = size; i < data.size();){

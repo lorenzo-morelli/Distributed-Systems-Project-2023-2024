@@ -42,14 +42,14 @@ public class Coordinator {
 
        
         
-        ArrayList<ProgramExecutor> coordinators = new ArrayList<>();
+        ArrayList<ProgramExecutor> programExecutors = new ArrayList<>();
 
         try {
             MutablePair<List<String>, List<Address>> configs = CoordinatorFileManager.readConfigurations(new File(conf_path));
 
             int programId = 0;
             for(String f : configs.getLeft()){
-                coordinators.add(new ProgramExecutor(programId,
+                programExecutors.add(new ProgramExecutor(programId,
                     CoordinatorFileManager.readOperations(new File(f)),
                     configs.getRight()
                     ));
@@ -62,8 +62,8 @@ public class Coordinator {
         logger.info("Coordinator initialized");
 
 
-        for(ProgramExecutor c : coordinators){
-            c.start();
+        for(ProgramExecutor p : programExecutors){
+            p.start();
         }
     }   
 }

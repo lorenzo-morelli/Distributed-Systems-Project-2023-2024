@@ -27,7 +27,7 @@ public class KeyAssignmentManager {
     public void insertAssignment(SocketHandler worker, List<Integer> keys, Integer num) {
         currentAssignments.put(worker, keys);
         if (currentAssignments.size() == num) {
-            logger.info("All workers have been assigned keys");
+            logger.info(Thread.currentThread().getName()+ ": All workers have been assigned keys");
             assignKeys(determineNewAssignmentsWithLoadBalancing());
         }
     }
@@ -35,7 +35,7 @@ public class KeyAssignmentManager {
     // Method to determine new worker assignments with load balancing for selected keys
     public Map<SocketHandler, List<Integer>> determineNewAssignmentsWithLoadBalancing() {
         
-        logger.info("Determining new worker assignments with load balancing");
+        logger.info(Thread.currentThread().getName()+": Determining new worker assignments with load balancing");
 
         Map<SocketHandler, List<Integer>> newAssignments = new HashMap<>();
         for(SocketHandler s: currentAssignments.keySet()){
@@ -56,7 +56,7 @@ public class KeyAssignmentManager {
                 }
             }
         }
-        logger.info("New worker assignments with load balancing determined");
+        logger.info(Thread.currentThread().getName()+": New worker assignments with load balancing determined");
         return newAssignments;
     }
 
@@ -67,10 +67,10 @@ public class KeyAssignmentManager {
     }
 
     private void assignKeys(Map<SocketHandler, List<Integer>> newAssignments) {
-        logger.info("Assigning keys to workers");
+        logger.info(Thread.currentThread().getName()+": Assigning keys to workers");
         canProceed = true;
         finalAssignments = newAssignments;
-        logger.info("Keys assigned to workers");
+        logger.info(Thread.currentThread().getName()+": Keys assigned to workers");
     }
 
     

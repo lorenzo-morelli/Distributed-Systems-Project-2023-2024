@@ -80,7 +80,7 @@ public class HadoopFileManager {
         for (KeyValuePair pair : result) {
             Integer key = pair.getKey();
             Integer value = pair.getValue();
-            String fileName = "/"+programId+"key" + key +"/"+identifier+".csv"; 
+            String fileName = "/program"+programId+"/key" + key +"/"+identifier+".csv"; 
     
             writeToHDFS(key + "," + value, fileName);                
         }
@@ -91,7 +91,7 @@ public class HadoopFileManager {
         logger = LogManager.getLogger("it.polimi.Worker");
         logger.info(Thread.currentThread().getName() + ": Reading key " + key + " from HDFS");
         List<KeyValuePair> result = new ArrayList<>(); 
-        String fileName = "/"+ programId + "key" + key;
+        String fileName = "/program"+ programId + "/key" + key;
         List<KeyValuePair> partialResult = readFromHDFS(fileName);
         result.addAll(partialResult);
         logger.info(Thread.currentThread().getName() + ": Key " + key + " read from HDFS");
@@ -183,13 +183,8 @@ public class HadoopFileManager {
             fs =initialize();
 
             fs.delete(new Path("/input" + programId), true);
-            
-            FileStatus[] keyFileStatus = fs.globStatus(new Path("/"+ programId + "*"));
-            if (keyFileStatus != null) {
-                for (FileStatus fileStatus : keyFileStatus) {
-                    fs.delete(fileStatus.getPath(), true);
-                }
-            }          
+            fs.delete(new Path("/program" + programId), true);
+    
             System.out.println("Files deleted");
             logger.info("Files deleted from HDFS");
         } catch (IOException e) {

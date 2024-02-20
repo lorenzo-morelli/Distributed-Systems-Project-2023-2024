@@ -50,7 +50,7 @@ public class Coordinator {
             int programId = 0;
             for(String f : configs.getLeft()){
                 programExecutors.add(new ProgramExecutor(programId,
-                    CoordinatorFileManager.readOperations(new File(f)),
+                    f,
                     configs.getRight()
                     ));
                 programId++;

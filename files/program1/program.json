@@ -1,0 +1,28 @@
+{
+  "operations": [
+    {
+      "operator": "FILTER",
+      "function": "GT(0)"
+    },
+    {
+      "operator": "MAP",
+      "function": "MULTIPLY(2)"
+    },
+    {
+      "operator": "MAP",
+      "function": "ADD(1)"
+    },
+    {
+      "operator": "FILTER",
+      "function": "LT(10000)"
+    },
+    {
+      "operator": "REDUCE",
+      "function": "SUM"
+    }
+  ],
+  "files": [
+    "files/program1/part1.csv",
+    "files/program1/part2.csv"
+  ]
+}

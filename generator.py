@@ -5,9 +5,9 @@ import pandas as pd
 
 partitions = 0
 PART_GEN_PATH = "gen_files/part"
-RESULT_GEN_PATH = "gen_files/result.csv"
-RESULT_REAL_PATH = "result.csv"
-OPERATIONS_PATH = "files/operations.json"
+RESULT_GEN_PATH = "files/program2/result.csv"
+RESULT_REAL_PATH = "result-1.csv"
+OPERATIONS_PATH = "files/program2/program.json"
 
 
 def generate_data():

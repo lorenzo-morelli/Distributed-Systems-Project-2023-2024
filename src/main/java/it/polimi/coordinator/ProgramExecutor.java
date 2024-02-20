@@ -1,5 +1,6 @@
 package it.polimi.coordinator;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.Socket;
 import java.util.ArrayList;
@@ -32,33 +33,28 @@ public class ProgramExecutor extends Thread{
     private List<String> localFiles;
     private List<Address> addresses;
     private MutablePair<String,String> lastReduce;
+    private CoordinatorFileManager coordinatorFileManager;
 
     private Integer endedTasks;
     private List<KeyValuePair> finalResult;
     private static final Logger logger = LogManager.getLogger("it.polimi.Coordinator");
     private Integer programId;
-
-    public ProgramExecutor(Integer programId,MutablePair<List<MutablePair<String, String>>,List<String>> operations,List<Address> addresses ) {
+    private String op_path;
+    public ProgramExecutor(Integer programId,String op_path,List<Address> addresses ) {
         this.clientSockets = new ArrayList<>();
         this.programId = programId;
-        this.operations = operations.getLeft();
-
-        this.localFiles = operations.getRight();
+        this.op_path = op_path;
+       
         this.addresses = addresses;
-        this.files = new ArrayList<>();
-         for(int i = 0; i < localFiles.size(); i++){
-                files.add("/input"+programId+"/" + new Path(localFiles.get(i)).getName());
-        }
-        this.numPartitions = files.size();
+       
+        
+        this.coordinatorFileManager = new CoordinatorFileManager();
 
         this.fileSocketMap = new HashMap<>();
         this.lastReduce = new MutablePair<>();
         this.keyManager = new KeyAssignmentManager();
         
-        if(this.numPartitions == 0 || this.operations.size() == 0){
-            logger.error(Thread.currentThread().getName() + ": Invalid input parameters!");
-            throw new IllegalArgumentException("Invalid input parameters!");
-        }
+       
         this.endedTasks = 0;
         this.finalResult = new ArrayList<>();
     }
@@ -91,7 +87,7 @@ public class ProgramExecutor extends Thread{
         return programId;
     }
 
-    public void initializeConnections(){
+    private void initializeConnections(){
         logger.info(Thread.currentThread().getName()+ ": Initializing connections...");
         int i = 0;
         for (String f : files) {
@@ -175,7 +171,7 @@ public class ProgramExecutor extends Thread{
             System.out.println(Thread.currentThread().getName()+ ": Writing the final result...");
             logger.info(Thread.currentThread().getName() + ": Writing the final result...");
             try{
-                CoordinatorFileManager.writeResult(programId,finalResult);
+                coordinatorFileManager.writeResult(programId,finalResult);
                 logger.info(Thread.currentThread().getName() +": Final result written");
             }
             catch(Exception e){
@@ -186,7 +182,7 @@ public class ProgramExecutor extends Thread{
             HadoopFileManager.deleteFiles(programId);
         }
     }
-    public void initializeHadoop(){
+    private void initializeHadoop(){
         try{
             logger.info(Thread.currentThread().getName()+ ": Uploading files to HDFS...");
             HadoopFileManager.uploadFiles(localFiles,"/input" + programId + "/");
@@ -196,10 +192,41 @@ public class ProgramExecutor extends Thread{
             throw new RuntimeException("Not possible to connect to the HDFS server. Check the address of the server and if it is running!\nCheck also if files exist!\n" + e.getMessage());
         }
     }
+    private boolean readOperations() throws Exception{
+
+
+        MutablePair<List<MutablePair<String, String>>,List<String>> operations = coordinatorFileManager.readOperations(new File(op_path));  
+
+        this.operations = operations.getLeft();
+
+        this.localFiles = operations.getRight();
+        this.files = new ArrayList<>();
+         for(int i = 0; i < localFiles.size(); i++){
+                files.add("/input"+programId+"/" + new Path(localFiles.get(i)).getName());
+        }
+        this.numPartitions = files.size();
+        
+        if(this.numPartitions == 0 || this.operations.size() == 0){
+            logger.info(Thread.currentThread().getName() + ": Operations or num partitions are 0!");
+            return false;
+        }
+        return true;
+    }
+
     @Override
     public void run(){
 
         Thread.currentThread().setName("ProgramExecutor" + programId);
+
+        try{
+            if(!this.readOperations()){
+                return;
+            }
+        }catch(Exception e){
+            System.out.println(e.getMessage());
+            return;
+        }
+       
 
         try {
             this.initializeConnections();

@@ -1,0 +1,28 @@
+{
+  "operations": [
+    {
+      "operator": "FILTER",
+      "function": "GT(0)"
+    },
+    {
+      "operator": "CHANGEKEY",
+      "function": "ADD(2)"
+    },
+    {
+      "operator": "FILTER",
+      "function": "GT(0)"
+    },
+    {
+      "operator": "MAP",
+      "function": "MULTIPLY(2)"
+    },
+    {
+      "operator": "CHANGEKEY",
+      "function": "DIVIDE(2)"
+    }
+  ],
+  "files": [
+    "files/program2/part1.csv",
+    "files/program2/part2.csv"
+  ]
+}

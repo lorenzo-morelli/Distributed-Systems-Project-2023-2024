@@ -4,7 +4,8 @@
       "127.0.0.1:5002"
     ],
     "programs": [
-      "files/program1.json",
-      "files/program2.json"
+      "files/program0/program.json",
+      "files/program1/program.json",
+      "files/program2/program.json"
     ]
   }

@@ -25,7 +25,7 @@ public class CoordinatorFileManager {
     
     private final static Logger logger = LogManager.getLogger("it.polimi.Coordinator");
 
-    public static MutablePair<List<MutablePair<String, String>>,List<String>> readOperations(File file) throws Exception {
+    public MutablePair<List<MutablePair<String, String>>,List<String>> readOperations(File file) throws Exception {
 
         logger.info("Reading operations file: " + file.getAbsolutePath().toString());
         List<MutablePair<String, String>> dataFunctions = new ArrayList<>();
@@ -81,7 +81,7 @@ public class CoordinatorFileManager {
     }
     
 
-    public static void writeResult(Integer programId,List<KeyValuePair> finalResult) throws IOException {
+    public void writeResult(Integer programId,List<KeyValuePair> finalResult) throws IOException {
         String fileName = "result-"+programId+".csv";
 
         try (FileWriter fileWriter = new FileWriter(fileName)) {

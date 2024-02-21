@@ -89,7 +89,7 @@ public class ProgramExecutor extends Thread{
     public HadoopCoordinator getHadoopCoordinator(){
         return hadoopCoordinator;
     }
-    
+
     private void initializeConnections(){
         logger.info(Thread.currentThread().getName()+ ": Initializing connections...");
         int i = 0;
@@ -183,7 +183,6 @@ public class ProgramExecutor extends Thread{
                 System.out.println(e.getMessage());
             }
             hadoopCoordinator.deleteFiles(programId);
-            hadoopCoordinator.closeFileSystem();
         }
     }
     private void initializeHadoop(){

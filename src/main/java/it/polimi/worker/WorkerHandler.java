@@ -19,6 +19,8 @@ import it.polimi.worker.operators.ReduceOperator;
 class WorkerHandler extends Thread {
     private Socket clientSocket;
     private Integer taskId;
+    private List<Integer> keysFromReduceMessage;
+    private Integer programId;
     private static final Logger logger = LogManager.getLogger("it.polimi.Worker");
     private CheckPointManager checkPointManager;
     private HadoopWorker hadoopWorker;
@@ -26,6 +28,9 @@ class WorkerHandler extends Thread {
         this.clientSocket = clientSocket;
         this.checkPointManager = new CheckPointManager();
         this.hadoopWorker = hadoopWorker;
+        this.keysFromReduceMessage = null;
+        this.taskId = -1;
+        this.programId = -1;
     }
 
     @Override
@@ -51,6 +56,7 @@ class WorkerHandler extends Thread {
                 if (object instanceof Task) {
                     Task task = (Task) object;
                     taskId = task.getTaskId(); 
+                    programId = task.getProgramId();
                     List<KeyValuePair> result  = new ArrayList<>();
                     
                     try{
@@ -74,7 +80,7 @@ class WorkerHandler extends Thread {
                             try{
                                 logger.info(Thread.currentThread().getName() + ": Writing the keys in HDFS");
                                 hadoopWorker.writeKeys(
-                                    task.getProgramId(),
+                                    programId,
                                     taskId.toString(),
                                     result
                                     );
@@ -96,12 +102,13 @@ class WorkerHandler extends Thread {
                     }
                 } else if (object instanceof LastReduce){
                     LastReduce reduceMessage = (LastReduce) object;
+                    programId = reduceMessage.getProgramId();
 
                     logger.info(Thread.currentThread().getName() + ": Received LastReduce message from coordinator, responsible for the keys: " + reduceMessage.getKeys());
                     
                     List<KeyValuePair> result = new ArrayList<>(); 
                     try{
-
+                        keysFromReduceMessage = reduceMessage.getKeys();
                         result = computeReduceMessage(reduceMessage);
                     }
                     catch(IOException e){
@@ -128,7 +135,9 @@ class WorkerHandler extends Thread {
             System.out.println(Thread.currentThread().getName() + ": Closing connection");
             logger.info(Thread.currentThread().getName() + ": Closing connection");
             try {
+                Thread.sleep(1000); // 'Timeout' to allow coordinator of receiving the message before deleting the checkpoints
                 hadoopWorker.closeFileSystem();
+                deleteFiles();
                 // Close the streams and socket when done
                 if (inputStream != null) {
                     inputStream.close();
@@ -141,6 +150,9 @@ class WorkerHandler extends Thread {
                 }
             } catch (IOException e) {
                 logger.error(Thread.currentThread().getName() + ": Error while closing the connection: " + e.getMessage());
+                System.out.println(Thread.currentThread().getName() + ": "+ e.getMessage());
+            } catch (InterruptedException e) {
+                logger.error(Thread.currentThread().getName() + ": Error while sleeping: " + e.getMessage());
                 System.out.println(Thread.currentThread().getName() + ": "+ e.getMessage());
             }
         }
@@ -279,7 +291,7 @@ class WorkerHandler extends Thread {
         return result;
     }
 
-    public List<Integer> extractKeys(List<KeyValuePair> keyValuePairs) {
+    private List<Integer> extractKeys(List<KeyValuePair> keyValuePairs) {
         List<Integer> keys = new ArrayList<>();
 
         for (KeyValuePair pair : keyValuePairs) {
@@ -287,5 +299,20 @@ class WorkerHandler extends Thread {
         }
         logger.info(Thread.currentThread().getName() +": Keys extracted: " + keys);
         return keys;
+    }
+    
+    private void deleteFiles() {
+        if(programId!= -1){
+            if(taskId != -1){
+                checkPointManager.deleteCheckPoint(taskId,programId,false);
+            }
+            if(keysFromReduceMessage != null){
+                for(Integer key: keysFromReduceMessage){
+                    checkPointManager.deleteCheckPoint(key,programId,true);
+                }
+            }
+
+
+        }
     }
 }

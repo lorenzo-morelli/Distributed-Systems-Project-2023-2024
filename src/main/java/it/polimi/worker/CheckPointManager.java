@@ -9,6 +9,7 @@ import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.locks.ReentrantLock;
 import java.nio.file.Paths;
 import org.apache.commons.lang3.tuple.MutablePair;
 import org.apache.log4j.LogManager;
@@ -24,7 +25,7 @@ public class CheckPointManager {
 
     private final String OUTPUT_DIRECTORY = "checkpoints-";
     private static final Logger logger = LogManager.getLogger("it.polimi.Worker");
-
+    private static final ReentrantLock folderLock = new ReentrantLock();
 
     public MutablePair<Boolean, List<KeyValuePair>> checkCheckPoint(Integer taskId, Integer programId, Boolean phase2){
         String fileName;
@@ -54,7 +55,7 @@ public class CheckPointManager {
     }
     
     public void writeCheckPointPhase1(Integer taskId,Integer programId, List<KeyValuePair> result, boolean finished) {
-        String fileName = OUTPUT_DIRECTORY+programId+"/"+ "task" + taskId + ".json";
+        String fileName = OUTPUT_DIRECTORY+programId+ "/task" + taskId + ".json";
         
         logger.info(Thread.currentThread().getName() + ": Creating checkpoint phase 1 for task " + taskId);
         createCheckpoint(result, fileName,finished,false,programId);
@@ -65,7 +66,7 @@ public class CheckPointManager {
         
         ArrayList<KeyValuePair> temp = new ArrayList<>();      
         for(KeyValuePair k : result){
-            String fileName = OUTPUT_DIRECTORY+programId+"/" + "key" + k.getKey() + ".json";
+            String fileName = OUTPUT_DIRECTORY+programId + "/key" + k.getKey() + ".json";
             temp.add(k);
             logger.info(Thread.currentThread().getName() + ": Creating checkpoint phase 2" + " for key " + k.getKey());
             createCheckpoint(temp, fileName,finished,true,programId);
@@ -139,20 +140,49 @@ public class CheckPointManager {
         Files.deleteIfExists(sourcePath);
         logger.info(Thread.currentThread().getName() + ": Temp checkpoint file deleted: " + tempFileName);
     }
-    public static synchronized void createOutputDirectory(String OUTPUT_DIRECTORY) {
+    private static void createOutputDirectory(String OUTPUT_DIRECTORY) {
+        try{
+            folderLock.lock();
 
-        Path outputDirectoryPath = Paths.get(OUTPUT_DIRECTORY);
+            Path outputDirectoryPath = Paths.get(OUTPUT_DIRECTORY);
 
-        if (Files.notExists(outputDirectoryPath)) {
-            try {
-                Files.createDirectories(outputDirectoryPath);
-                System.out.println(Thread.currentThread().getName() + ": Created '"+outputDirectoryPath+"' directory.");
-                logger.info(Thread.currentThread().getName() + ": Created '"+outputDirectoryPath+"' directory.");
-            } catch (IOException e) {
-                logger.error(Thread.currentThread().getName()+ ": Error while creating '"+outputDirectoryPath+"' directory");
-                System.out.println(Thread.currentThread().getName() + ": Error while creating '"+outputDirectoryPath+"' directory");
-                System.out.println(e.getMessage());
+            if (Files.notExists(outputDirectoryPath)) {
+                try {
+                    Files.createDirectories(outputDirectoryPath);
+                    System.out.println(Thread.currentThread().getName() + ": Created '"+outputDirectoryPath+"' directory.");
+                    logger.info(Thread.currentThread().getName() + ": Created '"+outputDirectoryPath+"' directory.");
+                } catch (IOException e) {
+                    logger.error(Thread.currentThread().getName()+ ": Error while creating '"+outputDirectoryPath+"' directory");
+                    System.out.println(Thread.currentThread().getName() + ": Error while creating '"+outputDirectoryPath+"' directory");
+                    System.out.println(e.getMessage());
+                }
             }
+        }finally{
+            folderLock.unlock();
+        }
+    }
+
+    public void deleteCheckPoint(Integer id, Integer programId, boolean phase2) {
+        String fileName;
+        if(phase2){
+            fileName = OUTPUT_DIRECTORY+programId+"/key" + id + ".json";
+        }else{
+            fileName = OUTPUT_DIRECTORY+programId+"/task" + id + ".json";
+        }
+        File file = new File(fileName);
+        if(file.exists()){
+            file.delete();
+        }
+        deleteEmptyDirectory(new File(OUTPUT_DIRECTORY+programId+"/"));
+    }
+    private static void deleteEmptyDirectory(File folder) {
+        try{
+            folderLock.lock();
+            if (folder.exists() && folder.isDirectory() && folder.list().length == 0) {
+                folder.delete();
+            }
+        }finally{
+            folderLock.unlock();
         }
     }
 }

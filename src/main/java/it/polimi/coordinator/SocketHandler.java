@@ -27,7 +27,7 @@ public class SocketHandler implements Runnable {
     private ObjectInputStream inputStream = null;
     private ObjectOutputStream outputStream = null;
     private boolean isProcessing;
-    private Integer programId;
+    private String programId;
     private static final Logger logger = LogManager.getLogger("it.polimi.Coordinator");
 
     public SocketHandler(ProgramExecutor programExecutor, String file, Integer taskId,CoordinatorPhase phase) {

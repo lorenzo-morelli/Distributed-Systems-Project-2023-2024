@@ -51,7 +51,7 @@ public class HadoopWorker extends HadoopFileManager{
         return result;
     }
 
-    public void writeKeys(Integer programId, String identifier,List<KeyValuePair> result) throws IOException {
+    public void writeKeys(String programId, String identifier,List<KeyValuePair> result) throws IOException {
         logger.info(Thread.currentThread().getName() + ": Writing keys to HDFS");
         for (KeyValuePair pair : result) {
             Integer key = pair.getKey();
@@ -63,7 +63,7 @@ public class HadoopWorker extends HadoopFileManager{
         logger.info(Thread.currentThread().getName() + ": Keys written to HDFS");
     }
 
-    public List<KeyValuePair> readKey(Integer programId, Integer key) throws IOException{
+    public List<KeyValuePair> readKey(String programId, Integer key) throws IOException{
         logger.info(Thread.currentThread().getName() + ": Reading key " + key + " from HDFS");
         List<KeyValuePair> result = new ArrayList<>(); 
         String fileName = "/program"+ programId + "/key" + key;

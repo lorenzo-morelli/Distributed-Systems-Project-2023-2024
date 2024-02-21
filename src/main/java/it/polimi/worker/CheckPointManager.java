@@ -27,7 +27,7 @@ public class CheckPointManager {
     private static final Logger logger = LogManager.getLogger("it.polimi.Worker");
     private static final ReentrantLock folderLock = new ReentrantLock();
 
-    public MutablePair<Boolean, List<KeyValuePair>> checkCheckPoint(Integer taskId, Integer programId, Boolean phase2){
+    public MutablePair<Boolean, List<KeyValuePair>> checkCheckPoint(Integer taskId, String programId, Boolean phase2){
         String fileName;
 
         if(phase2){
@@ -54,7 +54,7 @@ public class CheckPointManager {
         return result;
     }
     
-    public void writeCheckPointPhase1(Integer taskId,Integer programId, List<KeyValuePair> result, boolean finished) {
+    public void writeCheckPointPhase1(Integer taskId,String programId, List<KeyValuePair> result, boolean finished) {
         String fileName = OUTPUT_DIRECTORY+programId+ "/task" + taskId + ".json";
         
         logger.info(Thread.currentThread().getName() + ": Creating checkpoint phase 1 for task " + taskId);
@@ -62,7 +62,7 @@ public class CheckPointManager {
         logger.info(Thread.currentThread().getName() +": Checkpoint phase 1 created for task " + taskId);
         
     }
-    public void writeCheckPointPhase2(List<KeyValuePair> result,Integer programId, boolean finished) {
+    public void writeCheckPointPhase2(List<KeyValuePair> result,String programId, boolean finished) {
         
         ArrayList<KeyValuePair> temp = new ArrayList<>();      
         for(KeyValuePair k : result){
@@ -75,7 +75,7 @@ public class CheckPointManager {
         }        
     }
    
-    private void createCheckpoint(List<KeyValuePair> result, String fileName,boolean finished, boolean phase2, Integer programId) {
+    private void createCheckpoint(List<KeyValuePair> result, String fileName,boolean finished, boolean phase2, String programId) {
         CheckPointManager.createOutputDirectory(OUTPUT_DIRECTORY+programId+"/");
 
         try{
@@ -162,7 +162,7 @@ public class CheckPointManager {
         }
     }
 
-    public void deleteCheckPoint(Integer id, Integer programId, boolean phase2) {
+    public void deleteCheckPoint(Integer id, String programId, boolean phase2) {
         String fileName;
         if(phase2){
             fileName = OUTPUT_DIRECTORY+programId+"/key" + id + ".json";

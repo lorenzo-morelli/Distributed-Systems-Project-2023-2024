@@ -81,7 +81,7 @@ public class CoordinatorFileManager {
     }
     
 
-    public void writeResult(Integer programId,List<KeyValuePair> finalResult) throws IOException {
+    public void writeResult(String programId,List<KeyValuePair> finalResult) throws IOException {
         String fileName = "result-"+programId+".csv";
 
         try (FileWriter fileWriter = new FileWriter(fileName)) {

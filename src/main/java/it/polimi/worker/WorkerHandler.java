@@ -20,7 +20,7 @@ class WorkerHandler extends Thread {
     private Socket clientSocket;
     private Integer taskId;
     private List<Integer> keysFromReduceMessage;
-    private Integer programId;
+    private String programId;
     private static final Logger logger = LogManager.getLogger("it.polimi.Worker");
     private CheckPointManager checkPointManager;
     private HadoopWorker hadoopWorker;
@@ -30,7 +30,7 @@ class WorkerHandler extends Thread {
         this.hadoopWorker = hadoopWorker;
         this.keysFromReduceMessage = null;
         this.taskId = -1;
-        this.programId = -1;
+        this.programId = null;
     }
 
     @Override
@@ -302,7 +302,7 @@ class WorkerHandler extends Thread {
     }
     
     private void deleteFiles() {
-        if(programId!= -1){
+        if(programId!= null){
             if(taskId != -1){
                 checkPointManager.deleteCheckPoint(taskId,programId,false);
             }

@@ -4,6 +4,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
+import java.util.UUID;
 
 import org.apache.commons.lang3.tuple.MutablePair;
 import org.apache.log4j.LogManager;
@@ -46,14 +47,18 @@ public class Coordinator {
         try {
             MutablePair<List<String>, List<Address>> configs = CoordinatorFileManager.readConfigurations(new File(conf_path));
 
-            int programId = 0;
+            int i = 0;
+            String programId;
             for(String f : configs.getLeft()){
+                programId = UUID.randomUUID().toString();
                 programExecutors.add(new ProgramExecutor(programId,
                     f,
                     configs.getRight(),
                     new HadoopCoordinator(address)
                     ));
-                programId++;
+                System.out.println("Program " + i + " identified by " + programId );
+                logger.info("Program " + i + " identified by " + programId );    
+                i++;
             }
         } catch (Exception e) {
             System.out.println(e.getMessage());

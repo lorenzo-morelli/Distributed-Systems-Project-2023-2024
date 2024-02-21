@@ -11,8 +11,8 @@ public class Task implements Serializable{
     private final String pathFile;
     private final boolean isPresentStep2;
     private final Integer taskId;
-    private final Integer programId;
-    public Task(Integer programId, List<MutablePair<String, String>> list, String pathFile,boolean isPresentStep2,Integer taskId) {
+    private final String programId;
+    public Task(String programId, List<MutablePair<String, String>> list, String pathFile,boolean isPresentStep2,Integer taskId) {
         this.operators = list;
         this.pathFile = pathFile;
         this.isPresentStep2 = isPresentStep2;
@@ -31,7 +31,7 @@ public class Task implements Serializable{
     public Integer getTaskId(){
         return taskId;
     }
-    public Integer getProgramId(){
+    public String getProgramId(){
         return programId;
     }   
 

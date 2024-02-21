@@ -18,7 +18,7 @@ public class HadoopCoordinator extends HadoopFileManager{
         logger = LogManager.getLogger("it.polimi.Coordinator");
     }
 
-    public void deleteFiles(Integer programId) {
+    public void deleteFiles(String programId) {
         logger.info("Deleting files from HDFS");
         try {
 

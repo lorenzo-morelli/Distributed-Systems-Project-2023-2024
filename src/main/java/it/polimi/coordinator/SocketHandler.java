@@ -43,11 +43,8 @@ public class SocketHandler implements Runnable {
 
     @Override
     public void run() {
-        Thread.currentThread().setName(clientSocket.getInetAddress().getHostName() +":"+ clientSocket.getLocalPort() + ":" + programId);
+        Thread.currentThread().setName(clientSocket.getInetAddress().getHostName() +":"+ clientSocket.getPort() + "(" +clientSocket.getLocalPort() + "):" + programId);
 
-
-
-        logger.info(clientSocket.getInetAddress().getHostName() +":"+ clientSocket.getPort() + ": " + Thread.currentThread().getName());
         logger.info(Thread.currentThread().getName() + ": Starting worker connection");
         try {
             inputStream = new ObjectInputStream(clientSocket.getInputStream());
@@ -73,11 +70,11 @@ public class SocketHandler implements Runnable {
                             List<?> list = (List<?>) object;
                             // Process or print the list
                             if (!programExecutor.checkChangeKeyReduce()) {
-                                logger.info(Thread.currentThread().getName() + ": Received the final result:" + list);
+                                logger.info(Thread.currentThread().getName() + ": Received the final result");
                                 end(object);
                                 isProcessing = false;
                             } else {
-                                logger.info(Thread.currentThread().getName() + ": Received the keys:" + list);
+                                logger.info(Thread.currentThread().getName() + ": Received the keys to be managed");
                                 managePhase2(list);
                             }
                         } 
@@ -128,8 +125,7 @@ public class SocketHandler implements Runnable {
             programExecutor.writeResult(convertObjectToListKeyValuePairs(object));
             logger.info(Thread.currentThread().getName() + ": Final result written");
         }catch(Exception e){
-            System.out.println("Error while writing the final result");
-            System.out.println(e.getMessage());
+            System.out.println(Thread.currentThread().getName() +": Error while writing the final result" + e.getMessage());
         }
     }
 

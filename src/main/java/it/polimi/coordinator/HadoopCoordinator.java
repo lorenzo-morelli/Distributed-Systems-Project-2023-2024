@@ -19,21 +19,21 @@ public class HadoopCoordinator extends HadoopFileManager{
     }
 
     public void deleteFiles(String programId) {
-        logger.info("Deleting files from HDFS");
+        logger.info(Thread.currentThread().getName() + ": Deleting files from HDFS");
         try {
 
             fs.delete(new Path("/input" + programId), true);
             fs.delete(new Path("/program" + programId), true);
     
-            System.out.println("Files deleted");
-            logger.info("Files deleted from HDFS");
+            System.out.println(Thread.currentThread().getName() + ": Files deleted");
+            logger.info(Thread.currentThread().getName() + ": Files deleted from HDFS");
         } catch (IOException e) {
             logger.error(e);
             e.printStackTrace();
         }
-        logger.info("Closing file system");
+        logger.info(Thread.currentThread().getName() + ": Closing file system");
         closeFileSystem();
-        logger.info("File system closed");
+        logger.info(Thread.currentThread().getName() + ": File system closed");
     }
     private void uploadFileToHDFS(String localFilePath, String hdfsDestinationPath) throws IOException {
         logger.info(Thread.currentThread().getName() + ": Uploading file to HDFS: " + localFilePath);

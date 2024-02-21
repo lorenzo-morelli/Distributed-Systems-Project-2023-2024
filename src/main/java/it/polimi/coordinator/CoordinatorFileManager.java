@@ -27,7 +27,7 @@ public class CoordinatorFileManager {
 
     public MutablePair<List<MutablePair<String, String>>,List<String>> readOperations(File file) throws Exception {
 
-        logger.info("Reading operations file: " + file.getAbsolutePath().toString());
+        logger.info(Thread.currentThread().getName()+ ": Reading operations file: " + file.getAbsolutePath().toString());
         List<MutablePair<String, String>> dataFunctions = new ArrayList<>();
         List<String> files = null;
         try {
@@ -49,7 +49,7 @@ public class CoordinatorFileManager {
             logger.error(e);
             throw new Exception("Not possible to read the operations file:\n" + file.getAbsolutePath() + "\nCheck the path and the format of the file!");
         }
-        logger.info("Operations file read: " + file.getAbsolutePath().toString());
+        logger.info(Thread.currentThread().getName()+ ": Operations file read: " + file.getAbsolutePath().toString());
         return new MutablePair<>(dataFunctions,files);
     }
 
@@ -92,6 +92,4 @@ public class CoordinatorFileManager {
             throw new IOException("Not possible to write the finalResult:\n" + fileName);
         }
     }
-   
-    
 }

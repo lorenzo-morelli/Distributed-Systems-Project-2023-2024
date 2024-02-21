@@ -162,7 +162,7 @@ public class ProgramExecutor extends Thread{
             logger.info(Thread.currentThread().getName()+ ": New active socket found " + finalAddress.getHostname() + ":" + finalAddress.getPort());
             return result;
         }catch(Exception e){
-            logger.warn(Thread.currentThread().getName() + ": Error while creating the new active socket");
+            logger.warn(Thread.currentThread().getName() + ": Error while creating the new active socket: " + finalAddress.getHostname() + ":" + finalAddress.getPort());
             addressesTocheck.remove(finalAddress);
             return getNewActiveSocket(addressesTocheck);
         }

@@ -4,7 +4,6 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
-import java.util.UUID;
 
 import org.apache.commons.lang3.tuple.MutablePair;
 import org.apache.log4j.LogManager;
@@ -50,7 +49,8 @@ public class Coordinator {
             int i = 0;
             String programId;
             for(String f : configs.getLeft()){
-                programId = UUID.randomUUID().toString();
+                //programId = UUID.randomUUID().toString();
+                programId = String.valueOf(i);
                 programExecutors.add(new ProgramExecutor(programId,
                     f,
                     configs.getRight(),
@@ -70,5 +70,6 @@ public class Coordinator {
         for(ProgramExecutor p : programExecutors){
             p.start();
         }  
+        logger.info("Coordinator started");
     }   
 }

@@ -11,7 +11,6 @@ import org.apache.log4j.Logger;
 import org.apache.log4j.PropertyConfigurator;
 
 import it.polimi.common.Address;
-import it.polimi.common.HadoopFileManager;
 
 public class Coordinator {
     private static final Logger logger = LogManager.getLogger("it.polimi.Coordinator");
@@ -19,13 +18,13 @@ public class Coordinator {
 
         PropertyConfigurator.configure("conf/log4j.properties");
         String conf_path;
+        String address;
         try{
             Scanner scanner = new Scanner(System.in);
 
             System.out.println("Insert HDFS address (default: 'localhost:9000'): ");
-            String address = scanner.nextLine();
-            if(!address.equals(""))
-                HadoopFileManager.setHDFS_URI("hdfs://" + address);
+            address = scanner.nextLine();
+            address = (address.equals("")) ? "hdfs://localhost:9000" : "hdfs://" + address;
 
             String temp;
             System.out.println("Insert operations file path (default: 'files/configurations.json'): ");
@@ -51,7 +50,8 @@ public class Coordinator {
             for(String f : configs.getLeft()){
                 programExecutors.add(new ProgramExecutor(programId,
                     f,
-                    configs.getRight()
+                    configs.getRight(),
+                    new HadoopCoordinator(address)
                     ));
                 programId++;
             }
@@ -64,6 +64,6 @@ public class Coordinator {
 
         for(ProgramExecutor p : programExecutors){
             p.start();
-        }
+        }  
     }   
 }

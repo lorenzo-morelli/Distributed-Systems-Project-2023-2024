@@ -10,7 +10,6 @@ import java.util.List;
 import org.apache.commons.lang3.tuple.MutablePair;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
-import it.polimi.common.HadoopFileManager;
 import it.polimi.common.KeyValuePair;
 import it.polimi.common.messages.ErrorMessage;
 import it.polimi.common.messages.LastReduce;
@@ -22,9 +21,11 @@ class WorkerHandler extends Thread {
     private Integer taskId;
     private static final Logger logger = LogManager.getLogger("it.polimi.Worker");
     private CheckPointManager checkPointManager;
-    public WorkerHandler(Socket clientSocket) {
+    private HadoopWorker hadoopWorker;
+    public WorkerHandler(Socket clientSocket, HadoopWorker hadoopWorker) {
         this.clientSocket = clientSocket;
         this.checkPointManager = new CheckPointManager();
+        this.hadoopWorker = hadoopWorker;
     }
 
     @Override
@@ -72,7 +73,7 @@ class WorkerHandler extends Thread {
                         }else{
                             try{
                                 logger.info(Thread.currentThread().getName() + ": Writing the keys in HDFS");
-                                HadoopFileManager.writeKeys(
+                                hadoopWorker.writeKeys(
                                     task.getProgramId(),
                                     taskId.toString(),
                                     result
@@ -127,6 +128,7 @@ class WorkerHandler extends Thread {
             System.out.println(Thread.currentThread().getName() + ": Closing connection");
             logger.info(Thread.currentThread().getName() + ": Closing connection");
             try {
+                hadoopWorker.closeFileSystem();
                 // Close the streams and socket when done
                 if (inputStream != null) {
                     inputStream.close();
@@ -183,7 +185,7 @@ class WorkerHandler extends Thread {
 
             if(checkPoint.getRight().size() == 0){
                 Operator operator = CreateOperator.createOperator(reduceMessage.getReduce().getLeft(), reduceMessage.getReduce().getRight());
-                List<KeyValuePair> data = HadoopFileManager.readKey(reduceMessage.getProgramId(),key);
+                List<KeyValuePair> data = hadoopWorker.readKey(reduceMessage.getProgramId(),key);
                 logger.info(Thread.currentThread().getName()+ ": Data read from HDFS: " + data.size() + " elements with key: " + key);
                 temp.addAll(operator.execute(data));
                 i++;
@@ -232,7 +234,7 @@ class WorkerHandler extends Thread {
 
             logger.info(Thread.currentThread().getName() +": No checkpoint found for task " + task.getTaskId() + ", processing the task");
 
-            List<KeyValuePair> data = HadoopFileManager.readInputFile(task.getPathFile());
+            List<KeyValuePair> data = hadoopWorker.readInputFile(task.getPathFile());
             
             Integer sizeCheckPoint = 0;
 

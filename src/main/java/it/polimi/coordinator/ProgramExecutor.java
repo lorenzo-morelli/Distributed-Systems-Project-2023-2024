@@ -17,7 +17,6 @@ import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 
 import it.polimi.common.Address;
-import it.polimi.common.HadoopFileManager;
 import it.polimi.common.KeyValuePair;
 
 public class ProgramExecutor extends Thread{
@@ -40,7 +39,8 @@ public class ProgramExecutor extends Thread{
     private static final Logger logger = LogManager.getLogger("it.polimi.Coordinator");
     private Integer programId;
     private String op_path;
-    public ProgramExecutor(Integer programId,String op_path,List<Address> addresses ) {
+    private HadoopCoordinator hadoopCoordinator;
+    public ProgramExecutor(Integer programId,String op_path,List<Address> addresses, HadoopCoordinator hadoopCoordinator) {
         this.clientSockets = new ArrayList<>();
         this.programId = programId;
         this.op_path = op_path;
@@ -54,7 +54,7 @@ public class ProgramExecutor extends Thread{
         this.lastReduce = new MutablePair<>();
         this.keyManager = new KeyAssignmentManager();
         
-       
+        this.hadoopCoordinator = hadoopCoordinator;
         this.endedTasks = 0;
         this.finalResult = new ArrayList<>();
     }
@@ -86,7 +86,10 @@ public class ProgramExecutor extends Thread{
     public Integer getProgramId(){
         return programId;
     }
-
+    public HadoopCoordinator getHadoopCoordinator(){
+        return hadoopCoordinator;
+    }
+    
     private void initializeConnections(){
         logger.info(Thread.currentThread().getName()+ ": Initializing connections...");
         int i = 0;
@@ -179,17 +182,18 @@ public class ProgramExecutor extends Thread{
                 logger.error(Thread.currentThread().getName()+ ": Error while writing the final result");
                 System.out.println(e.getMessage());
             }
-            HadoopFileManager.deleteFiles(programId);
+            hadoopCoordinator.deleteFiles(programId);
+            hadoopCoordinator.closeFileSystem();
         }
     }
     private void initializeHadoop(){
         try{
             logger.info(Thread.currentThread().getName()+ ": Uploading files to HDFS...");
-            HadoopFileManager.uploadFiles(localFiles,"/input" + programId + "/");
+            hadoopCoordinator.uploadFiles(localFiles,"/input" + programId + "/");
             logger.info(Thread.currentThread().getName() + ": Files uploaded to HDFS successfully");
         }catch(Exception e){
             logger.error(Thread.currentThread().getName() + ": Error while uploading files to HDFS\n" + e.getMessage());
-            throw new RuntimeException("Not possible to connect to the HDFS server. Check the address of the server and if it is running!\nCheck also if files exist!\n" + e.getMessage());
+            throw new RuntimeException(e.getMessage());
         }
     }
     private boolean readOperations() throws Exception{

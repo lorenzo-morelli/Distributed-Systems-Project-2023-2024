@@ -8,7 +8,6 @@ import java.util.Scanner;
 import org.apache.log4j.Logger;
 import org.apache.log4j.PropertyConfigurator;
 
-import it.polimi.common.HadoopFileManager;
 
 import org.apache.log4j.LogManager;
 
@@ -23,14 +22,14 @@ public class Worker{
 
         Scanner scanner = new Scanner(System.in);
         
-
+        String address;
         int port;
         try {
 
             System.out.println("Insert HDFS address (default: 'localhost:9000'): ");
-            String address = scanner.nextLine();
-            if(!address.equals(""))
-                HadoopFileManager.setHDFS_URI("hdfs://" + address);
+            address = scanner.nextLine();
+            address = (address.equals("")) ? "hdfs://localhost:9000" : "hdfs://" + address;
+
 
             System.out.println("Insert a port");
             String portString = scanner.nextLine();
@@ -56,7 +55,7 @@ public class Worker{
                 logger.info("Coordinator opened a connection.");
 
                 // Handle the connection in a separate thread
-                WorkerHandler workerHandler = new WorkerHandler(clientSocket);
+                WorkerHandler workerHandler = new WorkerHandler(clientSocket, new HadoopWorker(address));
                 workerHandler.start();
             }
 

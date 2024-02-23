@@ -102,14 +102,14 @@ public class ProgramExecutor extends Thread{
                     fileSocketMap.put(f, clientSocket);
                 }else{
                     try{
-                        fileSocketMap.put(f, getNewActiveSocket(new ArrayList<>(addresses)));
+                        fileSocketMap.put(f, getNewActiveSocket(new ArrayList<>(addresses),null));
                     }catch(Exception e){
                         logger.error(Thread.currentThread().getName()+ ": No workers available");
                         throw new RuntimeException("No workers available");
                     }
                 }
             } catch (IOException e) {
-                fileSocketMap.put(f, getNewActiveSocket(new ArrayList<>(addresses)));
+                fileSocketMap.put(f, getNewActiveSocket(new ArrayList<>(addresses),null));
             }
             i++;
         }
@@ -136,22 +136,28 @@ public class ProgramExecutor extends Thread{
         return changeKey && reduce;
     }
 
-    public Socket getNewActiveSocket(List<Address> addressesTocheck){
+    public Socket getNewActiveSocket(List<Address> addressesTocheck, String machine){
         logger.info(Thread.currentThread().getName()+ ": Search for a new active socket...");
         if(addressesTocheck.size() == 0){
             logger.error(Thread.currentThread().getName()+ ": No workers available");
             throw new RuntimeException("No workers available");
         }
-
+        
+        machine = (machine == null) ? "" : machine;
+        
         Map<Address,Integer> load = new HashMap<>();
         Socket result = null;
         for(Address a: addressesTocheck){
-            load.put(a, 0);
+            if(!machine.equals(a.getHostname())){
+                load.put(a, 0);
+            }else{
+                load.put(a, -1);
+            }
         }
         
         for(Socket s:clientSockets){
             Address a = new Address(s.getInetAddress().getHostName(), s.getPort());
-            if(load.containsKey(a)){
+            if(load.containsKey(a) && !a.getHostname().equals(machine)){
                 load.put(a, load.get(a) + 1);
             }
         }
@@ -164,7 +170,7 @@ public class ProgramExecutor extends Thread{
         }catch(Exception e){
             logger.warn(Thread.currentThread().getName() + ": Error while creating the new active socket: " + finalAddress.getHostname() + ":" + finalAddress.getPort());
             addressesTocheck.remove(finalAddress);
-            return getNewActiveSocket(addressesTocheck);
+            return getNewActiveSocket(addressesTocheck, machine);
         }
     }
     public void writeResult(List<KeyValuePair> result){
@@ -183,6 +189,9 @@ public class ProgramExecutor extends Thread{
                 System.out.println(e.getMessage());
             }
             hadoopCoordinator.deleteFiles(programId);
+            logger.info(Thread.currentThread().getName() + ": Closing file system");
+            hadoopCoordinator.closeFileSystem();
+            logger.info(Thread.currentThread().getName() + ": File system closed");
         }
     }
     private void initializeHadoop(){

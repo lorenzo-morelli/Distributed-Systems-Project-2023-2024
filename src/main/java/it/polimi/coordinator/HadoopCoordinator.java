@@ -31,9 +31,6 @@ public class HadoopCoordinator extends HadoopFileManager{
             logger.error(e);
             e.printStackTrace();
         }
-        logger.info(Thread.currentThread().getName() + ": Closing file system");
-        closeFileSystem();
-        logger.info(Thread.currentThread().getName() + ": File system closed");
     }
     private void uploadFileToHDFS(String localFilePath, String hdfsDestinationPath) throws IOException {
         logger.info(Thread.currentThread().getName() + ": Uploading file to HDFS: " + localFilePath);

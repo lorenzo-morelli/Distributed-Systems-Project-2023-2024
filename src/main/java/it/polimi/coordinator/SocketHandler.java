@@ -219,7 +219,7 @@ public class SocketHandler implements Runnable {
                 if(addresses.size() == 0){
                     return false;
                 }
-                clientSocket = programExecutor.getNewActiveSocket(addresses);
+                clientSocket = programExecutor.getNewActiveSocket(addresses, clientSocket.getInetAddress().getHostName());
                 reconnected = true;
                 logger.info(Thread.currentThread().getName() + ": Reconnected to a new worker" + clientSocket.getInetAddress().getHostName() +":"+ clientSocket.getPort() + ". Resuming operations...");
             } catch (Exception e) {

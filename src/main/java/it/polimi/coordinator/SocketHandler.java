@@ -60,12 +60,12 @@ public class SocketHandler implements Runnable {
                         Object object = inputStream.readObject();
                         if (object == null){ 
                             logger.error(Thread.currentThread().getName() +": Received a null object!");
-                            System.out.println(Thread.currentThread().getName() + ": Received a null object!");
-                            System.exit(0);
+                            System.out.println(Thread.currentThread().getName() + ": Received a null object!"); 
                         }else if (object instanceof ErrorMessage) {
                             logger.error(Thread.currentThread().getName() +": Received an error message!" + ((ErrorMessage) object).getMessage());
                             System.out.println(Thread.currentThread().getName() + ": " + ((ErrorMessage) object).getMessage());
-                            System.exit(0);
+                            programExecutor.setErrorPresent(true);
+                            isProcessing = false;
                         }else if (object instanceof List<?>) {
                             List<?> list = (List<?>) object;
                             // Process or print the list
@@ -83,30 +83,32 @@ public class SocketHandler implements Runnable {
                         break;
             
                     case FINAL:
+                        if(programExecutor.IsErrorPresent()){
+                            logger.error(Thread.currentThread().getName() + ": Error present in the program. Aborting...");
+                            System.out.println(Thread.currentThread().getName() + ": Error present in the program. Aborting...");
+                            isProcessing = false;
+                            break;
+                        }
                         if(keyManager.canProceed()){
-
                             logger.info(Thread.currentThread().getName() + ": Sending task to worker phase2: " + clientSocket.getInetAddress().getHostName() +":"+ clientSocket.getPort());
                             System.out.println(Thread.currentThread().getName() + ": Sending task to worker phase2: " + clientSocket.getInetAddress().getHostName() +":"+ clientSocket.getPort());
                             LastReduce lastReduce = new LastReduce(programId,programExecutor.getLastReduce(), keyManager.getFinalAssignments().get(this));
-                            outputStream.writeObject(lastReduce);
-        
-                        
+                            outputStream.writeObject(lastReduce);                
                             Object finalObject = inputStream.readObject();
-
                             if (finalObject == null ) {
                                 logger.error(Thread.currentThread().getName() + ": Something went wrong with the reduce phase!");
                                 System.out.println(Thread.currentThread().getName() + ": Something went wrong with the reduce phase!");
-                                System.exit(0);
                             }else if (finalObject instanceof ErrorMessage){
                                 logger.error(Thread.currentThread().getName() + ": Received an error message!" + ((ErrorMessage) finalObject).getMessage());
                                 System.out.println(Thread.currentThread().getName()+ ": " + ((ErrorMessage) finalObject).getMessage());
-                                System.exit(0);
+                                programExecutor.setErrorPresent(true);
+                                isProcessing = false;
                             }else if (finalObject instanceof List<?>) {
                                 System.out.println(Thread.currentThread().getName() + ": Received the final result");
                                 logger.info(Thread.currentThread().getName() + ": Received the final result");  
                                 end(finalObject);
+                                isProcessing = false;
                             }            
-                            isProcessing = false;
                         }
                         break;
                     default:

@@ -40,6 +40,7 @@ public class ProgramExecutor extends Thread{
     private String programId;
     private String op_path;
     private HadoopCoordinator hadoopCoordinator;
+    private volatile boolean errorPresent;
     public ProgramExecutor(String programId,String op_path,List<Address> addresses, HadoopCoordinator hadoopCoordinator) {
         this.clientSockets = new ArrayList<>();
         this.programId = programId;
@@ -57,8 +58,14 @@ public class ProgramExecutor extends Thread{
         this.hadoopCoordinator = hadoopCoordinator;
         this.endedTasks = 0;
         this.finalResult = new ArrayList<>();
+        this.errorPresent = false;
     }
-
+    public boolean IsErrorPresent(){
+        return errorPresent;
+    }
+    public void setErrorPresent(boolean errorPresent){
+        this.errorPresent = errorPresent;
+    }
     public KeyAssignmentManager getKeyManager(){
         return keyManager;
     }

@@ -70,10 +70,12 @@ public class SocketHandler implements Runnable {
                             List<?> list = (List<?>) object;
                             // Process or print the list
                             if (!programExecutor.checkChangeKeyReduce()) {
+                                System.out.println(Thread.currentThread().getName() + ": Received the final result");
                                 logger.info(Thread.currentThread().getName() + ": Received the final result");
                                 end(object);
                                 isProcessing = false;
                             } else {
+                                System.out.println(Thread.currentThread().getName() + ": Received the keys to be managed");
                                 logger.info(Thread.currentThread().getName() + ": Received the keys to be managed");
                                 managePhase2(list);
                             }
@@ -90,6 +92,7 @@ public class SocketHandler implements Runnable {
         
                         
                             Object finalObject = inputStream.readObject();
+
                             if (finalObject == null ) {
                                 logger.error(Thread.currentThread().getName() + ": Something went wrong with the reduce phase!");
                                 System.out.println(Thread.currentThread().getName() + ": Something went wrong with the reduce phase!");
@@ -99,7 +102,8 @@ public class SocketHandler implements Runnable {
                                 System.out.println(Thread.currentThread().getName()+ ": " + ((ErrorMessage) finalObject).getMessage());
                                 System.exit(0);
                             }else if (finalObject instanceof List<?>) {
-                                logger.info(Thread.currentThread().getName() + ": Received the final result:" + finalObject);  
+                                System.out.println(Thread.currentThread().getName() + ": Received the final result");
+                                logger.info(Thread.currentThread().getName() + ": Received the final result");  
                                 end(finalObject);
                             }            
                             isProcessing = false;
@@ -121,11 +125,11 @@ public class SocketHandler implements Runnable {
     }
     private void end(Object object){
         try{
-            logger.info(Thread.currentThread().getName() + ": Writing the final result...");
+            logger.info(Thread.currentThread().getName() + ": Adding the final result...");
             programExecutor.writeResult(convertObjectToListKeyValuePairs(object));
-            logger.info(Thread.currentThread().getName() + ": Final result written");
+            logger.info(Thread.currentThread().getName() + ": Final result added"); 
         }catch(Exception e){
-            System.out.println(Thread.currentThread().getName() +": Error while writing the final result" + e.getMessage());
+            System.out.println(Thread.currentThread().getName() +": Error while adding the final result" + e.getMessage());
         }
     }
 

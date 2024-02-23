@@ -149,7 +149,6 @@ public class CheckPointManager {
             if (Files.notExists(outputDirectoryPath)) {
                 try {
                     Files.createDirectories(outputDirectoryPath);
-                    System.out.println(Thread.currentThread().getName() + ": Created '"+outputDirectoryPath+"' directory.");
                     logger.info(Thread.currentThread().getName() + ": Created '"+outputDirectoryPath+"' directory.");
                 } catch (IOException e) {
                     logger.error(Thread.currentThread().getName()+ ": Error while creating '"+outputDirectoryPath+"' directory");

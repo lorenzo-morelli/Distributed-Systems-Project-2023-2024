@@ -24,7 +24,7 @@ public class KeyAssignmentManager {
         return canProceed;
     }
 
-    public void insertAssignment(SocketHandler worker, List<Integer> keys, Integer num) {
+    public synchronized void insertAssignment(SocketHandler worker, List<Integer> keys, Integer num) {
         currentAssignments.put(worker, keys);
         if (currentAssignments.size() == num) {
             logger.info(Thread.currentThread().getName()+ ": All workers have been assigned keys");

@@ -35,7 +35,7 @@ class WorkerHandler extends Thread {
 
     @Override
     public void run() {
-        Thread.currentThread().setName(clientSocket.getInetAddress().getHostName() +":"+ clientSocket.getPort());
+        Thread.currentThread().setName(clientSocket.getInetAddress().getHostName() +":"+ clientSocket.getLocalPort() + "(" +clientSocket.getPort() + ")");
 
         logger.info(Thread.currentThread().getName() + ": WorkerHandler started.");
 
@@ -52,9 +52,15 @@ class WorkerHandler extends Thread {
 
                 // Read the object from the coordinator
                 Object object = inputStream.readObject();
+                
                 logger.info(Thread.currentThread().getName()+ ": Received object from coordinator: " + object);
                 if (object instanceof Task) {
+
                     Task task = (Task) object;
+                    Thread.currentThread().setName(clientSocket.getInetAddress().getHostName() +":"+ clientSocket.getLocalPort() + "(" +clientSocket.getPort() + ")" + ":" + task.getProgramId());
+                    System.out.println(Thread.currentThread().getName() + ": Received task from coordinator");
+                    logger.info(Thread.currentThread().getName() + ": Received task from coordinator: " + task.getTaskId());
+                    
                     taskId = task.getTaskId(); 
                     programId = task.getProgramId();
                     List<KeyValuePair> result  = new ArrayList<>();
@@ -72,7 +78,8 @@ class WorkerHandler extends Thread {
 
                     if (result != null) {
                         if(!task.isPresentStep2()){
-                            logger.info(Thread.currentThread().getName()+ ": Step 1 is done, sending result back to the coordinator: " + result);
+                            System.out.println(Thread.currentThread().getName() + ": Computation is done, sending result back to the coordinator");
+                            logger.info(Thread.currentThread().getName()+ ": Computation is done, sending result back to the coordinator: " + result.size() + " elements");
                             // Send the result back to the coordinator
                             outputStream.writeObject(result);
                             break;
@@ -92,6 +99,7 @@ class WorkerHandler extends Thread {
                             }
                             List<Integer> keys = extractKeys(result);
                             outputStream.writeObject(keys);
+                            System.out.println(Thread.currentThread().getName() + ": Keys sent to the coordinator");
                             logger.info(Thread.currentThread().getName() + ": Keys sent to the coordinator :" + keys);
 
                         }
@@ -102,9 +110,12 @@ class WorkerHandler extends Thread {
                     }
                 } else if (object instanceof LastReduce){
                     LastReduce reduceMessage = (LastReduce) object;
-                    programId = reduceMessage.getProgramId();
+                    Thread.currentThread().setName(clientSocket.getInetAddress().getHostName() +":"+ clientSocket.getLocalPort() + "(" +clientSocket.getPort() + ")" + ":" + reduceMessage.getProgramId());
 
+                    System.out.println(Thread.currentThread().getName() + ": Received LastReduce message from coordinator");
                     logger.info(Thread.currentThread().getName() + ": Received LastReduce message from coordinator, responsible for the keys: " + reduceMessage.getKeys());
+                    
+                    programId = reduceMessage.getProgramId();
                     
                     List<KeyValuePair> result = new ArrayList<>(); 
                     try{
@@ -116,8 +127,10 @@ class WorkerHandler extends Thread {
                         logger.error(Thread.currentThread().getName() + ": Error in the reduce phase: " + e.getMessage());
                         break;
                     }
+                    System.out.println(Thread.currentThread().getName() + ": Computation is done, sending result back to the coordinator");
+                    logger.info(Thread.currentThread().getName()+ ": Computation is done, sending result back to the coordinator: " + result.size() + " elements");
+
                     outputStream.writeObject(result);
-                    logger.info(Thread.currentThread().getName()+": " + result + " sent to the coordinator");
                     break;
                 }
                 else {
@@ -135,9 +148,11 @@ class WorkerHandler extends Thread {
             System.out.println(Thread.currentThread().getName() + ": Closing connection");
             logger.info(Thread.currentThread().getName() + ": Closing connection");
             try {
-                Thread.sleep(1000); // 'Timeout' to allow coordinator of receiving the message before deleting the checkpoints
+                logger.info(Thread.currentThread().getName() + ": Sleeping for 2 seconds to allow the coordinator to receive the message before deleting the checkpoints");
+                Thread.sleep(2000); // 'Timeout' to allow coordinator of receiving the message before deleting the checkpoints
                 hadoopWorker.closeFileSystem();
                 deleteFiles();
+                logger.info(Thread.currentThread().getName() + ": Checkpoints deleted");
                 // Close the streams and socket when done
                 if (inputStream != null) {
                     inputStream.close();
@@ -172,7 +187,6 @@ class WorkerHandler extends Thread {
         return operators;
     }
     private List<KeyValuePair> computeReduceMessage(LastReduce reduceMessage) throws IOException{
-        Thread.currentThread().setName(Thread.currentThread().getName() + ":" + reduceMessage.getProgramId());
 
         logger.info(Thread.currentThread().getName()+ ": Computing reduce");
         List<KeyValuePair> result = new ArrayList<>();
@@ -216,12 +230,11 @@ class WorkerHandler extends Thread {
             }
             
         }
-        logger.info(Thread.currentThread().getName() + ": Reduce done with result: " + result);
+        logger.info(Thread.currentThread().getName() + ": Reduce done with result: " + result.size() + " elements");
         return result;
     }
 
     private List<KeyValuePair> processTask(Task task) throws IOException{
-        Thread.currentThread().setName(Thread.currentThread().getName() + ":" + task.getProgramId());
 
         logger.info(Thread.currentThread().getName() +": Processing task: " + task.getTaskId());
 
@@ -247,7 +260,8 @@ class WorkerHandler extends Thread {
             logger.info(Thread.currentThread().getName() +": No checkpoint found for task " + task.getTaskId() + ", processing the task");
 
             List<KeyValuePair> data = hadoopWorker.readInputFile(task.getPathFile());
-            
+            logger.info(Thread.currentThread().getName() +": Data read from HDFS: " + data.size() + " elements");
+
             Integer sizeCheckPoint = 0;
 
             if(data.size() > 10){
@@ -255,8 +269,8 @@ class WorkerHandler extends Thread {
             }else{
                 sizeCheckPoint = data.size();
             }
+
             logger.info(Thread.currentThread().getName() +": Checkpointing every " + sizeCheckPoint + " elements");
-            logger.info(Thread.currentThread().getName() +": Data read from HDFS: " + data.size() + " elements");
             
             for(int i = size; i < data.size();){
 
@@ -287,7 +301,7 @@ class WorkerHandler extends Thread {
             checkPointManager.writeCheckPointPhase1(task.getTaskId(),task.getProgramId(), result,true);
             logger.info(Thread.currentThread().getName() +": Last checkpoint written: " + result.size() + " elements" + " for task " + task.getTaskId()); 
         }
-        logger.info(Thread.currentThread().getName() +": Task " + task.getTaskId() + " done" + " with result:" + result);
+        logger.info(Thread.currentThread().getName() +": Task " + task.getTaskId() + " done with result: " + result.size() + " elements");
         return result;
     }
 

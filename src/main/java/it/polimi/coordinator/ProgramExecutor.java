@@ -173,7 +173,7 @@ public class ProgramExecutor extends Thread{
             return getNewActiveSocket(addressesTocheck, machine);
         }
     }
-    public void writeResult(List<KeyValuePair> result){
+    public synchronized void writeResult(List<KeyValuePair> result){
         endedTasks++;
         finalResult.addAll(result);
         if(endedTasks == numPartitions){
@@ -196,9 +196,7 @@ public class ProgramExecutor extends Thread{
     }
     private void initializeHadoop(){
         try{
-            logger.info(Thread.currentThread().getName()+ ": Uploading files to HDFS...");
             hadoopCoordinator.uploadFiles(localFiles,"/input" + programId + "/");
-            logger.info(Thread.currentThread().getName() + ": Files uploaded to HDFS successfully");
         }catch(Exception e){
             logger.error(Thread.currentThread().getName() + ": Error while uploading files to HDFS\n" + e.getMessage());
             throw new RuntimeException(e.getMessage());

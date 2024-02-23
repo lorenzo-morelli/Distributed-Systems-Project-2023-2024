@@ -29,7 +29,7 @@ public class HadoopCoordinator extends HadoopFileManager{
             logger.info(Thread.currentThread().getName() + ": Files deleted from HDFS");
         } catch (IOException e) {
             logger.error(e);
-            e.printStackTrace();
+            System.out.println(Thread.currentThread().getName() + ": Error deleting files from HDFS : " + e.getMessage());
         }
     }
     private void uploadFileToHDFS(String localFilePath, String hdfsDestinationPath) throws IOException {

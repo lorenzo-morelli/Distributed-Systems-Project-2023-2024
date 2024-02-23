@@ -240,6 +240,7 @@ public class ProgramExecutor extends Thread{
                 return;
             }
         }catch(Exception e){
+            System.out.println(Thread.currentThread().getName() + ": Error while reading operations");
             System.out.println(e.getMessage());
             return;
         }
@@ -248,6 +249,7 @@ public class ProgramExecutor extends Thread{
         try {
             this.initializeConnections();
         } catch (Exception e) {
+            System.out.println(Thread.currentThread().getName() + ": Error while initializing connections");
             System.out.println(e.getMessage());
             return;
         }
@@ -256,6 +258,7 @@ public class ProgramExecutor extends Thread{
         try{
             this.initializeHadoop();
         }catch(Exception e){
+            System.out.println(Thread.currentThread().getName() + ": Error while initializing Hadoop");
             System.out.println(e.getMessage());
             return;
         }

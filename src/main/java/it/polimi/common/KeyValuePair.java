@@ -23,7 +23,6 @@ public class KeyValuePair implements Serializable {
         return key;
     }
 
-    // Override toString() for a more meaningful output
     @Override
     public String toString() {
         return "(" + key + ", " + value+ ")";

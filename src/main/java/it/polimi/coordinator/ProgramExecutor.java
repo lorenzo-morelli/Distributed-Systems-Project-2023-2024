@@ -93,9 +93,7 @@ public class ProgramExecutor extends Thread{
     public String getProgramId(){
         return programId;
     }
-    public HadoopCoordinator getHadoopCoordinator(){
-        return hadoopCoordinator;
-    }
+    
 
     private void initializeConnections(){
         logger.info(Thread.currentThread().getName()+ ": Initializing connections...");
@@ -181,6 +179,11 @@ public class ProgramExecutor extends Thread{
         }
     }
     public synchronized void writeResult(List<KeyValuePair> result){
+        if(errorPresent){
+            logger.error(Thread.currentThread().getName() + ": Error present in the program. Aborting...");
+            System.out.println(Thread.currentThread().getName() + ": Error present in the program. Aborting...");               
+            return;
+        }
         endedTasks++;
         finalResult.addAll(result);
         if(endedTasks == numPartitions){

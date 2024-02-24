@@ -53,7 +53,7 @@ class WorkerHandler extends Thread {
                 // Read the object from the coordinator
                 Object object = inputStream.readObject();
                 
-                logger.info(Thread.currentThread().getName()+ ": Received object from coordinator: " + object);
+                logger.info(Thread.currentThread().getName()+ ": Received message from coordinator");
                 if (object instanceof Task) {
 
                     Task task = (Task) object;
@@ -222,7 +222,7 @@ class WorkerHandler extends Thread {
             }
 
             if((i%sizeCheckPoint == 0 || (i+j) == reduceMessage.getKeys().size()) && temp.size() > 0){
-                logger.info(Thread.currentThread().getName()+ ": Writing checkpoint, elements: " + temp);
+                logger.info(Thread.currentThread().getName()+ ": Writing checkpoint, elements: " + temp.size());
                 checkPointManager.writeCheckPointPhase2(temp,reduceMessage.getProgramId(),true);
                 logger.info(Thread.currentThread().getName() + ": CheckPoint written: " + temp.size() + " elements");
                 result.addAll(temp);
@@ -255,6 +255,19 @@ class WorkerHandler extends Thread {
         if(!finished){
 
             List<Operator> operators = handleOperators(task.getOperators());
+            List<Operator> allOperatorsExceptReduce = new ArrayList<>();
+            Operator reduce = null;
+            for(Operator o : operators){
+                if(!(o instanceof ReduceOperator)){
+                    allOperatorsExceptReduce.add(o);
+                }else{
+                    if(reduce == null){
+                        reduce = o;
+                    }
+                }
+            }
+
+
             logger.info(Thread.currentThread().getName() +": Operators: " + operators.size() + " elements");
 
             logger.info(Thread.currentThread().getName() +": No checkpoint found for task " + task.getTaskId() + ", processing the task");
@@ -278,12 +291,12 @@ class WorkerHandler extends Thread {
                 if(i+sizeCheckPoint > data.size()){
                     end = data.size();
                 }
-                for (int k = 0;k < operators.size(); k++) {
+                for (int k = 0;k < allOperatorsExceptReduce.size(); k++) {
                     if(k == 0){
-                        tempResult = (operators.get(k).execute(data.subList(i, end)));
+                        tempResult = (allOperatorsExceptReduce.get(k).execute(data.subList(i, end)));
                         i = end;
                     }else{
-                        tempResult = (operators.get(k).execute(tempResult));
+                        tempResult = (allOperatorsExceptReduce.get(k).execute(tempResult));
                     }
                 }
                 result.addAll(tempResult);
@@ -291,11 +304,9 @@ class WorkerHandler extends Thread {
                 checkPointManager.writeCheckPointPhase1(task.getTaskId(),task.getProgramId(), result,false);
                 logger.info(Thread.currentThread().getName() +": CheckPoint written: " + result.size() + " elements" + " for task " + task.getTaskId()); 
             }
-
-            for(Operator o : operators){
-                if(o instanceof ReduceOperator){
-                    result = o.execute(result);
-                }   
+            
+            if(reduce != null){
+                result = reduce.execute(result);
             }
             logger.info(Thread.currentThread().getName() + ": Writing last checkpoint, elements: " + result.size() + " for task " + task.getTaskId());   
             checkPointManager.writeCheckPointPhase1(task.getTaskId(),task.getProgramId(), result,true);

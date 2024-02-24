@@ -1,7 +1,6 @@
 package it.polimi.coordinator;
 
 import java.io.File;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
 
@@ -26,10 +25,9 @@ public class Coordinator {
             address = scanner.nextLine();
             address = (address.equals("")) ? "hdfs://localhost:9000" : "hdfs://" + address;
 
-            String temp;
             System.out.println("Insert operations file path (default: 'files/configurations.json'): ");
-            temp = scanner.nextLine();
-            conf_path = temp.equals("") ? "files/configurations.json" : temp;
+            conf_path = scanner.nextLine();
+            conf_path = conf_path.equals("") ? "files/configurations.json" : conf_path;
 
             scanner.close();
         }catch(Exception e){
@@ -40,8 +38,6 @@ public class Coordinator {
         logger.info("Starting Coordinator");
 
        
-        
-        ArrayList<ProgramExecutor> programExecutors = new ArrayList<>();
 
         try {
             MutablePair<List<String>, List<Address>> configs = CoordinatorFileManager.readConfigurations(new File(conf_path));
@@ -51,11 +47,12 @@ public class Coordinator {
             for(String f : configs.getLeft()){
                 //programId = UUID.randomUUID().toString();
                 programId = String.valueOf(i);
-                programExecutors.add(new ProgramExecutor(programId,
+                ProgramExecutor executor = new ProgramExecutor(programId,
                     f,
                     configs.getRight(),
                     new HadoopCoordinator(address)
-                    ));
+                    );
+                executor.start();
                 System.out.println("Program " + i + " identified by " + programId );
                 logger.info("Program " + i + " identified by " + programId );    
                 i++;
@@ -64,12 +61,6 @@ public class Coordinator {
             System.out.println(e.getMessage());
             return;
         }
-        logger.info("Coordinator initialized");
-
-
-        for(ProgramExecutor p : programExecutors){
-            p.start();
-        }  
-        logger.info("Coordinator started");
+        logger.info("Coordinator initialized");        
     }   
 }

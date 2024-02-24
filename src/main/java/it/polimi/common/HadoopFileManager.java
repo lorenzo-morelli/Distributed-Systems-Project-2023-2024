@@ -35,8 +35,8 @@ public abstract class HadoopFileManager{
             try {
                 fs.close();
             } catch (IOException e) {
-                logger.error(e);
-                e.printStackTrace();
+                logger.error(Thread.currentThread().getName()+ ": Error closing the file system: " + e.getMessage());
+                System.out.println(Thread.currentThread().getName()+ ": Error closing the file system: " + e.getMessage());
             }
         }
     }

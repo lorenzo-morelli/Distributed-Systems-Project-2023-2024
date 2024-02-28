@@ -17,30 +17,25 @@ import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 
 import it.polimi.common.Address;
-import it.polimi.common.KeyValuePair;
 
 public class ProgramExecutor extends Thread{
 
-    private Integer numPartitions;
+    private int endedWorkers;
     private List<MutablePair<String, String>> operations;
     private List<Socket> clientSockets;
-    
     private KeyAssignmentManager keyManager;
-
-    private Map<String, Socket> fileSocketMap;
+    private Map<List<String>, Socket> fileSocketMap;
     private List<String> files;
     private List<String> localFiles;
     private List<Address> addresses;
     private MutablePair<String,String> lastReduce;
     private CoordinatorFileManager coordinatorFileManager;
-
-    private Integer endedTasks;
-    private List<KeyValuePair> finalResult;
     private static final Logger logger = LogManager.getLogger("it.polimi.Coordinator");
     private String programId;
     private String op_path;
     private HadoopCoordinator hadoopCoordinator;
     private volatile boolean errorPresent;
+
     public ProgramExecutor(String programId,String op_path,List<Address> addresses, HadoopCoordinator hadoopCoordinator) {
         this.clientSockets = new ArrayList<>();
         this.programId = programId;
@@ -53,11 +48,10 @@ public class ProgramExecutor extends Thread{
 
         this.fileSocketMap = new HashMap<>();
         this.lastReduce = new MutablePair<>();
-        this.keyManager = new KeyAssignmentManager();
+        this.keyManager = new KeyAssignmentManager(hadoopCoordinator,programId);
         
         this.hadoopCoordinator = hadoopCoordinator;
-        this.endedTasks = 0;
-        this.finalResult = new ArrayList<>();
+      
         this.errorPresent = false;
     }
     public boolean IsErrorPresent(){
@@ -77,11 +71,11 @@ public class ProgramExecutor extends Thread{
         return operations;
     }
 
-    public Integer getNumPartitions() {
-        return this.numPartitions;
+    public int getNumPartitions() {
+        return this.addresses.size();
     }
 
-    public Map<String, Socket> getFileSocketMap() {
+    public Map<List<String>, Socket> getFileSocketMap() {
         return fileSocketMap;
     }
     public List<Address> getAddresses(){
@@ -93,30 +87,37 @@ public class ProgramExecutor extends Thread{
     public String getProgramId(){
         return programId;
     }
-    
+    private List<String> manageFilesPerWorker(int workerIndex){
+        int numFilesPerWorker = files.size() / addresses.size();
+        int remainingFiles = files.size() % addresses.size();
+        
+        int start = workerIndex * numFilesPerWorker + Math.min(workerIndex, remainingFiles);
+        int end = (workerIndex + 1) * numFilesPerWorker + Math.min(workerIndex + 1, remainingFiles);
+
+        List<String> filesPerWorker = new ArrayList<>();
+        for (int i = start; i < end && i < files.size(); i++) {
+            filesPerWorker.add(files.get(i));
+        }
+        System.out.println(Thread.currentThread().getName() + ": Files per worker: " + filesPerWorker + " " + workerIndex);
+        return filesPerWorker;
+    }
 
     private void initializeConnections(){
         logger.info(Thread.currentThread().getName()+ ": Initializing connections...");
-        int i = 0;
-        for (String f : files) {
+        
+        
+        for (int j = 0; j < addresses.size(); j++) {
+
+            List<String> filesWorker = manageFilesPerWorker(j);
             try {
-                if(i<addresses.size()){
-                    Address a = addresses.get(i);
-                    Socket clientSocket = new Socket(a.getHostname(), a.getPort());
-                    clientSockets.add(clientSocket);
-                    fileSocketMap.put(f, clientSocket);
-                }else{
-                    try{
-                        fileSocketMap.put(f, getNewActiveSocket(new ArrayList<>(addresses),null));
-                    }catch(Exception e){
-                        logger.error(Thread.currentThread().getName()+ ": No workers available");
-                        throw new RuntimeException("No workers available");
-                    }
-                }
+                Address a = addresses.get(j);
+                Socket clientSocket = new Socket(a.getHostname(), a.getPort());
+                clientSockets.add(clientSocket);
+                fileSocketMap.put(filesWorker, clientSocket);
             } catch (IOException e) {
-                fileSocketMap.put(f, getNewActiveSocket(new ArrayList<>(addresses),null));
+                fileSocketMap.put(filesWorker, getNewActiveSocket(new ArrayList<>(addresses),null));
             }
-            i++;
+            
         }
         logger.info(Thread.currentThread().getName()+ ": Connections initialized");
 
@@ -178,32 +179,6 @@ public class ProgramExecutor extends Thread{
             return getNewActiveSocket(addressesTocheck, machine);
         }
     }
-    public synchronized void writeResult(List<KeyValuePair> result){
-        if(errorPresent){
-            logger.error(Thread.currentThread().getName() + ": Error present in the program. Aborting...");
-            System.out.println(Thread.currentThread().getName() + ": Error present in the program. Aborting...");               
-            return;
-        }
-        endedTasks++;
-        finalResult.addAll(result);
-        if(endedTasks == numPartitions){
-            System.out.println(Thread.currentThread().getName()+ ": Writing the final result...");
-            logger.info(Thread.currentThread().getName() + ": Writing the final result...");
-            try{
-                coordinatorFileManager.writeResult(programId,finalResult);
-                logger.info(Thread.currentThread().getName() +": Final result written");
-            }
-            catch(Exception e){
-                System.out.println(Thread.currentThread().getName() + ": Error while writing the final result");
-                logger.error(Thread.currentThread().getName()+ ": Error while writing the final result");
-                System.out.println(e.getMessage());
-            }
-            hadoopCoordinator.deleteFiles(programId);
-            logger.info(Thread.currentThread().getName() + ": Closing file system");
-            hadoopCoordinator.closeFileSystem();
-            logger.info(Thread.currentThread().getName() + ": File system closed");
-        }
-    }
     private void initializeHadoop(){
         try{
             hadoopCoordinator.uploadFiles(localFiles,"/input" + programId + "/");
@@ -218,15 +193,13 @@ public class ProgramExecutor extends Thread{
         MutablePair<List<MutablePair<String, String>>,List<String>> operations = coordinatorFileManager.readOperations(new File(op_path));  
 
         this.operations = operations.getLeft();
-
         this.localFiles = operations.getRight();
         this.files = new ArrayList<>();
          for(int i = 0; i < localFiles.size(); i++){
                 files.add("/input"+programId+"/" + new Path(localFiles.get(i)).getName());
         }
-        this.numPartitions = files.size();
         
-        if(this.numPartitions == 0 || this.operations.size() == 0){
+        if(this.addresses.size() == 0 || this.operations.size() == 0){
             logger.info(Thread.currentThread().getName() + ": Operations or num partitions are 0!");
             return false;
         }
@@ -271,7 +244,7 @@ public class ProgramExecutor extends Thread{
         try{
             int i = 0;
             
-            for (String f : this.getFileSocketMap().keySet()) {
+            for (List<String> f : this.getFileSocketMap().keySet()) {
                 executorService.submit(new SocketHandler(this,f,i,CoordinatorPhase.INIT));
                 i++;
             }
@@ -282,4 +255,26 @@ public class ProgramExecutor extends Thread{
         }
         logger.info(Thread.currentThread().getName() + " initialized SocketHandlers");
     }
+    
+    public synchronized void manageEnd(int identifier) throws IOException{
+        if(errorPresent){
+            logger.error(Thread.currentThread().getName() + ": Error present in the program. Aborting...");
+            System.out.println(Thread.currentThread().getName() + ": Error present in the program. Aborting...");               
+            return;
+        }
+        if(checkChangeKeyReduce()){
+            hadoopCoordinator.mergeFiles(programId,identifier);
+            endedWorkers++;
+            if(endedWorkers == addresses.size()){
+                hadoopCoordinator.deleteFiles(programId, checkChangeKeyReduce());
+            }
+        }else{
+            endedWorkers++;
+            if(endedWorkers == addresses.size()){
+                hadoopCoordinator.mergeFiles(programId);
+                hadoopCoordinator.deleteFiles(programId, checkChangeKeyReduce());
+            }
+        }
+    }
+
 }

@@ -1,72 +1,76 @@
 package it.polimi.coordinator;
 
+import java.io.IOException;
 import java.util.*;
 
+import org.apache.commons.lang3.tuple.MutablePair;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 
 public class KeyAssignmentManager {
 
-    private Map<SocketHandler, List<Integer>> currentAssignments;
-    private Map<SocketHandler, List<Integer>> finalAssignments;
+    private Map<SocketHandler, MutablePair<Integer,Integer>> currentAssignments;
+    private Map<SocketHandler, MutablePair<Integer,Integer>> finalAssignments;
     private volatile Boolean canProceed;
     private static final Logger logger = LogManager.getLogger("it.polimi.Coordinator");
-
-    public KeyAssignmentManager() {
+    private HadoopCoordinator hadoopCoordinator;
+    private String programId;
+    public KeyAssignmentManager(HadoopCoordinator hadoopCoordinator, String programId) {
         currentAssignments = new HashMap<>();
         finalAssignments = new HashMap<>();
         canProceed = false;
+        this.hadoopCoordinator = hadoopCoordinator;
+        this.programId = programId;
     }
-    public Map<SocketHandler,List<Integer>> getFinalAssignments(){
+    public Map<SocketHandler, MutablePair<Integer,Integer>> getFinalAssignments(){
         return finalAssignments;
     }
     public Boolean canProceed(){
         return canProceed;
     }
 
-    public synchronized void insertAssignment(SocketHandler worker, List<Integer> keys, Integer num) {
-        currentAssignments.put(worker, keys);
+    public synchronized void insertAssignment(SocketHandler worker, int num) throws IOException {
+        currentAssignments.put(worker, null);
         if (currentAssignments.size() == num) {
-            logger.info(Thread.currentThread().getName()+ ": All workers have been assigned keys");
             assignKeys(determineNewAssignmentsWithLoadBalancing());
         }
     }
 
     // Method to determine new worker assignments with load balancing for selected keys
-    public Map<SocketHandler, List<Integer>> determineNewAssignmentsWithLoadBalancing() {
+    public Map<SocketHandler, MutablePair<Integer,Integer>> determineNewAssignmentsWithLoadBalancing() throws IOException {
         
-        logger.info(Thread.currentThread().getName()+": Determining new worker assignments with load balancing");
+        Map<SocketHandler, MutablePair<Integer,Integer>> newAssignments = new HashMap<>();
+        
+        // Get the number of workers
+        int numWorkers = currentAssignments.size();
 
-        Map<SocketHandler, List<Integer>> newAssignments = new HashMap<>();
-        for(SocketHandler s: currentAssignments.keySet()){
-            newAssignments.put(s,new ArrayList<>());
-        }
-        Set<Integer> assignedKeys = new HashSet<>();
+        
+        // Get the number of keys
+        int keysSize = hadoopCoordinator.getKeysSize(programId);
+        
+        // Get the number of keys per worker
+        int keysPerWorker = keysSize / numWorkers;
+        int remainingKeys = keysSize % numWorkers;
 
-        for (Map.Entry<SocketHandler, List<Integer>> entry : currentAssignments.entrySet()) {
-
-            List<Integer> keys = entry.getValue();
-
-            for (Integer key : keys) { 
-                if(!assignedKeys.contains(key)){
-                    // Load balance keys with more than one worker
-                    SocketHandler newWorkerSocket = getLeastLoadedWorker(newAssignments);
-                    newAssignments.get(newWorkerSocket).add(key);
-                    assignedKeys.add(key);
-                }
+        // Assign keys to workers
+        int start = 0;
+        int end = 0;
+        for (SocketHandler worker : currentAssignments.keySet()) {
+            end = start + keysPerWorker;
+            if (remainingKeys > 0) {
+                end++;
+                remainingKeys--;
             }
+            newAssignments.put(worker, new MutablePair<>(start, end));
+            start = end;
         }
+
         logger.info(Thread.currentThread().getName()+": New worker assignments with load balancing determined");
         return newAssignments;
     }
 
-    private SocketHandler getLeastLoadedWorker(Map<SocketHandler, List<Integer>> newAssignments) {
-        Optional<Map.Entry<SocketHandler, List<Integer>>> leastLoadedWorker = newAssignments.entrySet().stream()
-                .min(Comparator.comparingInt(entry -> entry.getValue().size()));
-        return leastLoadedWorker.map(Map.Entry::getKey).orElseThrow();
-    }
 
-    private void assignKeys(Map<SocketHandler, List<Integer>> newAssignments) {
+    private void assignKeys(Map<SocketHandler, MutablePair<Integer,Integer>> newAssignments) {
         logger.info(Thread.currentThread().getName()+": Assigning keys to workers");
         canProceed = true;
         finalAssignments = newAssignments;

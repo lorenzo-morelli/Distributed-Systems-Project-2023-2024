@@ -8,20 +8,20 @@ import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.commons.lang3.tuple.MutablePair;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 
 import it.polimi.common.Address;
-import it.polimi.common.KeyValuePair;
 import it.polimi.common.messages.ErrorMessage;
-import it.polimi.common.messages.LastReduce;
-import it.polimi.common.messages.Task;
+import it.polimi.common.messages.ReduceOperation;
+import it.polimi.common.messages.NormalOperations;
 
 public class SocketHandler implements Runnable {
     public Socket clientSocket;
-    private Integer taskId;
+    private int identifier;
     private ProgramExecutor programExecutor;
-    private String file;
+    private List<String> files;
     private KeyAssignmentManager keyManager;
     private CoordinatorPhase phase;
     private ObjectInputStream inputStream = null;
@@ -30,11 +30,11 @@ public class SocketHandler implements Runnable {
     private String programId;
     private static final Logger logger = LogManager.getLogger("it.polimi.Coordinator");
 
-    public SocketHandler(ProgramExecutor programExecutor, String file, Integer taskId,CoordinatorPhase phase) {
-        this.clientSocket = programExecutor.getFileSocketMap().get(file);
+    public SocketHandler(ProgramExecutor programExecutor, List<String> files, int identifier,CoordinatorPhase phase) {
+        this.clientSocket = programExecutor.getFileSocketMap().get(files);
         this.keyManager = programExecutor.getKeyManager();
-        this.file = file;
-        this.taskId = taskId;
+        this.files = files;
+        this.identifier = identifier;
         this.programExecutor = programExecutor;
         this.phase = phase;
         this.isProcessing = true;
@@ -53,10 +53,12 @@ public class SocketHandler implements Runnable {
             while (isProcessing) {
                 switch (phase) {
                     case INIT:
-                        Task t = new Task(programId,programExecutor.getOperations(), file,programExecutor.checkChangeKeyReduce(),taskId);
+
+                        NormalOperations t = new NormalOperations(programId,programExecutor.getOperations(), files,programExecutor.checkChangeKeyReduce(),identifier);
                         System.out.println(Thread.currentThread().getName() + ": Sending task to worker phase1: " + clientSocket.getInetAddress().getHostName() +":"+ clientSocket.getPort());
                         logger.info(Thread.currentThread().getName() + ": Sending task to worker phase1: "+ clientSocket.getInetAddress().getHostName() +":"+ clientSocket.getPort());
                         outputStream.writeObject(t);
+                        
                         Object object = inputStream.readObject();
                         if (object == null){ 
                             logger.error(Thread.currentThread().getName() +": Received a null object!");
@@ -66,18 +68,17 @@ public class SocketHandler implements Runnable {
                             System.out.println(Thread.currentThread().getName() + ": " + ((ErrorMessage) object).getMessage());
                             programExecutor.setErrorPresent(true);
                             isProcessing = false;
-                        }else if (object instanceof List<?>) {
-                            List<?> list = (List<?>) object;
+                        }else if (object instanceof Boolean) {
                             // Process or print the list
                             if (!programExecutor.checkChangeKeyReduce()) {
                                 System.out.println(Thread.currentThread().getName() + ": Received the final result");
                                 logger.info(Thread.currentThread().getName() + ": Received the final result");
-                                end(object);
+                                end();
                                 isProcessing = false;
                             } else {
                                 System.out.println(Thread.currentThread().getName() + ": Received the keys to be managed");
                                 logger.info(Thread.currentThread().getName() + ": Received the keys to be managed");
-                                managePhase2(list);
+                                managePhase2();
                             }
                         } 
                         break;
@@ -92,7 +93,7 @@ public class SocketHandler implements Runnable {
                         if(keyManager.canProceed()){
                             logger.info(Thread.currentThread().getName() + ": Sending task to worker phase2: " + clientSocket.getInetAddress().getHostName() +":"+ clientSocket.getPort());
                             System.out.println(Thread.currentThread().getName() + ": Sending task to worker phase2: " + clientSocket.getInetAddress().getHostName() +":"+ clientSocket.getPort());
-                            LastReduce lastReduce = new LastReduce(programId,programExecutor.getLastReduce(), keyManager.getFinalAssignments().get(this));
+                            ReduceOperation lastReduce = new ReduceOperation(programId,programExecutor.getLastReduce(), keyManager.getFinalAssignments().get(this),identifier);
                             outputStream.writeObject(lastReduce);                
                             Object finalObject = inputStream.readObject();
                             if (finalObject == null ) {
@@ -103,10 +104,10 @@ public class SocketHandler implements Runnable {
                                 System.out.println(Thread.currentThread().getName()+ ": " + ((ErrorMessage) finalObject).getMessage());
                                 programExecutor.setErrorPresent(true);
                                 isProcessing = false;
-                            }else if (finalObject instanceof List<?>) {
+                            }else if (finalObject instanceof Boolean) {
                                 System.out.println(Thread.currentThread().getName() + ": Received the final result");
                                 logger.info(Thread.currentThread().getName() + ": Received the final result");  
-                                end(finalObject);
+                                end();
                                 isProcessing = false;
                             }            
                         }
@@ -120,48 +121,40 @@ public class SocketHandler implements Runnable {
             outputStream.close();
             clientSocket.close();
         } catch (Exception e) {  
+            e.printStackTrace();
             System.out.println(Thread.currentThread().getName() + ": Worker connection lost");
             logger.error(Thread.currentThread().getName() + ": Worker connection lost");
             handleSocketException();
         }
     }
-    private void end(Object object){
+    private void end(){
         try{
-            logger.info(Thread.currentThread().getName() + ": Adding the final result...");
-            programExecutor.writeResult(convertObjectToListKeyValuePairs(object));
-            logger.info(Thread.currentThread().getName() + ": Final result added"); 
+            programExecutor.manageEnd(identifier);   
         }catch(Exception e){
-            System.out.println(Thread.currentThread().getName() +": Error while adding the final result" + e.getMessage());
+            System.out.println(Thread.currentThread().getName() + ": Error while managing the end of the program" + e.getMessage());
+            logger.error(Thread.currentThread().getName() + ": Error while managing the end of the program" + e.getMessage());
+            System.exit(0);
         }
     }
 
-    private List<KeyValuePair> convertObjectToListKeyValuePairs(Object object) {
-        List<?> objectList = (List<?>) object;
-        List<KeyValuePair> list = new ArrayList<>();   
-        
-        for (Object element : objectList) {
-            if (element instanceof KeyValuePair) {
-                list.add((KeyValuePair) element);
-            }
+    
+    public void managePhase2(){
+
+        try{
+            keyManager.insertAssignment(this,programExecutor.getNumPartitions());
+            this.phase = CoordinatorPhase.FINAL;
+        }catch(Exception e){
+            System.out.println(Thread.currentThread().getName() + ": Error while splitting the keys" + e.getMessage());
+            logger.error(Thread.currentThread().getName() + ": Error while splitting th keys" + e.getMessage());
+            System.exit(0);
         }
-        return list;
     }
-    public void managePhase2(List<?> list){
-        List<Integer> integerList = new ArrayList<>();
-        for (Object element : list) {
-            if (element instanceof Integer) {
-                integerList.add((Integer) element);
-            }
-        }
-        logger.info(Thread.currentThread().getName() + ": Inserting keys...");
-        keyManager.insertAssignment(this, integerList,programExecutor.getNumPartitions());
-        this.phase = CoordinatorPhase.FINAL;
-    }
+
     private void handleSocketException() {
         logger.info(Thread.currentThread().getName() + ": Handling socket exception...");
         
         programExecutor.getClientSockets().remove(clientSocket);
-        programExecutor.getFileSocketMap().put(file, null);
+        programExecutor.getFileSocketMap().put(files, null);
     
         if (isProcessing) {
             boolean reconnected = attemptReconnection(clientSocket, 3, 5000);
@@ -250,12 +243,12 @@ public class SocketHandler implements Runnable {
     
     private void performReconnectedActions() {
         programExecutor.getClientSockets().add(clientSocket);
-        programExecutor.getFileSocketMap().put(file, clientSocket);
-        SocketHandler newSocketHandler = new SocketHandler(programExecutor, file, taskId, phase);
+        programExecutor.getFileSocketMap().put(files, clientSocket);
+        SocketHandler newSocketHandler = new SocketHandler(programExecutor, files, identifier, phase);
         if (keyManager.getFinalAssignments().get(this) != null) {
             System.out.println(Thread.currentThread().getName() + ": Reassigning keys to the new worker...");
             logger.info(Thread.currentThread().getName() + ": Reassigning keys to the new worker...");
-            List<Integer> keys= keyManager.getFinalAssignments().get(this);
+            MutablePair<Integer,Integer> keys= keyManager.getFinalAssignments().get(this);
             keyManager.getFinalAssignments().remove(this);            
             keyManager.getFinalAssignments().put(newSocketHandler, keys);
         }

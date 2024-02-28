@@ -1,14 +1,19 @@
 package it.polimi.coordinator;
 
 import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.List;
 
 import org.apache.hadoop.fs.FSDataOutputStream;
+import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.Path;
 import org.apache.log4j.LogManager;
+
 
 import it.polimi.common.HadoopFileManager;
 
@@ -18,13 +23,17 @@ public class HadoopCoordinator extends HadoopFileManager{
         logger = LogManager.getLogger("it.polimi.Coordinator");
     }
 
-    public void deleteFiles(String programId) {
+    public void deleteFiles(String programId, Boolean phase2) {
         logger.info(Thread.currentThread().getName() + ": Deleting files from HDFS");
         try {
-
+            
             fs.delete(new Path("/input" + programId), true);
             fs.delete(new Path("/program" + programId), true);
-    
+            
+            if(phase2){
+                fs.delete(new Path("/output" + programId), true);
+            }
+
             System.out.println(Thread.currentThread().getName() + ": Files deleted");
             logger.info(Thread.currentThread().getName() + ": Files deleted from HDFS");
         } catch (IOException e) {
@@ -64,4 +73,63 @@ public class HadoopCoordinator extends HadoopFileManager{
         }
         logger.info(Thread.currentThread().getName() +": Files uploaded to HDFS successfully.");
     }
+    
+    public int getKeysSize(String programId) throws IOException {
+        String path = "/program"+programId;
+        FileStatus[] fileStatuses = fs.listStatus(new Path(path));
+        return fileStatuses.length;
+    } 
+
+    public synchronized void mergeFiles(String programId, int identifier) throws IllegalArgumentException, IOException {
+        String hdfsFilePath = "/output" + programId + "/" + identifier;
+        String localMergedFilePath = "result-" + programId + ".csv";
+    
+        // Open the output file in append mode
+        try (BufferedOutputStream mergedOut = new BufferedOutputStream(new FileOutputStream(localMergedFilePath, true))) {
+            FileStatus[] fileStatuses = fs.listStatus(new Path(hdfsFilePath));
+    
+            for (FileStatus fileStatus : fileStatuses) {
+                String fileName = fileStatus.getPath().getName();
+                String hdfsFile = hdfsFilePath + "/" + fileName;
+                downloadAndAppendToMergedFile(hdfsFile, mergedOut);
+            }
+        }
+    }
+    public void mergeFiles(String programId) throws IllegalArgumentException, IOException {
+        String hdfsFilePath = "/program" + programId;
+        String localMergedFilePath = "result-" + programId + ".csv";
+        FileStatus[] folderStatuses = fs.listStatus(new Path(hdfsFilePath));
+        
+        for(FileStatus folder: folderStatuses){
+            // Open the output file in append mode
+            try (BufferedOutputStream mergedOut = new BufferedOutputStream(new FileOutputStream(localMergedFilePath, true))) {
+                FileStatus[] fileStatuses = fs.listStatus(new Path(folder.getPath().toString()));
+
+                for (FileStatus fileStatus : fileStatuses) {
+                    String fileName = fileStatus.getPath().getName();
+                    String hdfsFile = folder.getPath().toString() + "/" + fileName;
+                    downloadAndAppendToMergedFile(hdfsFile, mergedOut);
+                }
+            }
+        }
+    }
+
+    private void downloadAndAppendToMergedFile(String hdfsFilePath, OutputStream mergedOut) throws IOException {
+        logger.info(Thread.currentThread().getName() + ": Downloading file from HDFS: " + hdfsFilePath);
+        // Open HDFS file
+        try (InputStream in = fs.open(new Path(hdfsFilePath))) {
+            // Set buffer size to 4KB
+            byte[] buffer = new byte[4096];
+            int bytesRead;
+    
+            // Read file in chunks and write to merged file
+            while ((bytesRead = in.read(buffer)) > 0) {
+                mergedOut.write(buffer, 0, bytesRead);
+            }
+        }
+        logger.info(Thread.currentThread().getName() + ": File " + hdfsFilePath + " downloaded and appended to merged file successfully.");
+    }
+    
+
+
 }

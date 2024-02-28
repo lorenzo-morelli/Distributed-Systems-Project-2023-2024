@@ -3,24 +3,23 @@ import random
 import json
 import pandas as pd
 
-partitions = 0
-PART_GEN_PATH = "gen_files/part"
+keys = 0
+PART_GEN_PATH = "gen_files/key"
 RESULT_GEN_PATH = "files/program0/result.csv"
 RESULT_REAL_PATH = "result-0.csv"
-OPERATIONS_PATH = "files/program2/program.json"
+OPERATIONS_PATH = "files/program0/program.json"
 
 
 def generate_data():
-    global partitions
-    keys = int(input("Enter the number of keys per partition: "))
-    values = int(input("Enter the number of values per partition: "))
-    partitions = int(input("Enter the number of partitions (files): "))
+    global keys
+    keys = int(input("Enter the number of keys: "))
+    values = int(input("Enter the number of values per keys: "))
     max = int(input("Enter the max value for the values: "))
-    for i in range(1, partitions + 1):
+    for i in range(1, keys + 1):
         with open(f"{PART_GEN_PATH}{i}.csv", "w", newline='') as file:
             writer = csv.writer(file)
-            for j in range(1, values + 1):
-                key = random.randint(keys * (i - 1) + 1, keys * i)
+            for _ in range(1, values + 1):
+                key = i
                 value = random.randint(1, max)
                 if key and value:
                     writer.writerow([key, value])
@@ -117,8 +116,8 @@ def apply_operation(data, operation):
 
 
 def operations():
-    new_partitions = input(f"Specify the number of partitions (default set to: {partitions}): ")
-    new_partitions = int(new_partitions) if new_partitions else partitions
+    new_partitions = input(f"Specify the number of partitions (default set to: {keys}): ")
+    new_partitions = int(new_partitions) if new_partitions else keys
     if new_partitions == 0:
         print("No partitions to process.")
         return

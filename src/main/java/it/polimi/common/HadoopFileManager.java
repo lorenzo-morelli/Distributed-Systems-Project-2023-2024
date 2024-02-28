@@ -27,8 +27,8 @@ public abstract class HadoopFileManager{
 		Configuration conf = new Configuration();
         conf.set("fs.defaultFS", HDFS_URI);
         conf.set("fs.hdfs.impl", "org.apache.hadoop.hdfs.DistributedFileSystem");
-        FileSystem fs = FileSystem.newInstance(conf);
-		return fs;
+        FileSystem filesystem = FileSystem.newInstance(conf);
+		return filesystem;
 	}
     public void closeFileSystem(){
         if (fs!=null) {

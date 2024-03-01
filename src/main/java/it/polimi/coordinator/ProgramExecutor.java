@@ -35,7 +35,8 @@ public class ProgramExecutor extends Thread{
     private String op_path;
     private HadoopCoordinator hadoopCoordinator;
     private volatile boolean errorPresent;
-
+    private boolean changeKey;
+    private boolean reduce;
     public ProgramExecutor(String programId,String op_path,List<Address> addresses, HadoopCoordinator hadoopCoordinator) {
         this.clientSockets = new ArrayList<>();
         this.programId = programId;
@@ -53,6 +54,10 @@ public class ProgramExecutor extends Thread{
         this.hadoopCoordinator = hadoopCoordinator;
       
         this.errorPresent = false;
+        this.endedWorkers = 0;
+        this.changeKey = false;
+        this.reduce = false;
+
     }
     public boolean IsErrorPresent(){
         return errorPresent;
@@ -87,6 +92,13 @@ public class ProgramExecutor extends Thread{
     public String getProgramId(){
         return programId;
     }
+    public boolean getChangeKey(){
+        return changeKey;
+    }
+    public boolean getReduce(){
+        return reduce;
+    }
+
     private List<String> manageFilesPerWorker(int workerIndex){
         int numFilesPerWorker = files.size() / addresses.size();
         int remainingFiles = files.size() % addresses.size();
@@ -121,25 +133,6 @@ public class ProgramExecutor extends Thread{
         }
         logger.info(Thread.currentThread().getName()+ ": Connections initialized");
 
-    }
-    public boolean checkChangeKeyReduce(){
-        boolean changeKey = false;
-        boolean reduce = false;
-        boolean firstReduce = true;
-        for(MutablePair<String,String> m : operations){
-            if(m.getLeft().equals("CHANGEKEY")){
-                changeKey = true;
-            }
-            if(m.getLeft().equals("REDUCE")){
-                reduce = true;
-                if(firstReduce){
-                    lastReduce = m;
-                    firstReduce = false;
-                }
-            }
-        }
-        logger.info(Thread.currentThread().getName() + ": Phase 2 exists:" + (changeKey && reduce));
-        return changeKey && reduce;
     }
 
     public Socket getNewActiveSocket(List<Address> addressesTocheck, String machine){
@@ -203,6 +196,20 @@ public class ProgramExecutor extends Thread{
             logger.info(Thread.currentThread().getName() + ": Operations or num partitions are 0!");
             return false;
         }
+        boolean firstReduce = true;
+        for(MutablePair<String,String> m : this.operations){
+            if(m.getLeft().equals("CHANGEKEY")){
+                changeKey = true;
+            }
+            if(m.getLeft().equals("REDUCE")){
+                reduce = true;
+                if(firstReduce){
+                    lastReduce = m;
+                    firstReduce = false;
+                }
+            }
+        }
+
         return true;
     }
 
@@ -262,17 +269,17 @@ public class ProgramExecutor extends Thread{
             System.out.println(Thread.currentThread().getName() + ": Error present in the program. Aborting...");               
             return;
         }
-        if(checkChangeKeyReduce()){
+        if(changeKey && reduce){
             hadoopCoordinator.mergeFiles(programId,identifier);
             endedWorkers++;
             if(endedWorkers == addresses.size()){
-                hadoopCoordinator.deleteFiles(programId, checkChangeKeyReduce());
+                //hadoopCoordinator.deleteFiles(programId, changeKey && reduce);
             }
         }else{
             endedWorkers++;
             if(endedWorkers == addresses.size()){
                 hadoopCoordinator.mergeFiles(programId);
-                hadoopCoordinator.deleteFiles(programId, checkChangeKeyReduce());
+                hadoopCoordinator.deleteFiles(programId, changeKey && reduce);
             }
         }
     }

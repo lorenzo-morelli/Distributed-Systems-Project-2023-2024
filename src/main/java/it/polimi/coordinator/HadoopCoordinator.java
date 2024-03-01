@@ -98,18 +98,14 @@ public class HadoopCoordinator extends HadoopFileManager{
     public void mergeFiles(String programId) throws IllegalArgumentException, IOException {
         String hdfsFilePath = "/program" + programId;
         String localMergedFilePath = "result-" + programId + ".csv";
-        FileStatus[] folderStatuses = fs.listStatus(new Path(hdfsFilePath));
-        
-        for(FileStatus folder: folderStatuses){
-            // Open the output file in append mode
-            try (BufferedOutputStream mergedOut = new BufferedOutputStream(new FileOutputStream(localMergedFilePath, true))) {
-                FileStatus[] fileStatuses = fs.listStatus(new Path(folder.getPath().toString()));
-
-                for (FileStatus fileStatus : fileStatuses) {
-                    String fileName = fileStatus.getPath().getName();
-                    String hdfsFile = folder.getPath().toString() + "/" + fileName;
-                    downloadAndAppendToMergedFile(hdfsFile, mergedOut);
-                }
+        // Open the output file in append mode
+        try (BufferedOutputStream mergedOut = new BufferedOutputStream(new FileOutputStream(localMergedFilePath, true))) {
+            FileStatus[] fileStatuses = fs.listStatus(new Path(hdfsFilePath));
+    
+            for (FileStatus fileStatus : fileStatuses) {
+                String fileName = fileStatus.getPath().getName();
+                String hdfsFile = hdfsFilePath + "/" + fileName;
+                downloadAndAppendToMergedFile(hdfsFile, mergedOut);
             }
         }
     }

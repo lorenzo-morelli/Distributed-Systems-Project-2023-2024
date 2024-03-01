@@ -16,17 +16,18 @@ import java.util.regex.Matcher;
 import it.polimi.common.HadoopFileManager;
 import it.polimi.common.KeyValuePair;
 import it.polimi.common.messages.ReduceOperation;
+import it.polimi.worker.operators.ReduceOperator;
 import it.polimi.common.messages.NormalOperations;
 
 public class HadoopWorker extends HadoopFileManager{
-    private static final int BUFFER_SIZE = 8192;  // 8KB buffer size, adjust as needed
+    private static final int BUFFER_SIZE = 131072;  // 64KB buffer size, adjust as needed
 
     public HadoopWorker(String address) throws IOException{
         super(address);
         logger = LogManager.getLogger("it.polimi.Worker");
     }
 
-    public void readInputFile(int i, NormalOperations task, WorkerHandler workerHandler) throws IOException {
+    public void readInputFile(int i, NormalOperations task, WorkerHandler workerHandler, List<Operator> operators) throws IOException {
         
         Path filePath = new Path(task.getPathFiles().get(i));
         // Open the HDFS input stream
@@ -34,6 +35,18 @@ public class HadoopWorker extends HadoopFileManager{
         byte[] buffer = new byte[BUFFER_SIZE];
         int bytesRead;
         List<KeyValuePair> result = new ArrayList<>();
+
+        Operator reduce = null;
+        KeyValuePair reduceResult = null;
+        if(task.getReduce() && !task.getChangeKey()){
+            for (Operator op : operators) {
+                if (op instanceof ReduceOperator) {
+                    reduce = op;
+                    break;
+                }
+            }
+        }
+
         StringBuilder currentLine = new StringBuilder();
         Integer count = 0;
         while ((bytesRead = in.read(buffer, 0, BUFFER_SIZE)) != -1) {
@@ -45,9 +58,24 @@ public class HadoopWorker extends HadoopFileManager{
                 processLine(line, result);  
                 currentLine.delete(0, newlineIndex + 1);
             }
-            workerHandler.processPartitionTask(result, task,i,count);
+            for(Operator op: operators){
+                result = op.execute(result);
+            }
+            if((task.getReduce() && !task.getChangeKey())){
+                if(reduceResult == null){
+                    reduceResult = result.get(0);
+                }else{
+                    result.add(reduceResult);
+                    reduceResult = reduce.execute(result).get(0);
+                }
+            }else{
+                workerHandler.processPartitionTask(result, task,i,count);
+            }
             result.clear();
             count++;
+        }
+        if(task.getReduce() && !task.getChangeKey()){
+            workerHandler.processPartitionTask(List.of(reduceResult), task,i,count);
         }
     }
     private void processLine(String line, List<KeyValuePair> result) throws IOException {
@@ -62,41 +90,30 @@ public class HadoopWorker extends HadoopFileManager{
             throw new IOException("Invalid line in CSV: " + line);
         }
     } 
-    private String getPath(String programId, String identifier,Integer currentKey, boolean phase2){
-        return phase2 ? "/output"+programId+"/"+identifier +"/key"+currentKey+".csv"
-                : "/program"+programId+"/key" + currentKey +"/"+identifier+".csv";
-    }
+    
 
-    public List<String> writeKeys(String programId, String identifier,List<KeyValuePair> result, boolean phase2) throws IOException {
+    public void writeKeys(String programId, String identifier,KeyValuePair result) throws IOException {
         logger.info(Thread.currentThread().getName() + ": Writing keys to HDFS");
-        List<String> filesWritten = new ArrayList<>();
-        result.sort((KeyValuePair p1, KeyValuePair p2) -> p1.getKey().compareTo(p2.getKey()));
-        if(result.isEmpty()){
-            return filesWritten;
-        }
-        Integer count = 0;
-        Integer currentKey = result.get(count).getKey();
-        Integer start = 0;
-        Integer end = 0;
-        
-        for(;count<result.size();count++){
-            Integer key = result.get(count).getKey();    
-            if(currentKey!= key){
-                String fileName = getPath(programId, identifier, currentKey, phase2);
-                currentKey = key;
-                writeResult(result.subList(start, end),fileName);
-                filesWritten.add(fileName);             
-                start = end;
-                end++;
-            }else{
-                end++;
-            }
-        }
-        String fileName = getPath(programId, identifier, currentKey, phase2);
-        writeResult(result.subList(start, end),fileName);
-        filesWritten.add(fileName);
+        String fileName = "/output"+programId+"/"+identifier +"/key"+result.getKey()+".csv";
+        writeResult(List.of(result),fileName);
         logger.info(Thread.currentThread().getName() + ": Keys written to HDFS");
-        return filesWritten;
+    } 
+
+    public void writeKeys(String programId, String identifier,List<KeyValuePair> result,boolean changeKey,boolean reduce) throws IOException {
+        logger.info(Thread.currentThread().getName() + ": Writing keys to HDFS");
+        if(result.isEmpty()){
+            return;
+        }
+        if(changeKey && reduce){
+            for(KeyValuePair pair: result){
+                String fileName = "/program"+programId+"/key" + pair.getKey() +"/"+identifier+".csv";
+                writeResult(List.of(pair), fileName);
+            }   
+        }
+        else{
+            String fileName = "/program"+programId+"/" + identifier + ".csv";
+            writeResult(result,fileName);
+        }
     } 
 
     private void writeResult(List<KeyValuePair> data,String path) throws IOException {
@@ -116,7 +133,7 @@ public class HadoopWorker extends HadoopFileManager{
     }   
 
   
-    public List<KeyValuePair> readAndComputeReduce(int idx, ReduceOperation reduceMessage, Operator reduce) throws IOException, IllegalArgumentException {
+    public KeyValuePair readAndComputeReduce(int idx, ReduceOperation reduceMessage, Operator reduce) throws IOException, IllegalArgumentException {
         
         Integer key = findKey(idx, reduceMessage.getProgramId());
 
@@ -143,7 +160,7 @@ public class HadoopWorker extends HadoopFileManager{
                 result = reduce.execute(result);
             }
         }
-        return result;
+        return result.get(0);
     }
     private Integer findKey(int idx, String programId) throws IOException{
         String path = "/program"+programId;

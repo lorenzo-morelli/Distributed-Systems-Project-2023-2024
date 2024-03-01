@@ -5,10 +5,7 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 import org.apache.commons.lang3.tuple.MutablePair;
 import org.apache.log4j.LogManager;
@@ -23,7 +20,7 @@ class WorkerHandler extends Thread {
     private int identifier;
     private String programId;
     private static final Logger logger = LogManager.getLogger("it.polimi.Worker");
-    private Set<String> pathfilesWritten;
+    private List<Operator> operators;
     //private CheckPointManager checkPointManager;
     private HadoopWorker hadoopWorker;
     public WorkerHandler(Socket clientSocket, HadoopWorker hadoopWorker) {
@@ -32,7 +29,7 @@ class WorkerHandler extends Thread {
         this.hadoopWorker = hadoopWorker;
         this.identifier = -1;
         this.programId = null;
-        this.pathfilesWritten = new HashSet<>();
+        this.operators = new ArrayList<>();
     }
 
     @Override
@@ -79,7 +76,7 @@ class WorkerHandler extends Thread {
                     outputStream.writeObject(true);
                     System.out.println(Thread.currentThread().getName() + ": Keys sent to the coordinator");
                     logger.info(Thread.currentThread().getName() + ": Keys sent to the coordinator");
-                    if(!task.isPresentStep2()){
+                    if(!(task.getChangeKey() && task.getReduce())){
                         break;
                     }
                 } else if (object instanceof ReduceOperation){
@@ -151,24 +148,21 @@ class WorkerHandler extends Thread {
    
 
     private void processTask(NormalOperations task) throws IOException{
-        this.pathfilesWritten.clear();  
+        operators = handleOperators(task.getOperators());
         for(int i = 0;i<task.getPathFiles().size();i++){
-            hadoopWorker.readInputFile(i,task,this);
+            hadoopWorker.readInputFile(i,task,this,operators);
         }
     }
     public void processPartitionTask(List<KeyValuePair> result,NormalOperations task, Integer numFile,Integer numPart) throws IOException{
-        List<Operator> operators = handleOperators(task.getOperators());
-        for(Operator op: operators){
-            result = op.execute(result);
-        }
-        this.pathfilesWritten.addAll(hadoopWorker.writeKeys(programId,identifier + "_" + numFile +"_" + numPart,result,false));
+        
+        hadoopWorker.writeKeys(programId,identifier + "_" + numFile +"_" + numPart,result,task.getChangeKey(),task.getReduce());
     }
 
     private void computeReduceMessage(ReduceOperation reduceMessage) throws IOException{
-        this.pathfilesWritten.clear();
+        Operator reduce = handleOperators(List.of(reduceMessage.getReduce())).get(0);
         for(int idx = reduceMessage.getKeys().getLeft(); idx < reduceMessage.getKeys().getRight(); idx++ ){   
-            List<KeyValuePair> result = hadoopWorker.readAndComputeReduce(idx,reduceMessage,handleOperators(new ArrayList<>(Arrays.asList(reduceMessage.getReduce()))).get(0));
-            this.pathfilesWritten.addAll(hadoopWorker.writeKeys(programId,String.valueOf(identifier),result,true));
+            KeyValuePair result = hadoopWorker.readAndComputeReduce(idx,reduceMessage,reduce);
+            hadoopWorker.writeKeys(programId,String.valueOf(identifier),result);
         } 
     }
 }

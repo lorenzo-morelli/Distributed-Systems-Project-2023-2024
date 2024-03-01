@@ -54,7 +54,7 @@ public class SocketHandler implements Runnable {
                 switch (phase) {
                     case INIT:
 
-                        NormalOperations t = new NormalOperations(programId,programExecutor.getOperations(), files,programExecutor.checkChangeKeyReduce(),identifier);
+                        NormalOperations t = new NormalOperations(programId,programExecutor.getOperations(), files,programExecutor.getChangeKey(),programExecutor.getReduce(),identifier);
                         System.out.println(Thread.currentThread().getName() + ": Sending task to worker phase1: " + clientSocket.getInetAddress().getHostName() +":"+ clientSocket.getPort());
                         logger.info(Thread.currentThread().getName() + ": Sending task to worker phase1: "+ clientSocket.getInetAddress().getHostName() +":"+ clientSocket.getPort());
                         outputStream.writeObject(t);
@@ -70,7 +70,7 @@ public class SocketHandler implements Runnable {
                             isProcessing = false;
                         }else if (object instanceof Boolean) {
                             // Process or print the list
-                            if (!programExecutor.checkChangeKeyReduce()) {
+                            if (!(programExecutor.getChangeKey() && programExecutor.getReduce())) {
                                 System.out.println(Thread.currentThread().getName() + ": Received the final result");
                                 logger.info(Thread.currentThread().getName() + ": Received the final result");
                                 end();
@@ -121,7 +121,6 @@ public class SocketHandler implements Runnable {
             outputStream.close();
             clientSocket.close();
         } catch (Exception e) {  
-            e.printStackTrace();
             System.out.println(Thread.currentThread().getName() + ": Worker connection lost");
             logger.error(Thread.currentThread().getName() + ": Worker connection lost");
             handleSocketException();

@@ -8,13 +8,15 @@ import org.apache.commons.lang3.tuple.MutablePair;
 public class NormalOperations extends Operation{
     private final List<MutablePair<String, String>> operators;
     private final List<String> pathFiles;
-    private final boolean isPresentStep2;
+    private final boolean changeKey;
+    private final boolean reduce;
     private static final long serialVersionUID = 1L;
-    public NormalOperations(String programId, List<MutablePair<String, String>> list, List<String> pathFiles,boolean isPresentStep2,Integer identifier) {
+    public NormalOperations(String programId, List<MutablePair<String, String>> list, List<String> pathFiles,boolean changeKey,boolean reduce,Integer identifier) {
         super(programId,identifier); 
         this.operators = list;
         this.pathFiles = pathFiles;
-        this.isPresentStep2 = isPresentStep2;
+        this.changeKey = changeKey;
+        this.reduce = reduce;
     }
     public List<MutablePair<String, String>> getOperators(){
         return operators;
@@ -22,7 +24,10 @@ public class NormalOperations extends Operation{
     public List<String> getPathFiles(){
         return pathFiles;
     }
-    public boolean isPresentStep2(){
-        return isPresentStep2;
+    public boolean getChangeKey(){
+        return changeKey;
+    }
+    public boolean getReduce(){
+        return reduce;
     }
 }

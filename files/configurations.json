@@ -4,6 +4,7 @@
     ],
     "programs": [
       "files/program0/program.json",
-      "files/program1/program.json"
+      "files/program1/program.json",
+      "files/program2/program.json"
     ]
 }

@@ -1,0 +1,29 @@
+{
+  "operations": [
+    {
+      "operator": "FILTER",
+      "function": "GT(0)"
+    },
+    {
+      "operator": "MAP",
+      "function": "MULTIPLY(2)"
+    },
+    {
+      "operator": "CHANGEKEY",
+      "function": "ADD(1)"
+    }
+  ],
+  "files": [
+    "files/program2/key1.csv",
+    "files/program2/key2.csv",
+    "files/program2/key3.csv",
+    "files/program2/key4.csv",
+    "files/program2/key5.csv",
+    "files/program2/key6.csv",
+    "files/program2/key7.csv",
+    "files/program2/key8.csv",
+    "files/program2/key9.csv",
+    "files/program2/key10.csv"
+
+  ]
+}

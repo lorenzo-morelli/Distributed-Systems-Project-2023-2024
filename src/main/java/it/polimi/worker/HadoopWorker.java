@@ -20,7 +20,7 @@ import it.polimi.worker.operators.ReduceOperator;
 import it.polimi.common.messages.NormalOperations;
 
 public class HadoopWorker extends HadoopFileManager{
-    private static final int BUFFER_SIZE = 131072;  // 64KB buffer size, adjust as needed
+    private int BUFFER_SIZE = 262144;  // 64KB buffer size, adjust as needed
 
     public HadoopWorker(String address) throws IOException{
         super(address);
@@ -32,6 +32,7 @@ public class HadoopWorker extends HadoopFileManager{
         Path filePath = new Path(task.getPathFiles().get(i));
         // Open the HDFS input stream
         FSDataInputStream in = fs.open(filePath);
+
         byte[] buffer = new byte[BUFFER_SIZE];
         int bytesRead;
         List<KeyValuePair> result = new ArrayList<>();
@@ -47,20 +48,19 @@ public class HadoopWorker extends HadoopFileManager{
             }
         }
 
-        StringBuilder currentLine = new StringBuilder();
+        StringBuilder partialTuple  = new StringBuilder();
         Integer count = 0;
-        while ((bytesRead = in.read(buffer, 0, BUFFER_SIZE)) != -1) {
-            currentLine.append(new String(buffer, 0, bytesRead));
+        while ((bytesRead = in.read(buffer)) > 0) {
+            String data = new String(buffer, 0, bytesRead);
+            String combinedData = partialTuple.toString() + data;
 
-            int newlineIndex;
-            while ((newlineIndex = currentLine.indexOf("\n")) != -1) {
-                String line = currentLine.substring(0, newlineIndex).trim();
-                processLine(line, result);  
-                currentLine.delete(0, newlineIndex + 1);
+            String[] lines = combinedData.split("\n");
+
+            for (int j = 0; j < lines.length - 1; j++) {
+                processLine(lines[j].trim(), result);
             }
-            for(Operator op: operators){
-                result = op.execute(result);
-            }
+            partialTuple = new StringBuilder(lines[lines.length - 1]);
+
             if((task.getReduce() && !task.getChangeKey())){
                 if(reduceResult == null){
                     reduceResult = result.get(0);
@@ -95,7 +95,9 @@ public class HadoopWorker extends HadoopFileManager{
     public void writeKeys(String programId, String identifier,KeyValuePair result) throws IOException {
         logger.info(Thread.currentThread().getName() + ": Writing keys to HDFS");
         String fileName = "/output"+programId+"/"+identifier +"/key"+result.getKey()+".csv";
-        writeResult(List.of(result),fileName);
+        FileSystem fileSystem = initialize();
+        writeResult(List.of(result),fileName,fileSystem);
+        fileSystem.close();
         logger.info(Thread.currentThread().getName() + ": Keys written to HDFS");
     } 
 
@@ -104,20 +106,23 @@ public class HadoopWorker extends HadoopFileManager{
         if(result.isEmpty()){
             return;
         }
+        FileSystem fileSystem = initialize();
+
         if(changeKey && reduce){
             for(KeyValuePair pair: result){
                 String fileName = "/program"+programId+"/key" + pair.getKey() +"/"+identifier+".csv";
-                writeResult(List.of(pair), fileName);
+                writeResult(List.of(pair), fileName,fileSystem);
             }   
         }
         else{
             String fileName = "/program"+programId+"/" + identifier + ".csv";
-            writeResult(result,fileName);
+            writeResult(result,fileName,fileSystem);
         }
+        fileSystem.close();
+
     } 
 
-    private void writeResult(List<KeyValuePair> data,String path) throws IOException {
-        FileSystem fileSystem = initialize();
+    private void writeResult(List<KeyValuePair> data,String path, FileSystem fileSystem) throws IOException {
 
         logger.info(Thread.currentThread().getName() + ": Writing to HDFS: " + path);
         Path outputPath = new Path(path);
@@ -128,7 +133,6 @@ public class HadoopWorker extends HadoopFileManager{
             outputStream.write((key + "," + value + "\n").getBytes());
         }
         logger.info(Thread.currentThread().getName() + ": Written to HDFS: " + path);
-        fileSystem.close();
         outputStream.close();
     }   
 
@@ -147,7 +151,7 @@ public class HadoopWorker extends HadoopFileManager{
             int bytesRead;
             StringBuilder currentLine = new StringBuilder();
 
-            while ((bytesRead = in.read(buffer, 0, BUFFER_SIZE)) != -1) {
+            while ((bytesRead = in.read(buffer)) > 0) {
                 currentLine.append(new String(buffer, 0, bytesRead));
 
                 int newlineIndex;

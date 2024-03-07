@@ -125,6 +125,27 @@ public class HadoopCoordinator extends HadoopFileManager{
         }
         logger.info(Thread.currentThread().getName() + ": File " + hdfsFilePath + " downloaded and appended to merged file successfully.");
     }
+
+    public synchronized void mergeHadoopFiles(String id,String i, List<String> files) {
+        //merge the local files into 1 in hdfs in the folder /program+programId
+        String hdfsFilePath = "/input" + id;
+        String localMergedFilePath = "program" + i + ".csv";
+
+        try (FSDataOutputStream mergedOut = fs.create(new Path(hdfsFilePath + "/" + localMergedFilePath))) {
+            for (String file : files) {
+                try (BufferedInputStream in = new BufferedInputStream(new FileInputStream(file)) ) {
+                    byte[] buffer = new byte[4096];
+                    int bytesRead;
+                    while ((bytesRead = in.read(buffer)) > 0) {
+                        mergedOut.write(buffer, 0, bytesRead);
+                    }
+                }
+            }
+        } catch (IOException e) {
+            logger.error(e);
+            System.out.println(Thread.currentThread().getName() + ": Error merging files: " + e.getMessage());
+        }
+    }
     
 
 

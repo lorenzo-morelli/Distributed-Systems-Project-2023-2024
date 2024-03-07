@@ -149,6 +149,7 @@ class WorkerHandler extends Thread {
 
     private void processTask(NormalOperations task) throws IOException{
         operators = handleOperators(task.getOperators());
+        System.out.println(Thread.currentThread().getName() + ": Processing task" + task.getPathFiles());
         for(int i = 0;i<task.getPathFiles().size();i++){
             hadoopWorker.readInputFile(i,task,this,operators);
         }

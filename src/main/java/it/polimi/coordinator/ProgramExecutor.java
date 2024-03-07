@@ -174,7 +174,34 @@ public class ProgramExecutor extends Thread{
     }
     private void initializeHadoop(){
         try{
-            hadoopCoordinator.uploadFiles(localFiles,"/input" + programId + "/");
+            if(reduce && !changeKey){
+                hadoopCoordinator.uploadFiles(localFiles,"/input" + programId + "/");
+  
+            }
+            else{
+                                
+                for(int i = 0; i< addresses.size(); i++){
+                    int numFilesPerWorker = files.size() / addresses.size();
+                    int remainingFiles = files.size() % addresses.size();
+                    
+                    int start = i * numFilesPerWorker + Math.min(i, remainingFiles);
+                    int end = (i + 1) * numFilesPerWorker + Math.min(i + 1, remainingFiles);
+
+                    List<String> filesPerWorker = new ArrayList<>();
+                    for (int j = start; j < end && j < files.size(); j++) {
+                        filesPerWorker.add(localFiles.get(j));
+                    }
+                    hadoopCoordinator.mergeHadoopFiles(programId, String.valueOf(i),filesPerWorker);
+                    i++;
+                }
+
+
+
+                this.fileSocketMap.clear();
+                for(int i = 0; i < addresses.size(); i++){
+                    this.fileSocketMap.put(new ArrayList<>(List.of("/input" + programId + "/program" + i + ".csv")), clientSockets.get(i));
+                }
+            }
         }catch(Exception e){
             logger.error(Thread.currentThread().getName() + ": Error while uploading files to HDFS\n" + e.getMessage());
             throw new RuntimeException(e.getMessage());
@@ -273,7 +300,7 @@ public class ProgramExecutor extends Thread{
             hadoopCoordinator.mergeFiles(programId,identifier);
             endedWorkers++;
             if(endedWorkers == addresses.size()){
-                //hadoopCoordinator.deleteFiles(programId, changeKey && reduce);
+                hadoopCoordinator.deleteFiles(programId, changeKey && reduce);
             }
         }else{
             endedWorkers++;

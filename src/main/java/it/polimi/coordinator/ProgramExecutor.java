@@ -179,7 +179,7 @@ public class ProgramExecutor extends Thread{
   
             }
             else{
-                                
+                System.out.println(Thread.currentThread().getName() + ": Uploading files to HDFS" + addresses.size());          
                 for(int i = 0; i< addresses.size(); i++){
                     int numFilesPerWorker = files.size() / addresses.size();
                     int remainingFiles = files.size() % addresses.size();
@@ -192,14 +192,13 @@ public class ProgramExecutor extends Thread{
                         filesPerWorker.add(localFiles.get(j));
                     }
                     hadoopCoordinator.mergeHadoopFiles(programId, String.valueOf(i),filesPerWorker);
-                    i++;
                 }
 
 
 
                 this.fileSocketMap.clear();
                 for(int i = 0; i < addresses.size(); i++){
-                    this.fileSocketMap.put(new ArrayList<>(List.of("/input" + programId + "/program" + i + ".csv")), clientSockets.get(i));
+                    this.fileSocketMap.put(new ArrayList<>(List.of("/input" + programId + "/task" + i + ".csv")), clientSockets.get(i));
                 }
             }
         }catch(Exception e){

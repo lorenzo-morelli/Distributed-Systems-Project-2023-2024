@@ -129,7 +129,7 @@ public class HadoopCoordinator extends HadoopFileManager{
     public synchronized void mergeHadoopFiles(String id,String i, List<String> files) {
         //merge the local files into 1 in hdfs in the folder /program+programId
         String hdfsFilePath = "/input" + id;
-        String localMergedFilePath = "program" + i + ".csv";
+        String localMergedFilePath = "task" + i + ".csv";
 
         try (FSDataOutputStream mergedOut = fs.create(new Path(hdfsFilePath + "/" + localMergedFilePath))) {
             for (String file : files) {
@@ -145,6 +145,7 @@ public class HadoopCoordinator extends HadoopFileManager{
             logger.error(e);
             System.out.println(Thread.currentThread().getName() + ": Error merging files: " + e.getMessage());
         }
+        System.out.println("\n"+ Thread.currentThread().getName() + ": Files merged successfully" + localMergedFilePath +"\n\n\n\n");
     }
     
 

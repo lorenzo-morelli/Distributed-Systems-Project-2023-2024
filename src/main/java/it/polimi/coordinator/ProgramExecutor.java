@@ -127,7 +127,9 @@ public class ProgramExecutor extends Thread{
                 clientSockets.add(clientSocket);
                 fileSocketMap.put(filesWorker, clientSocket);
             } catch (IOException e) {
-                fileSocketMap.put(filesWorker, getNewActiveSocket(new ArrayList<>(addresses),null));
+                Socket clientSocket = getNewActiveSocket(new ArrayList<>(addresses),null);
+                clientSockets.add(clientSocket);
+                fileSocketMap.put(filesWorker, clientSocket);
             }
             
         }
@@ -258,6 +260,7 @@ public class ProgramExecutor extends Thread{
         try {
             this.initializeConnections();
         } catch (Exception e) {
+            
             System.out.println(Thread.currentThread().getName() + ": Error while initializing connections");
             System.out.println(e.getMessage());
             return;

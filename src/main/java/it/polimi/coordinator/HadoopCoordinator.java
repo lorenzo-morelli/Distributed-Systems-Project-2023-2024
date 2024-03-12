@@ -145,7 +145,6 @@ public class HadoopCoordinator extends HadoopFileManager{
             logger.error(e);
             System.out.println(Thread.currentThread().getName() + ": Error merging files: " + e.getMessage());
         }
-        System.out.println("\n"+ Thread.currentThread().getName() + ": Files merged successfully" + localMergedFilePath +"\n\n\n\n");
     }
     
 

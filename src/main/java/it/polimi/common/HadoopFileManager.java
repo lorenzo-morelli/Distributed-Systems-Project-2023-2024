@@ -7,12 +7,13 @@ import org.apache.hadoop.fs.FileSystem;
 import org.apache.log4j.Logger;
 
 public abstract class HadoopFileManager{
-    protected String HDFS_URI = "hdfs://localhost:9000";
+    protected final String HDFS_URI;
     protected FileSystem fs;
     protected static Logger logger;
-
-    public HadoopFileManager(String address) throws IOException{
-        setHDFS_URI(address);
+    protected final int BUFFER_SIZE;
+    public HadoopFileManager(String address, int BUFFER_SIZE) throws IOException{
+        this.HDFS_URI = address;
+        this.BUFFER_SIZE = BUFFER_SIZE;
         try{
         fs = initialize();
         }catch(IOException e){
@@ -20,9 +21,6 @@ public abstract class HadoopFileManager{
             throw new IOException("Not possible to connect to the HDFS server. Check the address of the server and if it is running!\nCheck also if files exist!\n" + e.getMessage());        }
     }
 
-    private void setHDFS_URI(String newURI) {
-        HDFS_URI = newURI;
-    }
     protected FileSystem initialize() throws IOException{
 		Configuration conf = new Configuration();
         conf.set("fs.defaultFS", HDFS_URI);

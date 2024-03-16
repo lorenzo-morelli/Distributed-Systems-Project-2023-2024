@@ -1,150 +1,88 @@
 package it.polimi.worker;
 
-import java.io.File;
-import java.io.FileWriter;
 import java.io.IOException;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.nio.file.Paths;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.concurrent.locks.ReentrantLock;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.locks.ReentrantLock;
-import java.nio.file.Paths;
-import org.apache.commons.lang3.tuple.MutablePair;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.nimbusds.jose.shaded.json.JSONObject;
+import it.polimi.worker.utils.CheckpointInfo;
 
-import it.polimi.common.KeyValuePair;
+import java.io.File;
 
 public class CheckPointManager {
 
-    private final String OUTPUT_DIRECTORY = "checkpoints-";
+    private final String CHECKPOINT_DIRECTORY = "checkpoints-";
     private static final Logger logger = LogManager.getLogger("it.polimi.Worker");
     private static final ReentrantLock folderLock = new ReentrantLock();
+    private final Set<String> createdFiles = new HashSet<>();
 
-    public MutablePair<Boolean, List<KeyValuePair>> checkCheckPoint(Integer taskId, String programId, Boolean phase2){
-        String fileName;
-
-        if(phase2){
-            fileName = "key" + taskId + ".json";
-        }else{
-            fileName = "task" + taskId + ".json";
-        }
-
-        String path = OUTPUT_DIRECTORY+programId+"/"+ fileName;
-        File file = new File(path);
-        MutablePair<Boolean, List<KeyValuePair>> result = new MutablePair<>(false, new ArrayList<>());
-        
-        
-        logger.info(Thread.currentThread().getName() +": Check if checkpoint exists :" + path);
-        if(file.exists()){
-            try{
-                result = readCheckPoint(file,phase2);
-                logger.info(Thread.currentThread().getName() + ": Checkpoint found for " + path);
-            }catch(IOException e){
-                logger.warn(Thread.currentThread().getName() + ": Error while reading the checkpoint");
-                System.out.println(Thread.currentThread().getName() + " :" + e.getMessage());
-            }
-        }
-        return result;
-    }
-    
-    public void writeCheckPointPhase1(Integer taskId,String programId, List<KeyValuePair> result, boolean finished) {
-        String fileName = OUTPUT_DIRECTORY+programId+ "/task" + taskId + ".json";
-        
-        logger.info(Thread.currentThread().getName() + ": Creating checkpoint phase 1 for task " + taskId);
-        createCheckpoint(result, fileName,finished,false,programId);
-        logger.info(Thread.currentThread().getName() +": Checkpoint phase 1 created for task " + taskId);
-        
-    }
-    public void writeCheckPointPhase2(List<KeyValuePair> result,String programId, boolean finished) {
-        
-        ArrayList<KeyValuePair> temp = new ArrayList<>();      
-        for(KeyValuePair k : result){
-            String fileName = OUTPUT_DIRECTORY+programId + "/key" + k.getKey() + ".json";
-            temp.add(k);
-            logger.info(Thread.currentThread().getName() + ": Creating checkpoint phase 2" + " for key " + k.getKey());
-            createCheckpoint(temp, fileName,finished,true,programId);
-            logger.info(Thread.currentThread().getName() +": Checkpoint created for phase 2" + " for key " + k.getKey());
-            temp.remove(k);
-        }        
-    }
-   
-    private void createCheckpoint(List<KeyValuePair> result, String fileName,boolean finished, boolean phase2, String programId) {
-        CheckPointManager.createOutputDirectory(OUTPUT_DIRECTORY+programId+"/");
-
-        try{
-            logger.info(Thread.currentThread().getName() + ": Writing the checkpoint to file " + fileName);
-            writeCheckPoint(result, fileName,finished,phase2);
-            logger.info(Thread.currentThread().getName() + ": Checkpoint written to file " + fileName);
-        }
-        catch(IOException e){
-            logger.error(Thread.currentThread().getName() + ": Error while writing the checkpoint");
-            System.out.println(Thread.currentThread().getName() + ": Error while writing the checkpoint");
+    public void createCheckpoint(String programId, String pathString,CheckpointInfo checkPointObj){
+        createOutputDirectory(CHECKPOINT_DIRECTORY + programId);
+        try {
+            Path path = Paths.get(pathString);
+            pathString = CHECKPOINT_DIRECTORY + programId + "/" + path.getFileName();
+            createdFiles.add(pathString);
+            BufferedWriter writer = new BufferedWriter(new FileWriter(pathString, true));
+            writer.write("<Checkpoint:" + checkPointObj.getCount() + "><"+checkPointObj.getEnd()+">\n");
+            writer.close();
+            logger.info(Thread.currentThread().getName() + ": Created checkpoint file " + pathString);
+        } catch (IOException e) {
+            logger.error(Thread.currentThread().getName() + ": Error while creating checkpoint file");
+            System.out.println(Thread.currentThread().getName() + ": Error while creating checkpoint file");
             System.out.println(e.getMessage());
         }
     }
-
-    
-    public MutablePair<Boolean, List<KeyValuePair>> readCheckPoint(File file, Boolean phase2) throws IOException {
-        logger.info(Thread.currentThread().getName() + ": Reading checkpoint file: " + file.getAbsolutePath().toString());
-        List<KeyValuePair> result = new ArrayList<>();
-        Boolean end = false;
-        
+    public CheckpointInfo getCheckPoint(String programId,String pathString) {
+        int count = 0;
+        boolean end = false;
         try {
-            ObjectMapper objectMapper = new ObjectMapper();
-            Map<String, Object> jsonData = objectMapper.readValue(file, new TypeReference<Map<String, Object>>() {});
-    
-            result = objectMapper.convertValue(jsonData.get("values"), new TypeReference<List<KeyValuePair>>() {});    
-            if(!phase2){
-                end = (Boolean) jsonData.get("end");
+            Path path = Paths.get(pathString);
+            pathString = CHECKPOINT_DIRECTORY + programId + "/" + path.getFileName();   
+            if (!Files.exists(Paths.get(pathString))) {
+                return new CheckpointInfo(0, false);
             }
-        } catch (IOException e) {
-            logger.warn(e);
-            throw new IOException("Not possible to read the checkpoint file:\n" + file.getAbsolutePath().toString());
-        }
-        logger.info(Thread.currentThread().getName() + ": Checkpoint file read: " + file.getAbsolutePath().toString());
-        return new MutablePair<>(end, result);
-    }
-    public void writeCheckPoint(List<KeyValuePair> result, String fileName, boolean finished, boolean phase2) throws IOException {
-        logger.info(Thread.currentThread().getName() + ": Creating checkpoint file: " + fileName);
-        JSONObject jsonObject = new JSONObject();
-        jsonObject.put("values", result);
-    
-        if (!phase2) {
-            jsonObject.put("end", finished);
-        }
-        
-        String tempFileName = fileName.split("\\.")[0] + "_temp.json";
+            BufferedReader reader = new BufferedReader(new FileReader(pathString));
+            String line;
+            while ((line = reader.readLine()) != null) {
+                if (line.startsWith("<Checkpoint")) {
+                    String[] parts = line.split("><");
+                    if (parts.length != 2) {
+                        reader.close();
+                        throw new NumberFormatException("Invalid checkpoint format");
+                    }
+                    if(parts[0].charAt(parts[0].length()-1) == '>' && (parts[1].charAt(parts[1].length()-1) == '>')){
+                        count = Integer.parseInt(parts[0].substring(12, parts[0].length()-1));
+                        end = Boolean.parseBoolean(parts[1].substring(0, parts[1].length()-1));
 
-        logger.info(Thread.currentThread().getName() + ": Writing temp checkpoint file: " + tempFileName);
-       // Write the JSON object to a file
-        try (FileWriter fileWriter = new FileWriter(tempFileName)) {
-            fileWriter.write(jsonObject.toJSONString());
+                    }else{
+                        reader.close();
+                        throw new NumberFormatException("Invalid checkpoint format");
+                    }
+                }
+            }
+            reader.close();
         } catch (IOException e) {
-            logger.error(e);
-            throw new IOException("Not possible to write the checkpoint file:\n" + tempFileName);
+            logger.error(Thread.currentThread().getName() + ": Error while reading checkpoint file");
+        } catch (NumberFormatException e) {
+            logger.warn("Invalid checkpoint format: " + e.getMessage());
         }
-        logger.info(Thread.currentThread().getName() + ": Temp checkpoint file written: " + tempFileName);
+        return new CheckpointInfo(count, end);
+}
 
-        Path sourcePath = Path.of(tempFileName);
-        Path destinationPath = Path.of(fileName);
-        logger.info(Thread.currentThread().getName() + ": Moving temp checkpoint file to: " + fileName);
-        Files.copy(sourcePath, destinationPath, StandardCopyOption.REPLACE_EXISTING);
-        logger.info(Thread.currentThread().getName() + ": Temp checkpoint file moved to: " + fileName);
-        Files.deleteIfExists(sourcePath);
-        logger.info(Thread.currentThread().getName() + ": Temp checkpoint file deleted: " + tempFileName);
-    }
-    private static void createOutputDirectory(String OUTPUT_DIRECTORY) {
+
+    private static void createOutputDirectory(String directory) {
         try{
             folderLock.lock();
-
-            Path outputDirectoryPath = Paths.get(OUTPUT_DIRECTORY);
+            Path outputDirectoryPath = Paths.get(directory);
 
             if (Files.notExists(outputDirectoryPath)) {
                 try {
@@ -156,23 +94,26 @@ public class CheckPointManager {
                     System.out.println(e.getMessage());
                 }
             }
-        }finally{
+        }catch(Exception e){
+            logger.error(Thread.currentThread().getName() + ": Error while creating '"+directory+"' directory");
+            System.out.println(Thread.currentThread().getName() + ": Error while creating '"+directory+"' directory");
+            System.out.println(e.getMessage());
+        }
+        finally{
             folderLock.unlock();
         }
     }
-
-    public void deleteCheckPoint(Integer id, String programId, boolean phase2) {
-        String fileName;
-        if(phase2){
-            fileName = OUTPUT_DIRECTORY+programId+"/key" + id + ".json";
-        }else{
-            fileName = OUTPUT_DIRECTORY+programId+"/task" + id + ".json";
+    public void deleteCheckpoints(String programId){
+        try{
+            for(String file : createdFiles){
+                Path path = Paths.get(file);
+                Files.deleteIfExists(path);
+            }
+            deleteEmptyDirectory(new File(CHECKPOINT_DIRECTORY+programId+"/"));
+        }catch(Exception e){
+            logger.error(Thread.currentThread().getName() + ": Error while deleting checkpoints");
+            System.out.println(Thread.currentThread().getName() + ": Error while deleting checkpoints");
         }
-        File file = new File(fileName);
-        if(file.exists()){
-            file.delete();
-        }
-        deleteEmptyDirectory(new File(OUTPUT_DIRECTORY+programId+"/"));
     }
     private static void deleteEmptyDirectory(File folder) {
         try{
@@ -180,8 +121,13 @@ public class CheckPointManager {
             if (folder.exists() && folder.isDirectory() && folder.list().length == 0) {
                 folder.delete();
             }
-        }finally{
+        }catch(Exception e){
+            logger.error(Thread.currentThread().getName() + ": Error while deleting '"+folder.getName()+"' directory");
+            System.out.println(Thread.currentThread().getName() + ": Error while deleting '"+folder.getName()+"' directory");
+        }
+        finally{
             folderLock.unlock();
         }
     }
+   
 }

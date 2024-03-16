@@ -13,6 +13,7 @@ import org.apache.log4j.Logger;
 import it.polimi.common.KeyValuePair;
 import it.polimi.common.messages.ErrorMessage;
 import it.polimi.common.messages.ReduceOperation;
+import it.polimi.worker.utils.CheckpointInfo;
 import it.polimi.common.messages.NormalOperations;
 
 class WorkerHandler extends Thread {
@@ -21,11 +22,12 @@ class WorkerHandler extends Thread {
     private String programId;
     private static final Logger logger = LogManager.getLogger("it.polimi.Worker");
     private List<Operator> operators;
-    //private CheckPointManager checkPointManager;
+    private CheckPointManager checkPointManager;
     private HadoopWorker hadoopWorker;
+    private boolean safeDelete = false;
     public WorkerHandler(Socket clientSocket, HadoopWorker hadoopWorker) {
         this.clientSocket = clientSocket;
-        //this.checkPointManager = new CheckPointManager();
+        this.checkPointManager = new CheckPointManager();
         this.hadoopWorker = hadoopWorker;
         this.identifier = -1;
         this.programId = null;
@@ -65,20 +67,30 @@ class WorkerHandler extends Thread {
                                       
                     try{
                         // Process the Task
-                        processTask(task);
+                        if(processTask(task)){
+                            outputStream.writeObject(true);
+                            System.out.println(Thread.currentThread().getName() + ": Keys sent to the coordinator");
+                            logger.info(Thread.currentThread().getName() + ": Keys sent to the coordinator");
+                            if(!(task.getChangeKey() && task.getReduce())){
+                                safeDelete = true;
+                                break;
+                                
+                            }
+                        }else{
+                            outputStream.writeObject(new ErrorMessage("Error while processing the task"));
+                            logger.error(Thread.currentThread().getName() + ": Error while processing the task");
+                            System.out.println(Thread.currentThread().getName() + ": Error while processing the task");
+                            break;
+                        }
                     }
-                    catch(IOException | IllegalArgumentException e ){
+                    catch(IllegalArgumentException e ){
                         logger.error(Thread.currentThread().getName() + ": Error while processing the task: " + e.getMessage());
                         outputStream.writeObject(new ErrorMessage(e.getMessage()));
                         System.out.println(Thread.currentThread().getName() + ": Error while processing the task\n" + e.getMessage());
                         break;
                     }
-                    outputStream.writeObject(true);
-                    System.out.println(Thread.currentThread().getName() + ": Keys sent to the coordinator");
-                    logger.info(Thread.currentThread().getName() + ": Keys sent to the coordinator");
-                    if(!(task.getChangeKey() && task.getReduce())){
-                        break;
-                    }
+
+                    
                 } else if (object instanceof ReduceOperation){
                     ReduceOperation reduceMessage = (ReduceOperation) object;
                     identifier = reduceMessage.getIdentifier();
@@ -90,15 +102,20 @@ class WorkerHandler extends Thread {
                     logger.info(Thread.currentThread().getName() + ": Received LastReduce message from coordinator, responsible for the keys: " + reduceMessage.getKeys());
                     
                     try{
-                        computeReduceMessage(reduceMessage);
+                        if(computeReduceMessage(reduceMessage)){
+                            outputStream.writeObject(true);
+                            safeDelete = true;
+                        }else{
+                            outputStream.writeObject(new ErrorMessage("Error in the reduce phase"));
+                            logger.error(Thread.currentThread().getName() + ": Error in the reduce phase");  
+                        }
                     }
-                    catch(IOException | IllegalArgumentException e){
+                    catch(IllegalArgumentException e){
                         outputStream.writeObject(new ErrorMessage("Error in the reduce phase"));
                         logger.error(Thread.currentThread().getName() + ": Error in the reduce phase: " + e.getMessage());
-                        break;
                     }
-                    outputStream.writeObject(true);
                     break;
+                    
                 }
                 else {
                     // Handle other types or unexpected objects
@@ -114,6 +131,18 @@ class WorkerHandler extends Thread {
         } finally {
             System.out.println(Thread.currentThread().getName() + ": Closing connection");
             logger.info(Thread.currentThread().getName() + ": Closing connection");
+            
+            
+            try{
+                Thread.sleep(2000);
+                if(safeDelete){
+                    checkPointManager.deleteCheckpoints(programId);
+                }
+            }catch(InterruptedException e){
+                logger.error(Thread.currentThread().getName() + ": Error while sleeping: " + e.getMessage());
+                System.out.println(Thread.currentThread().getName() + ": Error while sleeping: " + e.getMessage());
+            }
+ 
             try {
                 // Close the streams and socket when done
                 if (inputStream != null) {
@@ -147,23 +176,63 @@ class WorkerHandler extends Thread {
     }
    
 
-    private void processTask(NormalOperations task) throws IOException{
+    private boolean processTask(NormalOperations task){
+        
         operators = handleOperators(task.getOperators());
         System.out.println(Thread.currentThread().getName() + ": Processing task" + task.getPathFiles());
-        for(int i = 0;i<task.getPathFiles().size();i++){
-            hadoopWorker.readInputFile(i,task,this,operators);
-        }
-    }
-    public void processPartitionTask(List<KeyValuePair> result,NormalOperations task, Integer numFile,Integer numPart) throws IOException{
         
+        try{
+            for(int i = 0;i<task.getPathFiles().size();i++){
+            
+                CheckpointInfo checkPointObj = checkPointManager.getCheckPoint(task.getProgramId(),task.getPathFiles().get(i));
+                if(checkPointObj.getEnd()){
+                    logger.info(Thread.currentThread().getName() + ": File already processed");
+                    continue;
+                }else{
+                    if(checkPointObj.getCount() != 0){
+                        logger.info(Thread.currentThread().getName() + ": File partially processed, resuming from partition: " + checkPointObj.getCount());
+                    }else{
+                        logger.info(Thread.currentThread().getName() + ": File not processed yet");
+                    }
+                    
+                    hadoopWorker.readInputFile(i,task,this,operators,checkPointObj.getCount());
+                }
+            
+            }
+            return true;
+        }catch(IOException e){
+            logger.error(Thread.currentThread().getName() + ": Error while processing the task: " + e.getMessage());
+            System.out.println(Thread.currentThread().getName() + ": Error while processing the task\n" + e.getMessage());
+        }
+        return false;
+    }
+    
+    public void processPartitionTask(List<KeyValuePair> result,NormalOperations task, Integer numFile,Integer numPart,Boolean end) throws IOException{
         hadoopWorker.writeKeys(programId,identifier + "_" + numFile +"_" + numPart,result,task.getChangeKey(),task.getReduce());
+        checkPointManager.createCheckpoint(programId, task.getPathFiles().get(numFile),new CheckpointInfo(numPart,end));
     }
 
-    private void computeReduceMessage(ReduceOperation reduceMessage) throws IOException{
+    private boolean computeReduceMessage(ReduceOperation reduceMessage){
         Operator reduce = handleOperators(List.of(reduceMessage.getReduce())).get(0);
-        for(int idx = reduceMessage.getKeys().getLeft(); idx < reduceMessage.getKeys().getRight(); idx++ ){   
-            KeyValuePair result = hadoopWorker.readAndComputeReduce(idx,reduceMessage,reduce);
-            hadoopWorker.writeKeys(programId,String.valueOf(identifier),result);
-        } 
+        
+        try{
+            for(int idx = reduceMessage.getKeys().getLeft(); idx < reduceMessage.getKeys().getRight(); idx++ ){   
+                CheckpointInfo checkPointObj = checkPointManager.getCheckPoint(reduceMessage.getProgramId(),idx+".csv");
+                if(checkPointObj.getEnd()){
+                    logger.info(Thread.currentThread().getName() + ": File already processed");
+                    continue;
+                }else{
+                    logger.info(Thread.currentThread().getName() + ": File not processed");
+                    KeyValuePair result = hadoopWorker.readAndComputeReduce(idx,reduceMessage,reduce);
+                    hadoopWorker.writeKeys(programId,String.valueOf(identifier),result);
+                    checkPointManager.createCheckpoint(programId,idx+".csv",new CheckpointInfo(0,true));
+                }
+            } 
+            return true;
+        }catch(IOException e){
+            logger.error(Thread.currentThread().getName() + ": Error while processing the reduce phase: " + e.getMessage());
+            System.out.println(Thread.currentThread().getName() + ": Error while processing the reduce phase\n" + e.getMessage());
+        }
+        return false;
     }
 }

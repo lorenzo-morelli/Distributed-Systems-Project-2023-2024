@@ -19,7 +19,7 @@ import it.polimi.common.HadoopFileManager;
 
 public class HadoopCoordinator extends HadoopFileManager{
     public HadoopCoordinator(String address) throws IOException{
-        super(address);
+        super(address,16384);
         logger = LogManager.getLogger("it.polimi.Coordinator");
     }
 
@@ -51,8 +51,7 @@ public class HadoopCoordinator extends HadoopFileManager{
         // Create HDFS output stream
         FSDataOutputStream out = fs.create(new Path(finalName));
 
-        // Set buffer size to 4KB
-        byte[] buffer = new byte[4096];
+        byte[] buffer = new byte[BUFFER_SIZE];
         int bytesRead;
         
         // Read file in chunks and write to HDFS
@@ -115,7 +114,7 @@ public class HadoopCoordinator extends HadoopFileManager{
         // Open HDFS file
         try (InputStream in = fs.open(new Path(hdfsFilePath))) {
             // Set buffer size to 4KB
-            byte[] buffer = new byte[4096];
+            byte[] buffer = new byte[BUFFER_SIZE];
             int bytesRead;
     
             // Read file in chunks and write to merged file
@@ -126,25 +125,21 @@ public class HadoopCoordinator extends HadoopFileManager{
         logger.info(Thread.currentThread().getName() + ": File " + hdfsFilePath + " downloaded and appended to merged file successfully.");
     }
 
-    public synchronized void mergeHadoopFiles(String id,String i, List<String> files) {
-        //merge the local files into 1 in hdfs in the folder /program+programId
+    public synchronized void mergeHadoopFiles(String id,String i, List<String> files) throws IOException{
         String hdfsFilePath = "/input" + id;
         String localMergedFilePath = "task" + i + ".csv";
 
-        try (FSDataOutputStream mergedOut = fs.create(new Path(hdfsFilePath + "/" + localMergedFilePath))) {
-            for (String file : files) {
-                try (BufferedInputStream in = new BufferedInputStream(new FileInputStream(file)) ) {
-                    byte[] buffer = new byte[4096];
-                    int bytesRead;
-                    while ((bytesRead = in.read(buffer)) > 0) {
-                        mergedOut.write(buffer, 0, bytesRead);
-                    }
+        FSDataOutputStream mergedOut = fs.create(new Path(hdfsFilePath + "/" + localMergedFilePath));
+        for (String file : files) {
+            try (BufferedInputStream in = new BufferedInputStream(new FileInputStream(file)) ) {
+                byte[] buffer = new byte[BUFFER_SIZE];
+                int bytesRead;
+                while ((bytesRead = in.read(buffer)) > 0) {
+                    mergedOut.write(buffer, 0, bytesRead);
                 }
             }
-        } catch (IOException e) {
-            logger.error(e);
-            System.out.println(Thread.currentThread().getName() + ": Error merging files: " + e.getMessage());
         }
+        mergedOut.close();
     }
     
 

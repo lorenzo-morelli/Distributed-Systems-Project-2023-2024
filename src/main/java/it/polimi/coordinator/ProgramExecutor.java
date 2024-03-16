@@ -110,7 +110,6 @@ public class ProgramExecutor extends Thread{
         for (int i = start; i < end && i < files.size(); i++) {
             filesPerWorker.add(files.get(i));
         }
-        System.out.println(Thread.currentThread().getName() + ": Files per worker: " + filesPerWorker + " " + workerIndex);
         return filesPerWorker;
     }
 
@@ -181,7 +180,7 @@ public class ProgramExecutor extends Thread{
   
             }
             else{
-                System.out.println(Thread.currentThread().getName() + ": Uploading files to HDFS" + addresses.size());          
+                System.out.println(Thread.currentThread().getName() + ": Uploading files to HDFS");          
                 for(int i = 0; i< addresses.size(); i++){
                     int numFilesPerWorker = files.size() / addresses.size();
                     int remainingFiles = files.size() % addresses.size();
@@ -302,13 +301,13 @@ public class ProgramExecutor extends Thread{
             hadoopCoordinator.mergeFiles(programId,identifier);
             endedWorkers++;
             if(endedWorkers == addresses.size()){
-                hadoopCoordinator.deleteFiles(programId, changeKey && reduce);
+                //hadoopCoordinator.deleteFiles(programId, changeKey && reduce);
             }
         }else{
             endedWorkers++;
             if(endedWorkers == addresses.size()){
                 hadoopCoordinator.mergeFiles(programId);
-                hadoopCoordinator.deleteFiles(programId, changeKey && reduce);
+               // hadoopCoordinator.deleteFiles(programId, changeKey && reduce);
             }
         }
     }

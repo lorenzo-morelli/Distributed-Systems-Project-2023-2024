@@ -18,17 +18,17 @@ import it.polimi.common.HadoopFileManager;
 import it.polimi.common.KeyValuePair;
 import it.polimi.common.messages.ReduceOperation;
 import it.polimi.worker.operators.ReduceOperator;
+import it.polimi.worker.utils.Data;
 import it.polimi.common.messages.NormalOperations;
 
 public class HadoopWorker extends HadoopFileManager{
-    private int BUFFER_SIZE = 262144;  // 256KB buffer size, adjust as needed
 
     public HadoopWorker(String address) throws IOException{
-        super(address);
+        super(address,67108864);
         logger = LogManager.getLogger("it.polimi.Worker");
     }
 
-    public void readInputFile(int i, NormalOperations task, WorkerHandler workerHandler, List<Operator> operators) throws IOException {
+    public void readInputFile(int i, NormalOperations task, WorkerHandler workerHandler, List<Operator> operators, int count) throws IOException {
         logger.info(Thread.currentThread().getName() + ": Reading input file");
         Path filePath = new Path(task.getPathFiles().get(i));
         // Open the HDFS input stream
@@ -48,13 +48,11 @@ public class HadoopWorker extends HadoopFileManager{
         }
 
         StringBuilder partialTuple  = new StringBuilder();
-        Integer count = 0;
-        String data;
+        Data data;
         
-        while ((data = readFile(in, count)) != "" || partialTuple.toString().length() > 0){
-            
+        while ((data = readFile(in, count)).getData()!="" || partialTuple.toString().length() > 0){
             logger.info(Thread.currentThread().getName() + ": Data is ready to be processed of partition: " + count + " of file: " + i);
-            String combinedData = data == "" ? partialTuple.toString() : partialTuple.toString() + data;
+            String combinedData = data.getData() == "" ? partialTuple.toString() : partialTuple.toString() + data.getData();
            
             String[] lines = combinedData.split("\n");
             if(combinedData.endsWith("\n")){
@@ -81,14 +79,14 @@ public class HadoopWorker extends HadoopFileManager{
                     reduceResult = reduce.execute(result).get(0);
                 }
             } else {
-                workerHandler.processPartitionTask(result, task, i, count);
+                workerHandler.processPartitionTask(result, task, i, count, data.getEnd() && partialTuple.toString().length() == 0);
             }
             logger.info(Thread.currentThread().getName() + ": Data processed of partition: " + count + " of file: " + i);
             result.clear();
             count++;
         }
         if(task.getReduce() && !task.getChangeKey()){
-            workerHandler.processPartitionTask(List.of(reduceResult), task,i,count);
+            workerHandler.processPartitionTask(List.of(reduceResult), task,i,0, true);
         }
     }
     private void processLine(String line, List<KeyValuePair> result) throws IOException {
@@ -162,13 +160,13 @@ public class HadoopWorker extends HadoopFileManager{
             
             StringBuilder partialTuple  = new StringBuilder();
             Integer count = 0;
-            String data;
+            Data data;
            
-            while ((data = readFile(in, count)) != "" || partialTuple.toString().length() > 0){
+            while ((data = readFile(in, count)).getData()!="" || partialTuple.toString().length() > 0){
                 
                 System.out.println(Thread.currentThread().getName() + ": Data is ready to be processed of partition: " + count + " of key: " + key);
 
-                String combinedData = data == "" ? partialTuple.toString() : partialTuple.toString() + data;
+                String combinedData = data.getData() == "" ? partialTuple.toString() : partialTuple.toString() + data.getData();
                 
                
                 String[] lines = combinedData.split("\n");
@@ -203,7 +201,8 @@ public class HadoopWorker extends HadoopFileManager{
             throw new IllegalArgumentException("Invalid Key file");
         }
     }
-    private String readFile(FSDataInputStream in, int numPart) throws IOException{
+    private Data readFile(FSDataInputStream in, int numPart) throws IOException{
+        
         String data = "";
         
         byte[] buffer = new byte[BUFFER_SIZE];
@@ -215,7 +214,7 @@ public class HadoopWorker extends HadoopFileManager{
         
 
         if (seekPosition >= fileLength) {
-            return "";  // End of file
+            return new Data("", true);  // End of file
         }
         in.seek(seekPosition);
         while (accumulatedBytesRead  < BUFFER_SIZE) {
@@ -229,6 +228,6 @@ public class HadoopWorker extends HadoopFileManager{
             }
         }
         logger.info(Thread.currentThread().getName() + ": Read " + accumulatedBytesRead + " bytes from file");
-        return data;
+        return new Data(data, seekPosition + accumulatedBytesRead >= fileLength);
     }
 }

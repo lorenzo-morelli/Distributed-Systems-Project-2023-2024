@@ -77,9 +77,6 @@ class WorkerHandler extends Thread {
                                 
                             }
                         }else{
-                            outputStream.writeObject(new ErrorMessage("Error while processing the task"));
-                            logger.error(Thread.currentThread().getName() + ": Error while processing the task");
-                            System.out.println(Thread.currentThread().getName() + ": Error while processing the task");
                             break;
                         }
                     }
@@ -105,9 +102,6 @@ class WorkerHandler extends Thread {
                         if(computeReduceMessage(reduceMessage)){
                             outputStream.writeObject(true);
                             safeDelete = true;
-                        }else{
-                            outputStream.writeObject(new ErrorMessage("Error in the reduce phase"));
-                            logger.error(Thread.currentThread().getName() + ": Error in the reduce phase");  
                         }
                     }
                     catch(IllegalArgumentException e){
@@ -195,7 +189,7 @@ class WorkerHandler extends Thread {
                         logger.info(Thread.currentThread().getName() + ": File not processed yet");
                     }
                     
-                    hadoopWorker.readInputFile(i,task,this,operators,checkPointObj.getCount());
+                    hadoopWorker.readInputFile(i,task,this,operators,checkPointObj.getCount(),checkPointObj.getRemainingString());
                 }
             
             }
@@ -207,9 +201,9 @@ class WorkerHandler extends Thread {
         return false;
     }
     
-    public void processPartitionTask(List<KeyValuePair> result,NormalOperations task, Integer numFile,Integer numPart,Boolean end) throws IOException{
+    public void processPartitionTask(List<KeyValuePair> result,NormalOperations task, Integer numFile,Integer numPart,Boolean end, String remainingString) throws IOException{
         hadoopWorker.writeKeys(programId,identifier + "_" + numFile +"_" + numPart,result,task.getChangeKey(),task.getReduce());
-        checkPointManager.createCheckpoint(programId, task.getPathFiles().get(numFile),new CheckpointInfo(numPart,end));
+        checkPointManager.createCheckpoint(programId, task.getPathFiles().get(numFile),new CheckpointInfo(numPart,end,remainingString));
     }
 
     private boolean computeReduceMessage(ReduceOperation reduceMessage){
@@ -225,7 +219,7 @@ class WorkerHandler extends Thread {
                     logger.info(Thread.currentThread().getName() + ": File not processed");
                     KeyValuePair result = hadoopWorker.readAndComputeReduce(idx,reduceMessage,reduce);
                     hadoopWorker.writeKeys(programId,String.valueOf(identifier),result);
-                    checkPointManager.createCheckpoint(programId,idx+".csv",new CheckpointInfo(0,true));
+                    checkPointManager.createCheckpoint(programId,idx+".csv",new CheckpointInfo(0,true,""));
                 }
             } 
             return true;

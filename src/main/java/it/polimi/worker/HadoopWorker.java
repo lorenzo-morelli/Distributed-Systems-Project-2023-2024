@@ -28,7 +28,7 @@ public class HadoopWorker extends HadoopFileManager{
         logger = LogManager.getLogger("it.polimi.Worker");
     }
 
-    public void readInputFile(int i, NormalOperations task, WorkerHandler workerHandler, List<Operator> operators, int count) throws IOException {
+    public void readInputFile(int i, NormalOperations task, WorkerHandler workerHandler, List<Operator> operators, int count, String remainingString) throws IOException {
         logger.info(Thread.currentThread().getName() + ": Reading input file");
         Path filePath = new Path(task.getPathFiles().get(i));
         // Open the HDFS input stream
@@ -47,7 +47,7 @@ public class HadoopWorker extends HadoopFileManager{
             }
         }
 
-        StringBuilder partialTuple  = new StringBuilder();
+        StringBuilder partialTuple  = new StringBuilder(remainingString);
         Data data;
         
         while ((!(data = readFile(in, count)).getData().equals("")) || partialTuple.toString().length() > 0){
@@ -80,14 +80,14 @@ public class HadoopWorker extends HadoopFileManager{
                     reduceResult = reduce.execute(result).get(0);
                 }
             } else {
-                workerHandler.processPartitionTask(result, task, i, count, data.getEnd() && partialTuple.toString().length() == 0);
+                workerHandler.processPartitionTask(result, task, i, count, data.getEnd() && partialTuple.toString().length() == 0,partialTuple.toString());
             }
             logger.info(Thread.currentThread().getName() + ": Data processed of partition: " + count + " of file: " + i);
             result.clear();
             count++;
         }
         if(task.getReduce() && !task.getChangeKey()){
-            workerHandler.processPartitionTask(List.of(reduceResult), task,i,0, true);
+            workerHandler.processPartitionTask(List.of(reduceResult), task,i,0, true,"");
         }
     }
     private void processLine(String line, List<KeyValuePair> result) throws IOException {

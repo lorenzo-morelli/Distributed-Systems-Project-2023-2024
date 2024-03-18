@@ -28,11 +28,12 @@ public class CheckPointManager {
     public void createCheckpoint(String programId, String pathString,CheckpointInfo checkPointObj){
         createOutputDirectory(CHECKPOINT_DIRECTORY + programId);
         try {
+            
             Path path = Paths.get(pathString);
             pathString = CHECKPOINT_DIRECTORY + programId + "/" + path.getFileName();
             createdFiles.add(pathString);
             BufferedWriter writer = new BufferedWriter(new FileWriter(pathString, true));
-            writer.write("<Checkpoint:" + checkPointObj.getCount() + "><"+checkPointObj.getEnd()+">\n");
+            writer.write("<Checkpoint:" + checkPointObj.getCount() + "><"+checkPointObj.getEnd()+"><"+checkPointObj.getRemainingString()+">\n");
             writer.close();
             logger.info(Thread.currentThread().getName() + ": Created checkpoint file " + pathString);
         } catch (IOException e) {
@@ -44,25 +45,31 @@ public class CheckPointManager {
     public CheckpointInfo getCheckPoint(String programId,String pathString) {
         int count = 0;
         boolean end = false;
+        String remainingString = "";
         try {
             Path path = Paths.get(pathString);
             pathString = CHECKPOINT_DIRECTORY + programId + "/" + path.getFileName();   
             if (!Files.exists(Paths.get(pathString))) {
-                return new CheckpointInfo(0, false);
+                return new CheckpointInfo(0, false,"");
             }
             BufferedReader reader = new BufferedReader(new FileReader(pathString));
             String line;
             while ((line = reader.readLine()) != null) {
                 if (line.startsWith("<Checkpoint")) {
                     String[] parts = line.split("><");
-                    if (parts.length != 2) {
+                    if (parts.length != 3) {
                         reader.close();
                         throw new NumberFormatException("Invalid checkpoint format");
                     }
-                    if(parts[0].charAt(0) == '<' && (parts[1].charAt(parts[1].length()-1) == '>')){
+                    try{
                         count = Integer.parseInt(parts[0].split(":")[1]);
-                        end = Boolean.parseBoolean(parts[1].substring(0, parts[1].length()-1));                        
-                    }else{
+                        end = Boolean.parseBoolean(parts[1].substring(0, parts[1].length()));
+                        if(parts[2].length() > 1){
+                            remainingString = parts[2].substring(0, parts[2].length()-1);
+                        }else{
+                            remainingString = "";
+                        }                    
+                    }catch(NumberFormatException e){
                         reader.close();
                         throw new NumberFormatException("Invalid checkpoint format");
                     }
@@ -72,9 +79,9 @@ public class CheckPointManager {
         } catch (IOException e) {
             logger.error(Thread.currentThread().getName() + ": Error while reading checkpoint file");
         } catch (NumberFormatException e) {
-            logger.warn("Invalid checkpoint format: " + e.getMessage());
+            logger.warn(Thread.currentThread().getName() +": "+ e.getMessage());
         }
-        return new CheckpointInfo(count, end);
+        return new CheckpointInfo(count, end, remainingString);
 }
 
 

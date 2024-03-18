@@ -38,3 +38,6 @@ build/
 
 /files/
 /gen_files/
+/conf/logs
+/checkpoints*
+result-*

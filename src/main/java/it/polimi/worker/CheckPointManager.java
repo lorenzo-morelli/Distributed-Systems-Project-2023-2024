@@ -59,10 +59,9 @@ public class CheckPointManager {
                         reader.close();
                         throw new NumberFormatException("Invalid checkpoint format");
                     }
-                    if(parts[0].charAt(parts[0].length()-1) == '>' && (parts[1].charAt(parts[1].length()-1) == '>')){
-                        count = Integer.parseInt(parts[0].substring(12, parts[0].length()-1));
-                        end = Boolean.parseBoolean(parts[1].substring(0, parts[1].length()-1));
-
+                    if(parts[0].charAt(0) == '<' && (parts[1].charAt(parts[1].length()-1) == '>')){
+                        count = Integer.parseInt(parts[0].split(":")[1]);
+                        end = Boolean.parseBoolean(parts[1].substring(0, parts[1].length()-1));                        
                     }else{
                         reader.close();
                         throw new NumberFormatException("Invalid checkpoint format");

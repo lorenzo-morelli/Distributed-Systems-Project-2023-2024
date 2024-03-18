@@ -24,7 +24,7 @@ import it.polimi.common.messages.NormalOperations;
 public class HadoopWorker extends HadoopFileManager{
 
     public HadoopWorker(String address) throws IOException{
-        super(address,67108864);
+        super(address,1);
         logger = LogManager.getLogger("it.polimi.Worker");
     }
 
@@ -50,10 +50,12 @@ public class HadoopWorker extends HadoopFileManager{
         StringBuilder partialTuple  = new StringBuilder();
         Data data;
         
-        while ((data = readFile(in, count)).getData()!="" || partialTuple.toString().length() > 0){
+        while ((!(data = readFile(in, count)).getData().equals("")) || partialTuple.toString().length() > 0){
+            System.out.println(Thread.currentThread().getName() + ": Data: " + data.getData() +"/"+ partialTuple.toString() + " of file: " + i);
             logger.info(Thread.currentThread().getName() + ": Data is ready to be processed of partition: " + count + " of file: " + i);
-            String combinedData = data.getData() == "" ? partialTuple.toString() : partialTuple.toString() + data.getData();
-           
+            
+            String combinedData = data.getData().equals("") ? partialTuple.toString() : partialTuple.toString() + data.getData();
+            
             String[] lines = combinedData.split("\n");
             if(combinedData.endsWith("\n")){
                 for (int j = 0; j < lines.length; j++) {
@@ -162,11 +164,11 @@ public class HadoopWorker extends HadoopFileManager{
             Integer count = 0;
             Data data;
            
-            while ((data = readFile(in, count)).getData()!="" || partialTuple.toString().length() > 0){
+            while ((!(data = readFile(in, count)).getData().equals("")) || partialTuple.toString().length() > 0){
                 
                 System.out.println(Thread.currentThread().getName() + ": Data is ready to be processed of partition: " + count + " of key: " + key);
 
-                String combinedData = data.getData() == "" ? partialTuple.toString() : partialTuple.toString() + data.getData();
+                String combinedData = data.getData().equals("") ? partialTuple.toString() : partialTuple.toString() + data.getData();
                 
                
                 String[] lines = combinedData.split("\n");

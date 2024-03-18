@@ -117,7 +117,7 @@ public class ProgramExecutor extends Thread{
         logger.info(Thread.currentThread().getName()+ ": Initializing connections...");
         
         
-        for (int j = 0; j < addresses.size(); j++) {
+        for (int j = 0; j < Math.min(addresses.size(),files.size()); j++) {
 
             List<String> filesWorker = manageFilesPerWorker(j);
             try {
@@ -181,7 +181,7 @@ public class ProgramExecutor extends Thread{
             }
             else{
                 System.out.println(Thread.currentThread().getName() + ": Uploading files to HDFS");          
-                for(int i = 0; i< addresses.size(); i++){
+                for(int i = 0; i< Math.min(addresses.size(),files.size()); i++){
                     int numFilesPerWorker = files.size() / addresses.size();
                     int remainingFiles = files.size() % addresses.size();
                     
@@ -198,7 +198,7 @@ public class ProgramExecutor extends Thread{
 
 
                 this.fileSocketMap.clear();
-                for(int i = 0; i < addresses.size(); i++){
+                for(int i = 0; i < Math.min(addresses.size(),files.size()); i++){
                     this.fileSocketMap.put(new ArrayList<>(List.of("/input" + programId + "/task" + i + ".csv")), clientSockets.get(i));
                 }
             }
@@ -300,14 +300,14 @@ public class ProgramExecutor extends Thread{
         if(changeKey && reduce){
             hadoopCoordinator.mergeFiles(programId,identifier);
             endedWorkers++;
-            if(endedWorkers == addresses.size()){
-                //hadoopCoordinator.deleteFiles(programId, changeKey && reduce);
+            if(endedWorkers == Math.min(addresses.size(),files.size())){
+                hadoopCoordinator.deleteFiles(programId, changeKey && reduce);
             }
         }else{
             endedWorkers++;
-            if(endedWorkers == addresses.size()){
+            if(endedWorkers == Math.min(addresses.size(),files.size())){
                 hadoopCoordinator.mergeFiles(programId);
-               // hadoopCoordinator.deleteFiles(programId, changeKey && reduce);
+                hadoopCoordinator.deleteFiles(programId, changeKey && reduce);
             }
         }
     }

@@ -3,6 +3,7 @@ package it.polimi.coordinator;
 import java.io.File;
 import java.util.List;
 import java.util.Scanner;
+import java.util.UUID;
 
 import org.apache.commons.lang3.tuple.MutablePair;
 import org.apache.log4j.LogManager;
@@ -45,9 +46,8 @@ public class Coordinator {
             int i = 0;
             String programId;
             for(String f : configs.getLeft()){
-                //programId = UUID.randomUUID().toString();
-                programId = String.valueOf(i);
-                ProgramExecutor executor = new ProgramExecutor(programId,
+                programId = UUID.randomUUID().toString();
+                ProgramExecutor executor = new ProgramExecutor(String.valueOf(i),programId,
                     f,
                     configs.getRight(),
                     new HadoopCoordinator(address)

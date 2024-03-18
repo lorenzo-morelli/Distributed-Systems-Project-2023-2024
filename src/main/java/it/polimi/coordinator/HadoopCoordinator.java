@@ -79,9 +79,9 @@ public class HadoopCoordinator extends HadoopFileManager{
         return fileStatuses.length;
     } 
 
-    public synchronized void mergeFiles(String programId, int identifier) throws IllegalArgumentException, IOException {
+    public synchronized void mergeFiles(String outputId,String programId, int identifier) throws IllegalArgumentException, IOException {
         String hdfsFilePath = "/output" + programId + "/" + identifier;
-        String localMergedFilePath = "result-" + programId + ".csv";
+        String localMergedFilePath = "result-" + outputId + ".csv";
     
         // Open the output file in append mode
         try (BufferedOutputStream mergedOut = new BufferedOutputStream(new FileOutputStream(localMergedFilePath, true))) {
@@ -94,9 +94,9 @@ public class HadoopCoordinator extends HadoopFileManager{
             }
         }
     }
-    public void mergeFiles(String programId) throws IllegalArgumentException, IOException {
+    public void mergeFiles(String outputId,String programId) throws IllegalArgumentException, IOException {
         String hdfsFilePath = "/program" + programId;
-        String localMergedFilePath = "result-" + programId + ".csv";
+        String localMergedFilePath = "result-" + outputId + ".csv";
         // Open the output file in append mode
         try (BufferedOutputStream mergedOut = new BufferedOutputStream(new FileOutputStream(localMergedFilePath, true))) {
             FileStatus[] fileStatuses = fs.listStatus(new Path(hdfsFilePath));

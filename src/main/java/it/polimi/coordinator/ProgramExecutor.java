@@ -32,16 +32,17 @@ public class ProgramExecutor extends Thread{
     private CoordinatorFileManager coordinatorFileManager;
     private static final Logger logger = LogManager.getLogger("it.polimi.Coordinator");
     private String programId;
+    private String outputId;
     private String op_path;
     private HadoopCoordinator hadoopCoordinator;
     private volatile boolean errorPresent;
     private boolean changeKey;
     private boolean reduce;
-    public ProgramExecutor(String programId,String op_path,List<Address> addresses, HadoopCoordinator hadoopCoordinator) {
+    public ProgramExecutor(String output_id,String programId,String op_path,List<Address> addresses, HadoopCoordinator hadoopCoordinator) {
         this.clientSockets = new ArrayList<>();
         this.programId = programId;
         this.op_path = op_path;
-       
+        this.outputId = output_id;
         this.addresses = addresses;
        
         
@@ -298,7 +299,7 @@ public class ProgramExecutor extends Thread{
             return;
         }
         if(changeKey && reduce){
-            hadoopCoordinator.mergeFiles(programId,identifier);
+            hadoopCoordinator.mergeFiles(outputId,programId,identifier);
             endedWorkers++;
             if(endedWorkers == Math.min(addresses.size(),files.size())){
                 hadoopCoordinator.deleteFiles(programId, changeKey && reduce);
@@ -306,7 +307,7 @@ public class ProgramExecutor extends Thread{
         }else{
             endedWorkers++;
             if(endedWorkers == Math.min(addresses.size(),files.size())){
-                hadoopCoordinator.mergeFiles(programId);
+                hadoopCoordinator.mergeFiles(outputId,programId);
                 hadoopCoordinator.deleteFiles(programId, changeKey && reduce);
             }
         }

@@ -19,19 +19,19 @@ import it.polimi.common.KeyValuePair;
 import it.polimi.common.messages.ReduceOperation;
 import it.polimi.worker.operators.ReduceOperator;
 import it.polimi.worker.utils.Data;
+import it.polimi.worker.utils.Operator;
 import it.polimi.common.messages.NormalOperations;
 
 public class HadoopWorker extends HadoopFileManager{
 
     public HadoopWorker(String address) throws IOException{
-        super(address,65536);
+        super(address,131072);
         logger = LogManager.getLogger("it.polimi.Worker");
     }
 
     public void readInputFile(int i, NormalOperations task, WorkerHandler workerHandler, List<Operator> operators, int count, String remainingString) throws IOException {
-        logger.info(Thread.currentThread().getName() + ": Reading input file");
+        logger.info(Thread.currentThread().getName() + ": Reading input file: " + task.getPathFiles().get(i));
         Path filePath = new Path(task.getPathFiles().get(i));
-        // Open the HDFS input stream
         FSDataInputStream in = fs.open(filePath);
 
         List<KeyValuePair> result = new ArrayList<>();
@@ -51,7 +51,7 @@ public class HadoopWorker extends HadoopFileManager{
         Data data;
         
         while ((!(data = readFile(in, count)).getData().equals("")) || partialTuple.toString().length() > 0){
-            logger.info(Thread.currentThread().getName() + ": Data is ready to be processed of partition: " + count + " of file: " + i);
+            logger.info(Thread.currentThread().getName() + ": Data is ready to be processed of partition: " + count + " of file: " + task.getPathFiles().get(i));
             
             String combinedData = data.getData().equals("") ? partialTuple.toString() : partialTuple.toString() + data.getData();
             
@@ -82,7 +82,7 @@ public class HadoopWorker extends HadoopFileManager{
             } else {
                 workerHandler.processPartitionTask(result, task, i, count, data.getEnd() && partialTuple.toString().length() == 0,partialTuple.toString());
             }
-            logger.info(Thread.currentThread().getName() + ": Data processed of partition: " + count + " of file: " + i);
+            logger.info(Thread.currentThread().getName() + ": Data processed of partition: " + count + " of file: " + task.getPathFiles().get(i));
             result.clear();
             count++;
         }
@@ -126,7 +126,7 @@ public class HadoopWorker extends HadoopFileManager{
             }   
         }
         else{
-            String fileName = "/program"+programId+"/" + identifier + ".csv";
+            String fileName = "/output"+programId+"/" + identifier + ".csv";
             writeResult(result,fileName,fileSystem);
         }
         fileSystem.close();
@@ -215,12 +215,11 @@ public class HadoopWorker extends HadoopFileManager{
         
 
         if (seekPosition >= fileLength) {
-            return new Data("", true);  // End of file
+            return new Data("", true);  
         }
         in.seek(seekPosition);
         while (accumulatedBytesRead  < BUFFER_SIZE) {
             if ((bytesRead = in.read(buffer, 0, BUFFER_SIZE)) != -1) {
-                // Convert only the read portion of the buffer to a string
                 data += new String(buffer, 0, bytesRead);
                 accumulatedBytesRead += bytesRead;
             }

@@ -99,6 +99,9 @@ public class ProgramExecutor extends Thread{
     public boolean getReduce(){
         return reduce;
     }
+    public int getFilesSize() {
+        return files.size();
+    }
 
     private List<String> manageFilesPerWorker(int workerIndex){
         int numFilesPerWorker = files.size() / addresses.size();
@@ -312,5 +315,6 @@ public class ProgramExecutor extends Thread{
             }
         }
     }
+    
 
 }

@@ -15,6 +15,7 @@ public class KeyAssignmentManager {
     private static final Logger logger = LogManager.getLogger("it.polimi.Coordinator");
     private HadoopCoordinator hadoopCoordinator;
     private String programId;
+
     public KeyAssignmentManager(HadoopCoordinator hadoopCoordinator, String programId) {
         currentAssignments = new HashMap<>();
         finalAssignments = new HashMap<>();
@@ -30,6 +31,7 @@ public class KeyAssignmentManager {
     }
 
     public synchronized void insertAssignment(SocketHandler worker, int num) throws IOException {
+        logger.info(Thread.currentThread().getName()+": Inserting worker keys");
         currentAssignments.put(worker, null);
         if (currentAssignments.size() == num) {
             assignKeys(determineNewAssignmentsWithLoadBalancing());
@@ -38,7 +40,7 @@ public class KeyAssignmentManager {
 
     // Method to determine new worker assignments with load balancing for selected keys
     public Map<SocketHandler, MutablePair<Integer,Integer>> determineNewAssignmentsWithLoadBalancing() throws IOException {
-        
+        logger.info(Thread.currentThread().getName()+": Determining new worker assignments with load balancing");
         Map<SocketHandler, MutablePair<Integer,Integer>> newAssignments = new HashMap<>();
         
         // Get the number of workers

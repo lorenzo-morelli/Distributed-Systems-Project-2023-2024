@@ -62,13 +62,18 @@ public class CheckPointManager {
                         throw new NumberFormatException("Invalid checkpoint format");
                     }
                     try{
-                        count = Integer.parseInt(parts[0].split(":")[1]);
-                        end = Boolean.parseBoolean(parts[1].substring(0, parts[1].length()));
+                        int temp_count= Integer.parseInt(parts[0].split(":")[1]);
+                        boolean temp_end= Boolean.parseBoolean(parts[1].substring(0, parts[1].length()));
+                        String  temp_remainingString;
+                       
                         if(parts[2].length() > 1){
-                            remainingString = parts[2].substring(0, parts[2].length()-1);
+                            temp_remainingString= parts[2].substring(0, parts[2].length()-1);
                         }else{
-                            remainingString = "";
+                            temp_remainingString="";
                         }                    
+                        count = temp_count;
+                        end = temp_end;
+                        remainingString = temp_remainingString;
                     }catch(NumberFormatException e){
                         reader.close();
                         throw new NumberFormatException("Invalid checkpoint format");
@@ -81,6 +86,7 @@ public class CheckPointManager {
         } catch (NumberFormatException e) {
             logger.warn(Thread.currentThread().getName() +": "+ e.getMessage());
         }
+        logger.info(Thread.currentThread().getName() + ": Retrieved checkpoint file " + pathString + " with count " + count + " and end " + end + " and remaining string " + remainingString);
         return new CheckpointInfo(count, end, remainingString);
 }
 
@@ -109,11 +115,13 @@ public class CheckPointManager {
             folderLock.unlock();
         }
     }
+
     public void deleteCheckpoints(String programId){
         try{
             for(String file : createdFiles){
                 Path path = Paths.get(file);
                 Files.deleteIfExists(path);
+                logger.info(Thread.currentThread().getName() + ": Deleted checkpoint file " + file);
             }
             deleteEmptyDirectory(new File(CHECKPOINT_DIRECTORY+programId+"/"));
         }catch(Exception e){
@@ -125,6 +133,7 @@ public class CheckPointManager {
         try{
             folderLock.lock();
             if (folder.exists() && folder.isDirectory() && folder.list().length == 0) {
+                logger.info(Thread.currentThread().getName() + ": Deleting '"+folder.getName()+"' directory");
                 folder.delete();
             }
         }catch(Exception e){

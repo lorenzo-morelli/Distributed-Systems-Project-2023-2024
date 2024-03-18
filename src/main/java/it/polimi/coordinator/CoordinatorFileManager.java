@@ -1,8 +1,6 @@
 package it.polimi.coordinator;
 
 import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -18,7 +16,6 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import it.polimi.common.Address;
-import it.polimi.common.KeyValuePair;
 
 
 public class CoordinatorFileManager {
@@ -78,18 +75,5 @@ public class CoordinatorFileManager {
         }
         logger.info("Configuration file read: " + file.getAbsolutePath().toString());
         return new MutablePair<>(programsPaths, addresses);
-    }
-    
-
-    public void writeResult(String programId,List<KeyValuePair> finalResult) throws IOException {
-        String fileName = "result-"+programId+".csv";
-
-        try (FileWriter fileWriter = new FileWriter(fileName)) {
-            for (KeyValuePair pair : finalResult) {
-                fileWriter.write(pair.getKey() + "," + pair.getValue() + "\n");
-            }
-        } catch (IOException e) {
-            throw new IOException("Not possible to write the finalResult:\n" + fileName);
-        }
     }
 }

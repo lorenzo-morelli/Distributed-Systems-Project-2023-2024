@@ -13,6 +13,7 @@ import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 
 import it.polimi.common.Address;
+import it.polimi.common.messages.EndComputation;
 import it.polimi.common.messages.ErrorMessage;
 import it.polimi.common.messages.ReduceOperation;
 import it.polimi.common.messages.NormalOperations;
@@ -68,7 +69,7 @@ public class SocketHandler implements Runnable {
                             System.out.println(Thread.currentThread().getName() + ": " + ((ErrorMessage) object).getMessage());
                             programExecutor.setErrorPresent(true);
                             isProcessing = false;
-                        }else if (object instanceof Boolean) {
+                        }else if (object instanceof EndComputation) {
                             // Process or print the list
                             if (!(programExecutor.getChangeKey() && programExecutor.getReduce())) {
                                 System.out.println(Thread.currentThread().getName() + ": Received the final result");
@@ -104,7 +105,7 @@ public class SocketHandler implements Runnable {
                                 System.out.println(Thread.currentThread().getName()+ ": " + ((ErrorMessage) finalObject).getMessage());
                                 programExecutor.setErrorPresent(true);
                                 isProcessing = false;
-                            }else if (finalObject instanceof Boolean) {
+                            }else if (finalObject instanceof EndComputation) {
                                 System.out.println(Thread.currentThread().getName() + ": Received the final result");
                                 logger.info(Thread.currentThread().getName() + ": Received the final result");  
                                 end();
@@ -140,7 +141,7 @@ public class SocketHandler implements Runnable {
     public void managePhase2(){
 
         try{
-            keyManager.insertAssignment(this,programExecutor.getNumPartitions());
+            keyManager.insertAssignment(this,Math.min(programExecutor.getNumPartitions(),programExecutor.getFilesSize()));
             this.phase = CoordinatorPhase.FINAL;
         }catch(Exception e){
             System.out.println(Thread.currentThread().getName() + ": Error while splitting the keys" + e.getMessage());

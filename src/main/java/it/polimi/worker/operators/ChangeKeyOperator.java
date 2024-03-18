@@ -5,7 +5,7 @@ import java.util.List;
 import java.util.function.IntUnaryOperator;
 
 import it.polimi.common.KeyValuePair;
-import it.polimi.worker.Operator;
+import it.polimi.worker.utils.Operator;
 
 public class ChangeKeyOperator implements Operator {
     private final IntUnaryOperator function;

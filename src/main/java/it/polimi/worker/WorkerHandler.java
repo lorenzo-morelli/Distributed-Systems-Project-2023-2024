@@ -11,9 +11,11 @@ import org.apache.commons.lang3.tuple.MutablePair;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 import it.polimi.common.KeyValuePair;
+import it.polimi.common.messages.EndComputation;
 import it.polimi.common.messages.ErrorMessage;
 import it.polimi.common.messages.ReduceOperation;
 import it.polimi.worker.utils.CheckpointInfo;
+import it.polimi.worker.utils.Operator;
 import it.polimi.common.messages.NormalOperations;
 
 class WorkerHandler extends Thread {
@@ -68,13 +70,12 @@ class WorkerHandler extends Thread {
                     try{
                         // Process the Task
                         if(processTask(task)){
-                            outputStream.writeObject(true);
-                            System.out.println(Thread.currentThread().getName() + ": Keys sent to the coordinator");
-                            logger.info(Thread.currentThread().getName() + ": Keys sent to the coordinator");
-                            if(!(task.getChangeKey() && task.getReduce())){
+                            outputStream.writeObject(new EndComputation());
+                            System.out.println(Thread.currentThread().getName() + ": EndComputation message sent to the coordinator");
+                            logger.info(Thread.currentThread().getName() + ": EndComputation message sent to the coordinator");
+                            if(!(task.getChangeKey() && task.getReduce())){   
                                 safeDelete = true;
-                                break;
-                                
+                                break;     
                             }
                         }else{
                             break;
@@ -96,11 +97,11 @@ class WorkerHandler extends Thread {
                     Thread.currentThread().setName(clientSocket.getInetAddress().getHostName() +":"+ clientSocket.getLocalPort() + "(" +clientSocket.getPort() + ")" + ":" + reduceMessage.getProgramId());
 
                     System.out.println(Thread.currentThread().getName() + ": Received LastReduce message from coordinator");
-                    logger.info(Thread.currentThread().getName() + ": Received LastReduce message from coordinator, responsible for the keys: " + reduceMessage.getKeys());
+                    logger.info(Thread.currentThread().getName() + ": Received LastReduce message from coordinator, responsible for the keys: " + reduceMessage.getKeys().getLeft() + "-" + reduceMessage.getKeys().getRight());
                     
                     try{
                         if(computeReduceMessage(reduceMessage)){
-                            outputStream.writeObject(true);
+                            outputStream.writeObject(new EndComputation());
                             safeDelete = true;
                         }
                     }
@@ -173,7 +174,6 @@ class WorkerHandler extends Thread {
     private boolean processTask(NormalOperations task){
         
         operators = handleOperators(task.getOperators());
-        System.out.println(Thread.currentThread().getName() + ": Processing task" + task.getPathFiles());
         
         try{
             for(int i = 0;i<task.getPathFiles().size();i++){

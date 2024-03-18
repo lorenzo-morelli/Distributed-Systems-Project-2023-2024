@@ -7,7 +7,7 @@ import java.util.HashMap;
 import java.util.function.Function;
 
 import it.polimi.common.KeyValuePair;
-import it.polimi.worker.Operator;
+import it.polimi.worker.utils.Operator;
 
 public class ReduceOperator implements Operator {
     private final Function<List<Integer>, Integer> reduceFunction;

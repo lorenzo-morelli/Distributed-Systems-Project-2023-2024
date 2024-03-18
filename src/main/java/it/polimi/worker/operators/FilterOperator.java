@@ -5,7 +5,7 @@ import java.util.List;
 import java.util.function.Predicate;
 
 import it.polimi.common.KeyValuePair;
-import it.polimi.worker.Operator;
+import it.polimi.worker.utils.Operator;
 
 public class FilterOperator implements Operator {
     private final Predicate<Integer> filterFunction;

@@ -45,21 +45,17 @@ public class HadoopCoordinator extends HadoopFileManager{
         logger.info(Thread.currentThread().getName() + ": Uploading file to HDFS: " + localFilePath);
         String finalName =  hdfsDestinationPath + new Path(localFilePath).getName();
 
-        // Open the local file
         InputStream in = new BufferedInputStream(new FileInputStream(localFilePath)); 
 
-        // Create HDFS output stream
         FSDataOutputStream out = fs.create(new Path(finalName));
 
         byte[] buffer = new byte[BUFFER_SIZE];
         int bytesRead;
         
-        // Read file in chunks and write to HDFS
         while ((bytesRead = in.read(buffer)) > 0) {
             out.write(buffer, 0, bytesRead);
         }
 
-        // Close the streams
         out.close();
         in.close();
         logger.info(Thread.currentThread().getName() + ": File "+finalName +" uploaded to HDFS successfully.");
@@ -74,16 +70,17 @@ public class HadoopCoordinator extends HadoopFileManager{
     }
     
     public int getKeysSize(String programId) throws IOException {
+        logger.info(Thread.currentThread().getName() + ": Getting keys size from HDFS");
         String path = "/program"+programId;
         FileStatus[] fileStatuses = fs.listStatus(new Path(path));
         return fileStatuses.length;
     } 
 
     public synchronized void mergeFiles(String outputId,String programId, int identifier) throws IllegalArgumentException, IOException {
+        logger.info(Thread.currentThread().getName() + ": Merging files from HDFS");
         String hdfsFilePath = "/output" + programId + "/" + identifier;
         String localMergedFilePath = "result-" + outputId + ".csv";
     
-        // Open the output file in append mode
         try (BufferedOutputStream mergedOut = new BufferedOutputStream(new FileOutputStream(localMergedFilePath, true))) {
             FileStatus[] fileStatuses = fs.listStatus(new Path(hdfsFilePath));
     
@@ -95,9 +92,9 @@ public class HadoopCoordinator extends HadoopFileManager{
         }
     }
     public void mergeFiles(String outputId,String programId) throws IllegalArgumentException, IOException {
-        String hdfsFilePath = "/program" + programId;
+        logger.info(Thread.currentThread().getName() + ": Merging files from HDFS");
+        String hdfsFilePath = "/output" + programId;
         String localMergedFilePath = "result-" + outputId + ".csv";
-        // Open the output file in append mode
         try (BufferedOutputStream mergedOut = new BufferedOutputStream(new FileOutputStream(localMergedFilePath, true))) {
             FileStatus[] fileStatuses = fs.listStatus(new Path(hdfsFilePath));
     
@@ -111,13 +108,10 @@ public class HadoopCoordinator extends HadoopFileManager{
 
     private void downloadAndAppendToMergedFile(String hdfsFilePath, OutputStream mergedOut) throws IOException {
         logger.info(Thread.currentThread().getName() + ": Downloading file from HDFS: " + hdfsFilePath);
-        // Open HDFS file
         try (InputStream in = fs.open(new Path(hdfsFilePath))) {
-            // Set buffer size to 4KB
             byte[] buffer = new byte[BUFFER_SIZE];
             int bytesRead;
     
-            // Read file in chunks and write to merged file
             while ((bytesRead = in.read(buffer)) > 0) {
                 mergedOut.write(buffer, 0, bytesRead);
             }
@@ -126,6 +120,8 @@ public class HadoopCoordinator extends HadoopFileManager{
     }
 
     public synchronized void mergeHadoopFiles(String id,String i, List<String> files) throws IOException{
+        logger.info(Thread.currentThread().getName() + ": Merging files from HDFS");
+        files.stream().forEach(file -> logger.info(Thread.currentThread().getName() + ": File: " + file));
         String hdfsFilePath = "/input" + id;
         String localMergedFilePath = "task" + i + ".csv";
 
@@ -139,6 +135,7 @@ public class HadoopCoordinator extends HadoopFileManager{
                 }
             }
         }
+        logger.info(Thread.currentThread().getName() + ": Files merged from HDFS successfully : " + hdfsFilePath + "/" + localMergedFilePath);
         mergedOut.close();
     }
     

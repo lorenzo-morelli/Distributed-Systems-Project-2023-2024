@@ -24,7 +24,7 @@ import it.polimi.common.messages.NormalOperations;
 public class HadoopWorker extends HadoopFileManager{
 
     public HadoopWorker(String address) throws IOException{
-        super(address,1);
+        super(address,65536);
         logger = LogManager.getLogger("it.polimi.Worker");
     }
 
@@ -51,7 +51,6 @@ public class HadoopWorker extends HadoopFileManager{
         Data data;
         
         while ((!(data = readFile(in, count)).getData().equals("")) || partialTuple.toString().length() > 0){
-            System.out.println(Thread.currentThread().getName() + ": Data: " + data.getData() +"/"+ partialTuple.toString() + " of file: " + i);
             logger.info(Thread.currentThread().getName() + ": Data is ready to be processed of partition: " + count + " of file: " + i);
             
             String combinedData = data.getData().equals("") ? partialTuple.toString() : partialTuple.toString() + data.getData();

@@ -50,6 +50,7 @@ public class CheckPointManager {
             Path path = Paths.get(pathString);
             pathString = CHECKPOINT_DIRECTORY + programId + "/" + path.getFileName();   
             if (!Files.exists(Paths.get(pathString))) {
+                logger.warn(Thread.currentThread().getName() + ": Checkpoint file " + pathString + " does not exist");
                 return new CheckpointInfo(0, false,"");
             }
             BufferedReader reader = new BufferedReader(new FileReader(pathString));

@@ -103,7 +103,7 @@ public class ProgramExecutor extends Thread{
         return files.size();
     }
 
-    private List<String> manageFilesPerWorker(int workerIndex){
+    private List<String> manageFilesPerWorker(int workerIndex,boolean local){
         int numFilesPerWorker = files.size() / addresses.size();
         int remainingFiles = files.size() % addresses.size();
         
@@ -111,8 +111,14 @@ public class ProgramExecutor extends Thread{
         int end = (workerIndex + 1) * numFilesPerWorker + Math.min(workerIndex + 1, remainingFiles);
 
         List<String> filesPerWorker = new ArrayList<>();
-        for (int i = start; i < end && i < files.size(); i++) {
-            filesPerWorker.add(files.get(i));
+        if(!local){
+            for (int i = start; i < end && i < files.size(); i++) {
+                filesPerWorker.add(files.get(i));
+            }
+        }else{
+            for (int i = start; i < end && i < localFiles.size(); i++) {
+                filesPerWorker.add(localFiles.get(i));
+            }
         }
         return filesPerWorker;
     }
@@ -123,7 +129,7 @@ public class ProgramExecutor extends Thread{
         
         for (int j = 0; j < Math.min(addresses.size(),files.size()); j++) {
 
-            List<String> filesWorker = manageFilesPerWorker(j);
+            List<String> filesWorker = manageFilesPerWorker(j,false);
             try {
                 Address a = addresses.get(j);
                 Socket clientSocket = new Socket(a.getHostname(), a.getPort());
@@ -186,17 +192,11 @@ public class ProgramExecutor extends Thread{
             else{
                 System.out.println(Thread.currentThread().getName() + ": Uploading files to HDFS");          
                 for(int i = 0; i< Math.min(addresses.size(),files.size()); i++){
-                    int numFilesPerWorker = files.size() / addresses.size();
-                    int remainingFiles = files.size() % addresses.size();
-                    
-                    int start = i * numFilesPerWorker + Math.min(i, remainingFiles);
-                    int end = (i + 1) * numFilesPerWorker + Math.min(i + 1, remainingFiles);
+                   
 
-                    List<String> filesPerWorker = new ArrayList<>();
-                    for (int j = start; j < end && j < files.size(); j++) {
-                        filesPerWorker.add(localFiles.get(j));
-                    }
-                    hadoopCoordinator.mergeHadoopFiles(programId, String.valueOf(i),filesPerWorker);
+                    List<String> filesPerWorker = manageFilesPerWorker(i,true);
+                    
+                    hadoopCoordinator.uploadMergedFiles(programId, String.valueOf(i),filesPerWorker);
                 }
 
 

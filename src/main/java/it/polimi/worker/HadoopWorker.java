@@ -28,7 +28,25 @@ public class HadoopWorker extends HadoopFileManager{
         super(address,131072);
         logger = LogManager.getLogger("it.polimi.Worker");
     }
-
+    public StringBuilder processData(String combinedData, List<KeyValuePair> result) throws IOException{
+        StringBuilder partialTuple;
+        String[] lines = combinedData.split("\n");
+        
+        if(combinedData.endsWith("\n")){
+            for (int j = 0; j < lines.length; j++) {
+                processLine(lines[j].trim(), result);
+            }
+                partialTuple = new StringBuilder();
+            }
+        else{
+            for (int j = 0; j < lines.length - 1; j++) {
+                processLine(lines[j].trim(), result);
+            }
+            partialTuple = new StringBuilder(lines[lines.length - 1]);
+        }
+        return partialTuple;
+        
+    }
     public void readInputFile(int i, NormalOperations task, WorkerHandler workerHandler, List<Operator> operators, int count, String remainingString) throws IOException {
         logger.info(Thread.currentThread().getName() + ": Reading input file: " + task.getPathFiles().get(i));
         Path filePath = new Path(task.getPathFiles().get(i));
@@ -55,19 +73,7 @@ public class HadoopWorker extends HadoopFileManager{
             
             String combinedData = data.getData().equals("") ? partialTuple.toString() : partialTuple.toString() + data.getData();
             
-            String[] lines = combinedData.split("\n");
-            if(combinedData.endsWith("\n")){
-                for (int j = 0; j < lines.length; j++) {
-                    processLine(lines[j].trim(), result);
-                }
-                partialTuple = new StringBuilder();
-            }
-            else{
-                for (int j = 0; j < lines.length - 1; j++) {
-                    processLine(lines[j].trim(), result);
-                }
-                partialTuple = new StringBuilder(lines[lines.length - 1]);
-            }
+            partialTuple = processData(combinedData, result);
 
             for (Operator op : operators) {
                 result = op.execute(result);
@@ -170,19 +176,7 @@ public class HadoopWorker extends HadoopFileManager{
                 String combinedData = data.getData().equals("") ? partialTuple.toString() : partialTuple.toString() + data.getData();
                 
                
-                String[] lines = combinedData.split("\n");
-                if(combinedData.endsWith("\n")){
-                    for (int j = 0; j < lines.length; j++) {
-                        processLine(lines[j].trim(), result);
-                    }
-                    partialTuple = new StringBuilder();
-                }
-                else{
-                    for (int j = 0; j < lines.length - 1; j++) {
-                        processLine(lines[j].trim(), result);
-                    }
-                    partialTuple = new StringBuilder(lines[lines.length - 1]);
-                }
+                partialTuple = processData(combinedData, result);
                 count++;
                 result = reduce.execute(result);
             }

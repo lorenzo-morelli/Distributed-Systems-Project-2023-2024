@@ -55,10 +55,10 @@ public class SocketHandler implements Runnable {
                 switch (phase) {
                     case INIT:
 
-                        NormalOperations t = new NormalOperations(programId,programExecutor.getOperations(), files,programExecutor.getChangeKey(),programExecutor.getReduce(),identifier);
+                        NormalOperations task = new NormalOperations(programId,programExecutor.getOperations(), files,programExecutor.getChangeKey(),programExecutor.getReduce(),identifier);
                         System.out.println(Thread.currentThread().getName() + ": Sending task to worker phase1: " + clientSocket.getInetAddress().getHostName() +":"+ clientSocket.getPort());
                         logger.info(Thread.currentThread().getName() + ": Sending task to worker phase1: "+ clientSocket.getInetAddress().getHostName() +":"+ clientSocket.getPort());
-                        outputStream.writeObject(t);
+                        outputStream.writeObject(task);
                         
                         Object object = inputStream.readObject();
                         if (object == null){ 
@@ -70,7 +70,6 @@ public class SocketHandler implements Runnable {
                             programExecutor.setErrorPresent(true);
                             isProcessing = false;
                         }else if (object instanceof EndComputation) {
-                            // Process or print the list
                             if (!(programExecutor.getChangeKey() && programExecutor.getReduce())) {
                                 System.out.println(Thread.currentThread().getName() + ": Received the final result");
                                 logger.info(Thread.currentThread().getName() + ": Received the final result");
@@ -94,7 +93,7 @@ public class SocketHandler implements Runnable {
                         if(keyManager.canProceed()){
                             logger.info(Thread.currentThread().getName() + ": Sending task to worker phase2: " + clientSocket.getInetAddress().getHostName() +":"+ clientSocket.getPort());
                             System.out.println(Thread.currentThread().getName() + ": Sending task to worker phase2: " + clientSocket.getInetAddress().getHostName() +":"+ clientSocket.getPort());
-                            ReduceOperation lastReduce = new ReduceOperation(programId,programExecutor.getLastReduce(), keyManager.getFinalAssignments().get(this),identifier);
+                            ReduceOperation lastReduce = new ReduceOperation(programId,programExecutor.getLastReduce(), keyManager.getAssignments().get(this),identifier);
                             outputStream.writeObject(lastReduce);                
                             Object finalObject = inputStream.readObject();
                             if (finalObject == null ) {
@@ -245,12 +244,12 @@ public class SocketHandler implements Runnable {
         programExecutor.getClientSockets().add(clientSocket);
         programExecutor.getFileSocketMap().put(files, clientSocket);
         SocketHandler newSocketHandler = new SocketHandler(programExecutor, files, identifier, phase);
-        if (keyManager.getFinalAssignments().get(this) != null) {
+        if (keyManager.getAssignments().get(this) != null) {
             System.out.println(Thread.currentThread().getName() + ": Reassigning keys to the new worker...");
             logger.info(Thread.currentThread().getName() + ": Reassigning keys to the new worker...");
-            MutablePair<Integer,Integer> keys= keyManager.getFinalAssignments().get(this);
-            keyManager.getFinalAssignments().remove(this);            
-            keyManager.getFinalAssignments().put(newSocketHandler, keys);
+            MutablePair<Integer,Integer> keys= keyManager.getAssignments().get(this);
+            keyManager.getAssignments().remove(this);            
+            keyManager.getAssignments().put(newSocketHandler, keys);
         }
         System.out.println(Thread.currentThread().getName() + ": Reconnected to a new worker. Resuming operations...");
         logger.info(Thread.currentThread().getName() + ": Reconnected to a new worker. Resuming operations...");    

@@ -28,10 +28,10 @@ public class HadoopCoordinator extends HadoopFileManager{
         try {
             
             fs.delete(new Path("/input" + programId), true);
-            fs.delete(new Path("/program" + programId), true);
-            
+            fs.delete(new Path("/output" + programId), true);
+
             if(phase2){
-                fs.delete(new Path("/output" + programId), true);
+                fs.delete(new Path("/program" + programId), true);
             }
 
             System.out.println(Thread.currentThread().getName() + ": Files deleted");
@@ -76,7 +76,7 @@ public class HadoopCoordinator extends HadoopFileManager{
         return fileStatuses.length;
     } 
 
-    public synchronized void mergeFiles(String outputId,String programId, int identifier) throws IllegalArgumentException, IOException {
+    public synchronized void mergeFiles(String outputId,String programId, int identifier) throws IOException {
         logger.info(Thread.currentThread().getName() + ": Merging files from HDFS");
         String hdfsFilePath = "/output" + programId + "/" + identifier;
         String localMergedFilePath = "result-" + outputId + ".csv";
@@ -91,7 +91,7 @@ public class HadoopCoordinator extends HadoopFileManager{
             }
         }
     }
-    public void mergeFiles(String outputId,String programId) throws IllegalArgumentException, IOException {
+    public void mergeFiles(String outputId,String programId) throws IOException {
         logger.info(Thread.currentThread().getName() + ": Merging files from HDFS");
         String hdfsFilePath = "/output" + programId;
         String localMergedFilePath = "result-" + outputId + ".csv";
@@ -119,7 +119,7 @@ public class HadoopCoordinator extends HadoopFileManager{
         logger.info(Thread.currentThread().getName() + ": File " + hdfsFilePath + " downloaded and appended to merged file successfully.");
     }
 
-    public synchronized void mergeHadoopFiles(String id,String i, List<String> files) throws IOException{
+    public synchronized void uploadMergedFiles(String id,String i, List<String> files) throws IOException{
         logger.info(Thread.currentThread().getName() + ": Merging files from HDFS");
         files.stream().forEach(file -> logger.info(Thread.currentThread().getName() + ": File: " + file));
         String hdfsFilePath = "/input" + id;

@@ -30,7 +30,12 @@ public class Worker{
             address = scanner.nextLine();
             address = (address.equals("")) ? "hdfs://localhost:9000" : "hdfs://" + address;
 
-
+        } catch (Exception e) {
+            System.out.println("Not a valid address");
+            scanner.close();
+            return;
+        }
+        try {
             System.out.println("Insert a port");
             String portString = scanner.nextLine();
             port = Integer.parseInt(portString);

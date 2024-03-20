@@ -177,8 +177,14 @@ class WorkerHandler extends Thread {
         
         try{
             for(int i = 0;i<task.getPathFiles().size();i++){
-            
-                CheckpointInfo checkPointObj = checkPointManager.getCheckPoint(task.getProgramId(),task.getPathFiles().get(i));
+                CheckpointInfo checkPointObj;
+                if ((task.getReduce() && !task.getChangeKey())) {
+                    checkPointObj = checkPointManager.getCheckPointForReduce(task.getProgramId(),task.getPathFiles().get(i));
+                }
+                else{
+                    checkPointObj = checkPointManager.getCheckPoint(task.getProgramId(),task.getPathFiles().get(i));
+                }
+
                 if(checkPointObj.getEnd()){
                     logger.info(Thread.currentThread().getName() + ": File already processed");
                     continue;
@@ -189,7 +195,7 @@ class WorkerHandler extends Thread {
                         logger.info(Thread.currentThread().getName() + ": File not processed yet");
                     }
                     
-                    hadoopWorker.readInputFile(i,task,this,operators,checkPointObj.getCount(),checkPointObj.getRemainingString());
+                    hadoopWorker.readInputFile(i,task,this,operators,checkPointObj.getCount(),checkPointObj.getRemainingString(),checkPointObj.getKeyValuePair());
                 }
             
             }
@@ -201,9 +207,16 @@ class WorkerHandler extends Thread {
         return false;
     }
     
-    public void processPartitionTask(List<KeyValuePair> result,NormalOperations task, Integer numFile,Integer numPart,Boolean end, String remainingString) throws IOException{
-        hadoopWorker.writeKeys(programId,identifier + "_" + numFile +"_" + numPart,result,task.getChangeKey(),task.getReduce());
-        checkPointManager.createCheckpoint(programId, task.getPathFiles().get(numFile),new CheckpointInfo(numPart,end,remainingString));
+    public void processPartitionTask(List<KeyValuePair> result,NormalOperations task, Integer numFile,Integer numPart,Boolean end, String remainingString,boolean writeKeys) throws IOException{
+        if ((task.getReduce() && !task.getChangeKey())) {
+            checkPointManager.createCheckpointForReduce(programId, task.getPathFiles().get(numFile), new CheckpointInfo(numPart, end, remainingString,result.get(0)), result.get(0));
+            if(writeKeys){
+                hadoopWorker.writeKeys(programId,identifier + "_" + numFile +"_" + numPart,result,task.getChangeKey(),task.getReduce());
+            }
+        }else{
+            hadoopWorker.writeKeys(programId,identifier + "_" + numFile +"_" + numPart,result,task.getChangeKey(),task.getReduce());
+            checkPointManager.createCheckpoint(programId, task.getPathFiles().get(numFile),new CheckpointInfo(numPart,end,remainingString,null));
+        }
     }
 
     private boolean computeReduceMessage(ReduceOperation reduceMessage){
@@ -211,15 +224,15 @@ class WorkerHandler extends Thread {
         
         try{
             for(int idx = reduceMessage.getKeys().getLeft(); idx < reduceMessage.getKeys().getRight(); idx++ ){   
-                CheckpointInfo checkPointObj = checkPointManager.getCheckPoint(reduceMessage.getProgramId(),idx+".csv");
-                if(checkPointObj.getEnd()){
+                
+                if(checkPointManager.readCheckPointReducePhase(reduceMessage.getProgramId(),idx+".csv")){
                     logger.info(Thread.currentThread().getName() + ": File already processed");
                     continue;
                 }else{
                     logger.info(Thread.currentThread().getName() + ": File not processed");
                     KeyValuePair result = hadoopWorker.readAndComputeReduce(idx,reduceMessage,reduce);
                     hadoopWorker.writeKeys(programId,String.valueOf(identifier),result);
-                    checkPointManager.createCheckpoint(programId,idx+".csv",new CheckpointInfo(0,true,""));
+                    checkPointManager.writeCheckPointReducePhase(programId,idx+".csv");
                 }
             } 
             return true;

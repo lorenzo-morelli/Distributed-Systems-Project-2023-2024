@@ -47,7 +47,7 @@ public class HadoopWorker extends HadoopFileManager{
         return partialTuple;
         
     }
-    public void readInputFile(int i, NormalOperations task, WorkerHandler workerHandler, List<Operator> operators, int count, String remainingString) throws IOException {
+    public void readInputFile(int i, NormalOperations task, WorkerHandler workerHandler, List<Operator> operators, int count, String remainingString,KeyValuePair value) throws IOException {
         logger.info(Thread.currentThread().getName() + ": Reading input file: " + task.getPathFiles().get(i));
         Path filePath = new Path(task.getPathFiles().get(i));
         FSDataInputStream in = fs.open(filePath);
@@ -55,7 +55,7 @@ public class HadoopWorker extends HadoopFileManager{
         List<KeyValuePair> result = new ArrayList<>();
 
         Operator reduce = null;
-        KeyValuePair reduceResult = null;
+        KeyValuePair reduceResult = value;
         if(task.getReduce() && !task.getChangeKey()){
             for (Operator op : operators) {
                 if (op instanceof ReduceOperator) {
@@ -85,15 +85,17 @@ public class HadoopWorker extends HadoopFileManager{
                     result.add(reduceResult);
                     reduceResult = reduce.execute(result).get(0);
                 }
-            } else {
-                workerHandler.processPartitionTask(result, task, i, count, data.getEnd() && partialTuple.toString().length() == 0,partialTuple.toString());
+                workerHandler.processPartitionTask(List.of(reduceResult), task, i, count, data.getEnd() && partialTuple.toString().length() == 0,partialTuple.toString(),false);
+            }else{
+                workerHandler.processPartitionTask(result, task, i, count, data.getEnd() && partialTuple.toString().length() == 0,partialTuple.toString(),true);
+
             }
             logger.info(Thread.currentThread().getName() + ": Data processed of partition: " + count + " of file: " + task.getPathFiles().get(i));
             result.clear();
             count++;
         }
         if(task.getReduce() && !task.getChangeKey()){
-            workerHandler.processPartitionTask(List.of(reduceResult), task,i,0, true,"");
+            workerHandler.processPartitionTask(List.of(reduceResult), task,i,count, true,"",true);
         }
     }
     private void processLine(String line, List<KeyValuePair> result) throws IOException {

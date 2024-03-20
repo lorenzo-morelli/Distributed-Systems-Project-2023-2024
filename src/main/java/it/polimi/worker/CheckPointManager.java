@@ -14,6 +14,7 @@ import java.nio.file.Path;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 
+import it.polimi.common.KeyValuePair;
 import it.polimi.worker.utils.CheckpointInfo;
 
 import java.io.File;
@@ -50,8 +51,8 @@ public class CheckPointManager {
             Path path = Paths.get(pathString);
             pathString = CHECKPOINT_DIRECTORY + programId + "/" + path.getFileName();   
             if (!Files.exists(Paths.get(pathString))) {
-                logger.warn(Thread.currentThread().getName() + ": Checkpoint file " + pathString + " does not exist");
-                return new CheckpointInfo(0, false,"");
+                logger.info(Thread.currentThread().getName() + ": Checkpoint file " + pathString + " does not exist");
+                return new CheckpointInfo(0, false,"",null);
             }
             BufferedReader reader = new BufferedReader(new FileReader(pathString));
             String line;
@@ -88,8 +89,104 @@ public class CheckPointManager {
             logger.warn(Thread.currentThread().getName() +": "+ e.getMessage());
         }
         logger.info(Thread.currentThread().getName() + ": Retrieved checkpoint file " + pathString + " with count " + count + " and end " + end + " and remaining string " + remainingString);
-        return new CheckpointInfo(count, end, remainingString);
-}
+        return new CheckpointInfo(count, end, remainingString, null);
+    }
+    public void createCheckpointForReduce(String programId, String pathString,CheckpointInfo checkPointObj,KeyValuePair keyValuePair){
+        createOutputDirectory(CHECKPOINT_DIRECTORY + programId);
+        try {
+            
+            Path path = Paths.get(pathString);
+            pathString = CHECKPOINT_DIRECTORY + programId + "/" + path.getFileName();
+            createdFiles.add(pathString);
+            BufferedWriter writer = new BufferedWriter(new FileWriter(pathString, true));
+            writer.write("<Checkpoint:" + checkPointObj.getCount() + "><"+checkPointObj.getEnd()+"><"+keyValuePair+"><" +checkPointObj.getRemainingString()+">\n");
+            writer.close();
+            logger.info(Thread.currentThread().getName() + ": Created checkpoint file " + pathString);
+        } catch (IOException e) {
+            logger.error(Thread.currentThread().getName() + ": Error while creating checkpoint file");
+            System.out.println(Thread.currentThread().getName() + ": Error while creating checkpoint file");
+            System.out.println(e.getMessage());
+        }
+    }
+    public CheckpointInfo getCheckPointForReduce(String programId,String pathString) {
+        int count = 0;
+        boolean end = false;
+        String remainingString = "";
+        KeyValuePair keyValuePair = null;
+        try {
+            Path path = Paths.get(pathString);
+            pathString = CHECKPOINT_DIRECTORY + programId + "/" + path.getFileName();   
+            if (!Files.exists(Paths.get(pathString))) {
+                logger.info(Thread.currentThread().getName() + ": Checkpoint file " + pathString + " does not exist");
+                return new CheckpointInfo(0, false,"", null);
+            }
+            BufferedReader reader = new BufferedReader(new FileReader(pathString));
+            String line;
+            while ((line = reader.readLine()) != null) {
+                if (line.startsWith("<Checkpoint")) {
+                    String[] parts = line.split("><");
+                    if (parts.length != 4) {
+                        reader.close();
+                        throw new NumberFormatException("Invalid checkpoint format");
+                    }
+                    try{
+                        int temp_count = Integer.parseInt(parts[0].split(":")[1]);
+                        boolean temp_end = Boolean.parseBoolean(parts[1]);
+                        String temp_remainingString = "";
+                        String[] keyValueString = parts[2].substring(0, parts[2].length()).split(",");
+                        if(parts[3].length() > 1){
+                            temp_remainingString= parts[3].substring(0, parts[3].length()-1);
+                        }else{
+                            temp_remainingString="";
+                        }   
+                        count = temp_count;
+                        end = temp_end;
+                        remainingString = temp_remainingString;
+                        keyValuePair = new KeyValuePair(Integer.parseInt(keyValueString[0]),Integer.parseInt(keyValueString[1]));
+                    }catch(NumberFormatException e){
+                        reader.close();
+                        throw new NumberFormatException("Invalid checkpoint format");
+                    }
+                }
+            }
+            reader.close();
+        } catch (IOException e) {
+            logger.error(Thread.currentThread().getName() + ": Error while reading checkpoint file");
+        } catch (NumberFormatException e) {
+            logger.warn(Thread.currentThread().getName() +": "+ e.getMessage());
+        }
+        logger.info(Thread.currentThread().getName() + ": Retrieved checkpoint file " + pathString + " with count " + count + " and end " + end + " and remaining string " + remainingString + " and keyValuePair " + keyValuePair);
+        return new CheckpointInfo(count, end, remainingString, keyValuePair);
+    }
+
+    public void writeCheckPointReducePhase(String programId, String pathString){
+        createOutputDirectory(CHECKPOINT_DIRECTORY + programId);
+        try {
+            
+            Path path = Paths.get(pathString);
+            pathString = CHECKPOINT_DIRECTORY + programId + "/" + path.getFileName();
+            createdFiles.add(pathString);
+            BufferedWriter writer = new BufferedWriter(new FileWriter(pathString, true));
+            writer.write("<Checkpoint done>\n");
+            writer.close();
+            logger.info(Thread.currentThread().getName() + ": Created checkpoint file " + pathString);
+        } catch (IOException e) {
+            logger.error(Thread.currentThread().getName() + ": Error while creating checkpoint file");
+            System.out.println(Thread.currentThread().getName() + ": Error while creating checkpoint file");
+            System.out.println(e.getMessage());
+        }
+    }
+    public boolean readCheckPointReducePhase(String programId,String pathString) {
+        Path path = Paths.get(pathString);
+        pathString = CHECKPOINT_DIRECTORY + programId + "/" + path.getFileName();   
+        if (!Files.exists(Paths.get(pathString))) {
+            logger.info(Thread.currentThread().getName() + ": Checkpoint file " + pathString + " does not exist");
+            return false;
+        }
+        else{
+            return true;
+        }
+    }
 
 
     private static void createOutputDirectory(String directory) {

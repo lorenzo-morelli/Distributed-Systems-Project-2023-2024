@@ -281,11 +281,11 @@ public class ProgramExecutor extends Thread{
 
         ExecutorService executorService = Executors.newFixedThreadPool(this.getFileSocketMap().size());
         try{
-            int i = 0;
+            int i = getFileSocketMap().size()-1;
             
             for (List<String> f : this.getFileSocketMap().keySet()) {
                 executorService.submit(new SocketHandler(this,f,i,CoordinatorPhase.INIT));
-                i++;
+                i--;
             }
             executorService.shutdown();
         }catch(Exception e){

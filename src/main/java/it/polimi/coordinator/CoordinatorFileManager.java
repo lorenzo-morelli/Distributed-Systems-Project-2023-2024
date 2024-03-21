@@ -16,11 +16,20 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import it.polimi.common.Address;
 
-
+/**
+ * The CoordinatorFileManager class is used to read the operations and configurations from the file.
+ * It contains the readOperations and readConfigurations methods.
+ */
 public class CoordinatorFileManager {
 
     private final static Logger logger = LogManager.getLogger("it.polimi.Coordinator");
 
+    /**
+     * The readOperations method is used to read the operations from the file.
+     * @param file represents the operation file to read.
+     * @return a MutablePair containing the list of operations and the list of files to process.
+     * @throws Exception if the file is not found or the format is not correct.
+     */
     public MutablePair<List<MutablePair<String, String>>, List<String>> readOperations(File file) throws Exception {
 
         logger.info(Thread.currentThread().getName() + ": Reading operations file: " + file.getAbsolutePath());
@@ -48,7 +57,12 @@ public class CoordinatorFileManager {
         logger.info(Thread.currentThread().getName() + ": Operations file read: " + file.getAbsolutePath());
         return new MutablePair<>(dataFunctions, files);
     }
-
+    /**
+     * The readConfigurations method is used to read the configurations from the file.
+     * @param file represents the configuration file to read.
+     * @return a MutablePair containing the list of programs paths and the list of workers addresses.
+     * @throws Exception if the file is not found or the format is not correct.
+     */
     public static MutablePair<List<String>, List<Address>> readConfigurations(File file) throws Exception {
         logger.info("Reading configuration file: " + file.getAbsolutePath());
         List<Address> addresses = new ArrayList<>();

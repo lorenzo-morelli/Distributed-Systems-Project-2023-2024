@@ -317,12 +317,14 @@ public class ProgramExecutor extends Thread {
             endedWorkers++;
             if (endedWorkers == Math.min(addresses.size(), files.size())) {
                 hadoopCoordinator.deleteFiles(programId, changeKey && reduce);
+                hadoopCoordinator.closeFileSystem();
             }
         } else {
             endedWorkers++;
             if (endedWorkers == Math.min(addresses.size(), files.size())) {
                 hadoopCoordinator.mergeFiles(outputId, programId);
                 hadoopCoordinator.deleteFiles(programId, changeKey && reduce);
+                hadoopCoordinator.closeFileSystem();
             }
         }
     }

@@ -11,9 +11,18 @@ import org.apache.log4j.PropertyConfigurator;
 
 import it.polimi.common.Address;
 
+/**
+ * The Coordinator class is the main class of the coordinator module.
+ * It is used to start the coordinator, read the configurations from the file and start the ProgramExecutor for each program.
+ */
 public class Coordinator {
     private static final Logger logger = LogManager.getLogger("it.polimi.Coordinator");
 
+    /**
+     * The main method is used to start the coordinator, read the configurations from the file and start the ProgramExecutor for each program.
+     * It reads the HDFS address and the operations file path from the user input.
+     * @param args represents the arguments of the main method.
+     */
     public static void main(String[] args) {
 
         PropertyConfigurator.configure("conf/log4j.properties");

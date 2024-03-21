@@ -10,7 +10,7 @@ import it.polimi.worker.operators.ChangeKeyOperator;
 import it.polimi.worker.operators.FilterOperator;
 import it.polimi.worker.operators.MapOperator;
 import it.polimi.worker.operators.ReduceOperator;
-import it.polimi.worker.utils.Operator;
+import it.polimi.worker.models.Operator;
 
 public class CreateOperator {
 

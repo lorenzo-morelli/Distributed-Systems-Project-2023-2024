@@ -11,24 +11,19 @@ import org.apache.log4j.PropertyConfigurator;
 
 import org.apache.log4j.LogManager;
 
-public class Worker{
+public class Worker {
 
-        private static final Logger logger = LogManager.getLogger("it.polimi.Worker");
-        public static void main(String[] args){
-        
-        
+    private static final Logger logger = LogManager.getLogger("it.polimi.Worker");
+
+    public static void main(String[] args) {
         PropertyConfigurator.configure("conf/log4j.properties");
-        
-
         Scanner scanner = new Scanner(System.in);
-        
         String address;
         int port;
         try {
-
             System.out.println("Insert HDFS address (default: 'localhost:9000'): ");
             address = scanner.nextLine();
-            address = (address.equals("")) ? "hdfs://localhost:9000" : "hdfs://" + address;
+            address = (address.isEmpty()) ? "hdfs://localhost:9000" : "hdfs://" + address;
 
         } catch (Exception e) {
             System.out.println("Not a valid address");
@@ -45,25 +40,20 @@ public class Worker{
             scanner.close();
             return;
         }
-        ServerSocket serverSocket = null;
+        ServerSocket serverSocket;
         try {
             // Create a server socket to accept connections
             serverSocket = new ServerSocket(port);
             System.out.println("Server started on port " + port);
             logger.info("Server started on port " + port);
             while (true) {
-
                 // Wait for a client to connect
                 Socket clientSocket = serverSocket.accept();
-
-
                 logger.info("Coordinator opened a connection.");
-
                 // Handle the connection in a separate thread
                 WorkerHandler workerHandler = new WorkerHandler(clientSocket, new HadoopWorker(address));
                 workerHandler.start();
             }
-
         } catch (IOException e) {
             System.out.println(e.getMessage());
         }

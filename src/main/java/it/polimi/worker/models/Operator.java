@@ -1,4 +1,4 @@
-package it.polimi.worker.utils;
+package it.polimi.worker.models;
 
 import java.util.List;
 
@@ -6,5 +6,5 @@ import it.polimi.common.KeyValuePair;
 
 // Operator interface
 public interface Operator {
-    public List<KeyValuePair> execute(List<KeyValuePair> input);
+    List<KeyValuePair> execute(List<KeyValuePair> input);
 }

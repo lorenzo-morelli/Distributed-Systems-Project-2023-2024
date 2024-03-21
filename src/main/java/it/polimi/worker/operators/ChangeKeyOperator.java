@@ -5,7 +5,7 @@ import java.util.List;
 import java.util.function.IntUnaryOperator;
 
 import it.polimi.common.KeyValuePair;
-import it.polimi.worker.utils.Operator;
+import it.polimi.worker.models.Operator;
 
 public class ChangeKeyOperator implements Operator {
     private final IntUnaryOperator function;
@@ -20,8 +20,8 @@ public class ChangeKeyOperator implements Operator {
 
         for (KeyValuePair pair : input) {
             // Apply the key transformation function to change the key
-            int transformedKey = function.applyAsInt(pair.getValue());
-            KeyValuePair transformedPair = new KeyValuePair(transformedKey, pair.getValue());
+            int transformedKey = function.applyAsInt(pair.value());
+            KeyValuePair transformedPair = new KeyValuePair(transformedKey, pair.value());
             output.add(transformedPair);
         }
 

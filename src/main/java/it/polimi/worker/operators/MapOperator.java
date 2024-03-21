@@ -5,7 +5,7 @@ import java.util.function.IntUnaryOperator;
 import java.util.stream.Collectors;
 
 import it.polimi.common.KeyValuePair;
-import it.polimi.worker.utils.Operator;
+import it.polimi.worker.models.Operator;
 
 public class MapOperator implements Operator {
     private final IntUnaryOperator function;
@@ -18,7 +18,7 @@ public class MapOperator implements Operator {
     public List<KeyValuePair> execute(List<KeyValuePair> input) {
         // Implementation of the map operator
         return input.stream()
-                .map(kv -> new KeyValuePair(kv.getKey(), function.applyAsInt(kv.getValue())))
+                .map(kv -> new KeyValuePair(kv.key(), function.applyAsInt(kv.value())))
                 .collect(Collectors.toList());
     }
 }

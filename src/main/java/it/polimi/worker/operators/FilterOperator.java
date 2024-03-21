@@ -5,7 +5,7 @@ import java.util.List;
 import java.util.function.Predicate;
 
 import it.polimi.common.KeyValuePair;
-import it.polimi.worker.utils.Operator;
+import it.polimi.worker.models.Operator;
 
 public class FilterOperator implements Operator {
     private final Predicate<Integer> filterFunction;
@@ -19,7 +19,7 @@ public class FilterOperator implements Operator {
         List<KeyValuePair> output = new ArrayList<>();
 
         for (KeyValuePair pair : input) {
-            if (filterFunction.test(pair.getValue())) {
+            if (filterFunction.test(pair.value())) {
                 output.add(pair);
             }
         }

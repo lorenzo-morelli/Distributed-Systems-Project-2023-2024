@@ -7,7 +7,7 @@ import java.util.HashMap;
 import java.util.function.Function;
 
 import it.polimi.common.KeyValuePair;
-import it.polimi.worker.utils.Operator;
+import it.polimi.worker.models.Operator;
 
 public class ReduceOperator implements Operator {
     private final Function<List<Integer>, Integer> reduceFunction;
@@ -22,7 +22,7 @@ public class ReduceOperator implements Operator {
 
         // Group values by key
         for (KeyValuePair pair : input) {
-            groupedValues.computeIfAbsent(pair.getKey(), k -> new ArrayList<>()).add(pair.getValue());
+            groupedValues.computeIfAbsent(pair.key(), k -> new ArrayList<>()).add(pair.value());
         }
 
         List<KeyValuePair> output = new ArrayList<>();

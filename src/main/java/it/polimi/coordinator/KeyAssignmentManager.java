@@ -9,11 +9,11 @@ import org.apache.log4j.Logger;
 
 public class KeyAssignmentManager {
 
-    private Map<SocketHandler, MutablePair<Integer,Integer>> assignments;
+    private final Map<SocketHandler, MutablePair<Integer, Integer>> assignments;
     private volatile Boolean canProceed;
     private static final Logger logger = LogManager.getLogger("it.polimi.Coordinator");
-    private HadoopCoordinator hadoopCoordinator;
-    private String programId;
+    private final HadoopCoordinator hadoopCoordinator;
+    private final String programId;
 
     public KeyAssignmentManager(HadoopCoordinator hadoopCoordinator, String programId) {
         assignments = new HashMap<>();
@@ -21,15 +21,17 @@ public class KeyAssignmentManager {
         this.hadoopCoordinator = hadoopCoordinator;
         this.programId = programId;
     }
-    public Map<SocketHandler, MutablePair<Integer,Integer>> getAssignments(){
+
+    public Map<SocketHandler, MutablePair<Integer, Integer>> getAssignments() {
         return assignments;
     }
-    public Boolean canProceed(){
+
+    public Boolean canProceed() {
         return canProceed;
     }
 
     public synchronized void insertAssignment(SocketHandler worker, int num) throws IOException {
-        logger.info(Thread.currentThread().getName()+": Inserting worker keys");
+        logger.info(Thread.currentThread().getName() + ": Inserting worker keys");
         assignments.put(worker, null);
         if (assignments.size() == num) {
             determineNewAssignmentsWithLoadBalancing();
@@ -38,22 +40,22 @@ public class KeyAssignmentManager {
 
     // Method to determine new worker assignments with load balancing for selected keys
     public void determineNewAssignmentsWithLoadBalancing() throws IOException {
-        logger.info(Thread.currentThread().getName()+": Determining new worker assignments with load balancing");
-        
+        logger.info(Thread.currentThread().getName() + ": Determining new worker assignments with load balancing");
+
         // Get the number of workers
         int numWorkers = assignments.size();
 
-        
+
         // Get the number of keys
         int keysSize = hadoopCoordinator.getKeysSize(programId);
-        
+
         // Get the number of keys per worker
         int keysPerWorker = keysSize / numWorkers;
         int remainingKeys = keysSize % numWorkers;
 
         // Assign keys to workers
         int start = 0;
-        int end = 0;
+        int end;
         for (SocketHandler worker : assignments.keySet()) {
             end = start + keysPerWorker;
             if (remainingKeys > 0) {
@@ -65,7 +67,7 @@ public class KeyAssignmentManager {
         }
         canProceed = true;
 
-        logger.info(Thread.currentThread().getName()+": New worker assignments with load balancing determined");
+        logger.info(Thread.currentThread().getName() + ": New worker assignments with load balancing determined");
     }
-    
+
 }

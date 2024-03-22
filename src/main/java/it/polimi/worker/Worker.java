@@ -10,11 +10,19 @@ import org.apache.log4j.PropertyConfigurator;
 
 
 import org.apache.log4j.LogManager;
-
+/**
+ * This class is responsible for starting the worker server.
+ * The worker server listens for connections from the coordinator.
+ * When a connection is established, the worker server creates a WorkerHandler thread to handle the connection.
+ */
 public class Worker {
 
     private static final Logger logger = LogManager.getLogger("it.polimi.Worker");
 
+    /**
+     * Main method to start the worker server.
+     * @param args Command line arguments (not used).
+     */
     public static void main(String[] args) {
         PropertyConfigurator.configure("conf/log4j.properties");
         Scanner scanner = new Scanner(System.in);

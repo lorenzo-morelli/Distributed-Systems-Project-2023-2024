@@ -18,6 +18,11 @@ import it.polimi.worker.models.CheckpointInfo;
 import it.polimi.worker.models.Operator;
 import it.polimi.common.messages.NormalOperations;
 
+/**
+ * The WorkerHandler class is used to handle the communication between the Coordinator and the Worker.
+ * It is used to process the tasks and the reduce messages received from the Coordinator.
+ * It is also used to handle the operators and the checkpoints.
+ */
 public class WorkerHandler extends Thread {
     private final Socket clientSocket;
     private int identifier;
@@ -28,6 +33,11 @@ public class WorkerHandler extends Thread {
     private final HadoopWorker hadoopWorker;
     private boolean safeDelete = false;
 
+    /**
+     * Constructor for the WorkerHandler class.
+     * @param clientSocket The socket used to communicate with the Coordinator.
+     * @param hadoopWorker The HadoopWorker used to read and write files.
+     */
     public WorkerHandler(Socket clientSocket, HadoopWorker hadoopWorker) {
         this.clientSocket = clientSocket;
         this.checkPointManager = new CheckPointManager();
@@ -37,6 +47,11 @@ public class WorkerHandler extends Thread {
         this.operators = new ArrayList<>();
     }
 
+    /**
+     * The run method is used to handle the communication between the Coordinator and the Worker.
+     * This method creates input and output streams for communication.
+     * It is used to process the tasks and the reduce messages received from the Coordinator.
+     */
     @Override
     public void run() {
         Thread.currentThread().setName(clientSocket.getInetAddress().getHostName() + ":" + clientSocket.getLocalPort() + "(" + clientSocket.getPort() + ")");
@@ -44,7 +59,6 @@ public class WorkerHandler extends Thread {
         logger.info(Thread.currentThread().getName() + ": WorkerHandler started.");
 
         System.out.println(Thread.currentThread().getName() + ": WorkerHandler started");
-        // Create input and output streams for communication
         ObjectInputStream inputStream = null;
         ObjectOutputStream outputStream = null;
 
@@ -54,7 +68,6 @@ public class WorkerHandler extends Thread {
             inputStream = new ObjectInputStream(clientSocket.getInputStream());
             while (true) {
 
-                // Read the object from the coordinator
                 Object object = inputStream.readObject();
                 System.out.println(Thread.currentThread().getName() + ": Received message from coordinator");
                 logger.info(Thread.currentThread().getName() + ": Received message from coordinator");
@@ -68,7 +81,6 @@ public class WorkerHandler extends Thread {
 
 
                     try {
-                        // Process the Task
                         if (processTask(task)) {
                             outputStream.writeObject(new EndComputation());
                             System.out.println(Thread.currentThread().getName() + ": EndComputation message sent to the coordinator");
@@ -109,7 +121,6 @@ public class WorkerHandler extends Thread {
                     break;
 
                 } else {
-                    // Handle other types or unexpected objects
                     System.out.println(Thread.currentThread().getName() + ": Received unexpected object type");
                     outputStream.writeObject(new ErrorMessage("Received unexpected object type"));
                     logger.error(Thread.currentThread().getName() + ": Received unexpected object type");
@@ -136,7 +147,6 @@ public class WorkerHandler extends Thread {
             }
 
             try {
-                // Close the streams and socket when done
                 if (inputStream != null) {
                     inputStream.close();
                 }
@@ -153,6 +163,11 @@ public class WorkerHandler extends Thread {
         }
     }
 
+    /**
+     * The handleOperators method is used to create the operators from a list of mutable pairs.
+     * @param dataFunctions it is the data functions to be used to create the operators.
+     * @return The list of operators created.
+     */
     private List<Operator> handleOperators(List<MutablePair<String, String>> dataFunctions) {
         logger.info(Thread.currentThread().getName() + ": Handling operators");
         List<Operator> operators = new ArrayList<>();
@@ -167,7 +182,13 @@ public class WorkerHandler extends Thread {
         return operators;
     }
 
-
+    /**
+     * The processTask method is used to process the task received from the Coordinator.
+     * It reads the input files and processes them using the operators.
+     * It also creates the checkpoints for the task.
+     * @param task it is the task to be processed.
+     * @return true if the task was processed successfully, false otherwise.
+     */
     private boolean processTask(NormalOperations task) {
 
         operators = handleOperators(task.getOperators());
@@ -201,10 +222,21 @@ public class WorkerHandler extends Thread {
         }
         return false;
     }
-
+    /**
+     * The processPartitionTask method is used to write the keys and create the checkpoints for a partition.
+     * This method is invoked by the HadoopWorker after processing a partition. 
+     * @param result it is the result of the partition.
+     * @param task it is the task to be processed.
+     * @param numFile it is the number of the file to be processed.
+     * @param numPart it is the number of the partition to be processed.
+     * @param end it is a boolean value indicating if the partition is the last one.
+     * @param remainingString it is the remaining string to be processed.
+     * @param writeKeys it is a boolean value indicating if the keys should be written.
+     * @throws IOException if an error occurs while writing the keys or creating the checkpoints.
+     */
     public void processPartitionTask(List<KeyValuePair> result, NormalOperations task, Integer numFile, Integer numPart, Boolean end, String remainingString, boolean writeKeys) throws IOException {
         if ((task.getReduce() && !task.getChangeKey())) {
-            checkPointManager.createCheckpointForReduce(programId, task.getPathFiles().get(numFile), new CheckpointInfo(numPart, end, remainingString, result.getFirst()), result.getFirst());
+            checkPointManager.createCheckpointForReduce(programId, task.getPathFiles().get(numFile), new CheckpointInfo(numPart, end, remainingString, result.getFirst()));
             if (writeKeys) {
                 hadoopWorker.writeKeys(programId, identifier + "_" + numFile + "_" + numPart, result, task.getChangeKey(), task.getReduce());
             }
@@ -213,7 +245,13 @@ public class WorkerHandler extends Thread {
             checkPointManager.createCheckpoint(programId, task.getPathFiles().get(numFile), new CheckpointInfo(numPart, end, remainingString, null));
         }
     }
-
+    /**
+     * The computeReduceMessage method is used to process the reduce message received from the Coordinator.
+     * It reads the input files and processes them using the reduce operator.
+     * It also creates the checkpoints for the reduce message.
+     * @param reduceMessage it is the reduce message to be processed.
+     * @return true if the reduce message was processed successfully, false otherwise.
+     */
     private boolean computeReduceMessage(ReduceOperation reduceMessage) {
         Operator reduce = handleOperators(List.of(reduceMessage.getReduce())).getFirst();
 

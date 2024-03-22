@@ -20,7 +20,16 @@ import it.polimi.common.KeyValuePair;
 import it.polimi.worker.models.CheckpointInfo;
 
 import java.io.File;
-
+/**
+ * The CheckPointManager class is used to manage the checkpoints.
+ * It contains the methods to create, read and delete the checkpoints.
+ * @param CHECKPOINT_DIRECTORY represents the directory where the checkpoints are stored.
+ * @param logger represents the logger used to log the messages.
+ * @param folderLock represents the lock used to synchronize the access to the directory.
+ * @param createdFiles represents the set of the created files.
+ * @return the methods to manage the checkpoints.
+ * @see CheckpointInfo
+ */
 public class CheckPointManager {
 
     private final String CHECKPOINT_DIRECTORY = "checkpoints-";
@@ -28,6 +37,14 @@ public class CheckPointManager {
     private static final ReentrantLock folderLock = new ReentrantLock();
     private final Set<String> createdFiles = new HashSet<>();
 
+    /**
+     * The createCheckpoint method creates a new checkpoint file.
+     * This method is invoked in the first phase when the program does not include a reduce operation unless it also includes a changekey operation.
+     * It is called upon completion of processing a partition.
+     * @param programId represents the program id.
+     * @param pathString represents the path of the checkpoint file.
+     * @param checkPointObj represents the checkpoint information.
+     */
     public void createCheckpoint(String programId, String pathString, CheckpointInfo checkPointObj) {
         createOutputDirectory(CHECKPOINT_DIRECTORY + programId);
         try {
@@ -45,7 +62,13 @@ public class CheckPointManager {
             System.out.println(e.getMessage());
         }
     }
-
+    /**
+     * The getCheckPoint method reads the checkpoint file.
+     * It is called in the first phase before read the corresponding input file.
+     * @param programId represents the program id.
+     * @param pathString represents the path of the checkpoint file.
+     * @return the checkpoint information.
+     */
     public CheckpointInfo getCheckPoint(String programId, String pathString) {
         int count = 0;
         boolean end = false;
@@ -94,8 +117,15 @@ public class CheckPointManager {
         logger.info(Thread.currentThread().getName() + ": Retrieved checkpoint file " + pathString + " with count " + count + " and end " + end + " and remaining string " + remainingString);
         return new CheckpointInfo(count, end, remainingString, null);
     }
-
-    public void createCheckpointForReduce(String programId, String pathString, CheckpointInfo checkPointObj, KeyValuePair keyValuePair) {
+    /**
+      * The createCheckpointForReduce method creates a new checkpoint file.
+      * This method is invoked during the first phase when the program involves a reduce operation and does not include a changekey operation.
+      * It is called upon completion of processing a partition.
+      * @param programId represents the program id.
+      * @param pathString represents the path of the checkpoint file.
+      * @param checkPointObj represents the checkpoint information.
+     */
+    public void createCheckpointForReduce(String programId, String pathString, CheckpointInfo checkPointObj) {
         createOutputDirectory(CHECKPOINT_DIRECTORY + programId);
         try {
 
@@ -103,7 +133,7 @@ public class CheckPointManager {
             pathString = CHECKPOINT_DIRECTORY + programId + "/" + path.getFileName();
             createdFiles.add(pathString);
             BufferedWriter writer = new BufferedWriter(new FileWriter(pathString, true));
-            writer.write("<Checkpoint:" + checkPointObj.count() + "><" + checkPointObj.end() + "><" + keyValuePair + "><" + checkPointObj.remainingString() + ">\n");
+            writer.write("<Checkpoint:" + checkPointObj.count() + "><" + checkPointObj.end() + "><" + checkPointObj.keyValuePair() + "><" + checkPointObj.remainingString() + ">\n");
             writer.close();
             logger.info(Thread.currentThread().getName() + ": Created checkpoint file " + pathString);
         } catch (IOException e) {
@@ -112,7 +142,14 @@ public class CheckPointManager {
             System.out.println(e.getMessage());
         }
     }
-
+    /**
+     * The getCheckPointForReduce method reads the checkpoint file.
+     * This method is invoked during the first phase when the program involves a reduce operation and does not include a changekey operation.
+     * It is called in the first phase before read the corresponding input file.
+     * @param programId represents the program id.
+     * @param pathString represents the path of the checkpoint file.
+     * @return the checkpoint information.
+     */
     public CheckpointInfo getCheckPointForReduce(String programId, String pathString) {
         int count = 0;
         boolean end = false;
@@ -163,7 +200,13 @@ public class CheckPointManager {
         logger.info(Thread.currentThread().getName() + ": Retrieved checkpoint file " + pathString + " with count " + count + " and end " + end + " and remaining string " + remainingString + " and keyValuePair " + keyValuePair);
         return new CheckpointInfo(count, end, remainingString, keyValuePair);
     }
-
+    /**
+     * The writeCheckPointReducePhase method creates a new checkpoint file.
+     * This method is invoked during the reduce phase, i.e., the second phase.
+     * It is called upon completion of processing a key.
+     * @param programId represents the program id.
+     * @param pathString represents the path of the checkpoint file.
+     */
     public void writeCheckPointReducePhase(String programId, String pathString) {
         createOutputDirectory(CHECKPOINT_DIRECTORY + programId);
         try {
@@ -181,7 +224,14 @@ public class CheckPointManager {
             System.out.println(e.getMessage());
         }
     }
-
+    /**
+     * The readCheckPointReducePhase method reads the checkpoint file.
+     * This method is invoked during the reduce phase, i.e., the second phase.
+     * It is called in the second phase before read the files for the corresponding key.
+     * @param programId represents the program id.
+     * @param pathString represents the path of the checkpoint file.
+     * @return true if the checkpoint file exists, false otherwise.
+     */
     public boolean readCheckPointReducePhase(String programId, String pathString) {
         Path path = Paths.get(pathString);
         pathString = CHECKPOINT_DIRECTORY + programId + "/" + path.getFileName();

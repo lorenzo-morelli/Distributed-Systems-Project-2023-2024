@@ -11,10 +11,20 @@ import it.polimi.worker.operators.FilterOperator;
 import it.polimi.worker.operators.MapOperator;
 import it.polimi.worker.operators.ReduceOperator;
 import it.polimi.worker.models.Operator;
-
+/**
+ * This class is responsible for creating the operators from strings.
+ * It uses the factory pattern to create the operators.
+ * The operators are created by parsing the function string and creating the corresponding lambda function.
+ */
 public class CreateOperator {
-
-
+    /**
+     * The createIntUnaryOperator method creates an IntUnaryOperator from a string.
+     * The method parses the function string and creates the corresponding lambda function.
+     * The function string is in the format "operation(value)".
+     * The method uses a regex pattern to parse the function string.
+     * @param function which is string representing the function.
+     * @return the IntUnaryOperator corresponding to the function.
+     */
     private static IntUnaryOperator createIntUnaryOperator(String function) {
         Pattern FUNCTION_PATTERN = Pattern.compile("(\\w+)\\((\\d+)\\)");
         Matcher matcher = FUNCTION_PATTERN.matcher(function);
@@ -43,11 +53,23 @@ public class CreateOperator {
             throw new IllegalArgumentException("Invalid function format: " + function);
         }
     }
-
+    /**
+     * The createMapOperator method creates a MapOperator from a string.
+     * This method calls the createIntUnaryOperator method to create the lambda function.
+     * @param functionName which is string representing the function.
+     * @return the MapOperator corresponding to the function.
+     */
     private static MapOperator createMapOperator(String functionName) {
         return new MapOperator(createIntUnaryOperator(functionName));
     }
-
+    /**
+     * The createFilterOperator method creates a FilterOperator from a string.
+     * The method parses the function string and creates the corresponding lambda function.
+     * The function string is in the format "operation(value)".
+     * The method uses a regex pattern to parse the function string.
+     * @param functionName which is string representing the function.
+     * @return the FilterOperator corresponding to the function.
+     */
     private static FilterOperator createFilterOperator(String functionName) {
         Pattern FUNCTION_PATTERN = Pattern.compile("(\\w+)(?:\\((\\d+)\\))?");
         Matcher matcher = FUNCTION_PATTERN.matcher(functionName);
@@ -68,15 +90,26 @@ public class CreateOperator {
             throw new IllegalArgumentException("Invalid filter function format: " + functionName);
         }
     }
-
+    /**
+     * The createChangeKeyOperator method creates a ChangeKeyOperator from a string.
+     * This method calls the createIntUnaryOperator method to create the lambda function.
+     * @param functionName which is string representing the function.
+     * @return the ChangeKeyOperator corresponding to the function.
+     */
     private static ChangeKeyOperator createChangeKeyOperator(String functionName) {
         return new ChangeKeyOperator(createIntUnaryOperator(functionName));
     }
-
+    /**
+     * The createReduceOperator method creates a ReduceOperator from a string.
+     * The method parses the function string and creates the corresponding lambda function.
+     * The function string is in the format "operation".
+     * The method uses a switch statement to create the lambda function based on the function string.
+     * @param functionName which is string representing the function.
+     * @return the ReduceOperator corresponding to the function.
+     */
     private static ReduceOperator createReduceOperator(String functionName) {
         return switch (functionName) {
             case "SUM" -> new ReduceOperator(values -> values.stream().mapToInt(Integer::intValue).sum());
-            case "PRODUCT" -> new ReduceOperator(values -> values.stream().reduce(1, (a, b) -> a * b));
             case "MIN" -> new ReduceOperator(values -> values.stream().min(Integer::compareTo).orElseThrow());
             case "MAX" -> new ReduceOperator(values -> values.stream().max(Integer::compareTo).orElseThrow());
             case "COUNT" -> new ReduceOperator(List::size);
@@ -84,6 +117,14 @@ public class CreateOperator {
         };
     }
 
+    /**
+     * The createOperator method creates an Operator from a string.
+     * The method parses the operator and creates the corresponding operator using the factory pattern.
+     * The operator is created by parsing the function string and creating the corresponding lambda function.
+     * @param operator which is string representing the operator.
+     * @param function which is string representing the function.
+     * @return the Operator corresponding to the function.
+     */
     public static Operator createOperator(String operator, String function) {
         return switch (operator) {
             case "MAP" -> CreateOperator.createMapOperator(function);

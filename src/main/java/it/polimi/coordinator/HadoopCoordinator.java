@@ -16,13 +16,28 @@ import org.apache.log4j.LogManager;
 
 
 import it.polimi.common.HadoopFileManager;
+/**
+ * The HadoopCoordinator class is responsible for managing the files on HDFS at coordinator-side. 
+ * It extends the HadoopFileManager class.
+ * It contains methods to delete files, upload files, get keys size, merge files locally and upload merged files.
+ */
 
 public class HadoopCoordinator extends HadoopFileManager {
+    
+    /**
+     * HadoopCoordinator class constructor. 
+     * @param address it is the address of the HDFS.
+     * @throws IOException if it is not possible to connect to the HDFS.
+     */
     public HadoopCoordinator(String address) throws IOException {
         super(address, 16384);
         logger = LogManager.getLogger("it.polimi.Coordinator");
     }
-
+    /**
+     * This method deletes the files from HDFS.
+     * @param programId it is the id of the program.
+     * @param phase2 it is a boolean that indicates if the phase 2 is present or not.
+     */
     public void deleteFiles(String programId, Boolean phase2) {
         logger.info(Thread.currentThread().getName() + ": Deleting files from HDFS");
         try {
@@ -41,7 +56,12 @@ public class HadoopCoordinator extends HadoopFileManager {
             System.out.println(Thread.currentThread().getName() + ": Error deleting files from HDFS : " + e.getMessage());
         }
     }
-
+    /**
+     * This method uploads the files to HDFS.
+     * @param localFilePath it is the path of the file to upload.
+     * @param hdfsDestinationPath it is the path of the destination in HDFS.
+     * @throws IOException if it is not possible to upload the file.
+     */
     private void uploadFileToHDFS(String localFilePath, String hdfsDestinationPath) throws IOException {
         logger.info(Thread.currentThread().getName() + ": Uploading file to HDFS: " + localFilePath);
         String finalName = hdfsDestinationPath + new Path(localFilePath).getName();
@@ -62,7 +82,12 @@ public class HadoopCoordinator extends HadoopFileManager {
         logger.info(Thread.currentThread().getName() + ": File " + finalName + " uploaded to HDFS successfully.");
         System.out.println(Thread.currentThread().getName() + ": File " + finalName + " uploaded to HDFS successfully.");
     }
-
+    /**
+     * This method uploads the files to HDFS.
+     * @param list it is the list of files to upload.
+     * @param hdfsDestinationPath it is the path of the destination in HDFS.
+     * @throws IOException if it is not possible to upload the files.
+     */
     public void uploadFiles(List<String> list, String hdfsDestinationPath) throws IOException {
         logger.info(Thread.currentThread().getName() + ": Uploading files to HDFS");
         for (String localFilePath : list) {
@@ -70,14 +95,25 @@ public class HadoopCoordinator extends HadoopFileManager {
         }
         logger.info(Thread.currentThread().getName() + ": Files uploaded to HDFS successfully.");
     }
-
+    /**
+     * This method gets the size of the keys.
+     * @param programId it is the id of the program.
+     * @return the size of the keys to be processed.
+     * @throws IOException if it is not possible to get the size of the keys.
+     */
     public int getKeysSize(String programId) throws IOException {
         logger.info(Thread.currentThread().getName() + ": Getting keys size from HDFS");
         String path = "/program" + programId;
         FileStatus[] fileStatuses = fs.listStatus(new Path(path));
         return fileStatuses.length;
     }
-
+    /**
+     * This method merges the files locally.
+     * @param outputId it is the id (number of the program) concatenated to the name of the final csv.
+     * @param programId it is the id of the program.
+     * @param identifier it is the identifier of the ended worker.
+     * @throws IOException if it is not possible to merge the files.
+     */
     public synchronized void mergeFiles(String outputId, String programId, int identifier) throws IOException {
         logger.info(Thread.currentThread().getName() + ": Merging files from HDFS");
         String hdfsFilePath = "/output" + programId + "/" + identifier;
@@ -93,7 +129,12 @@ public class HadoopCoordinator extends HadoopFileManager {
             }
         }
     }
-
+    /**
+     * This method merges the files locally.
+     * @param outputId it is the id (number of the program) concatenated to the name of the final csv.
+     * @param programId it is the id of the program.
+     * @throws IOException if it is not possible to merge the files.
+     */
     public void mergeFiles(String outputId, String programId) throws IOException {
         logger.info(Thread.currentThread().getName() + ": Merging files from HDFS");
         String hdfsFilePath = "/output" + programId;
@@ -108,7 +149,12 @@ public class HadoopCoordinator extends HadoopFileManager {
             }
         }
     }
-
+    /**
+     * This method downloads and appends the file to the final csv.
+     * @param hdfsFilePath it is the path of the file in HDFS.
+     * @param mergedOut it is the output stream of the merged file.
+     * @throws IOException if it is not possible to download and append the file.
+     */
     private void downloadAndAppendToMergedFile(String hdfsFilePath, OutputStream mergedOut) throws IOException {
         logger.info(Thread.currentThread().getName() + ": Downloading file from HDFS: " + hdfsFilePath);
         try (InputStream in = fs.open(new Path(hdfsFilePath))) {
@@ -121,7 +167,13 @@ public class HadoopCoordinator extends HadoopFileManager {
         }
         logger.info(Thread.currentThread().getName() + ": File " + hdfsFilePath + " downloaded and appended to merged file successfully.");
     }
-
+    /**
+     * This method uploads the merged files to HDFS.
+     * @param id it is the id of the program.
+     * @param i it is the number of the task.
+     * @param files it is the list of files to upload.
+     * @throws IOException if it is not possible to upload the merged files.
+     */
     public synchronized void uploadMergedFiles(String id, String i, List<String> files) throws IOException {
         logger.info(Thread.currentThread().getName() + ": Merging files from HDFS");
         files.forEach(file -> logger.info(Thread.currentThread().getName() + ": File: " + file));

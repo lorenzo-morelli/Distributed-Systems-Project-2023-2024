@@ -18,6 +18,11 @@ import org.apache.log4j.Logger;
 
 import it.polimi.common.Address;
 
+/**
+ * The ProgramExecutor class is responsible for executing the program.
+ * It contains methods to manage the files per worker, initialize the connections, initialize Hadoop, read the operations and manage the end of the program.
+ */
+
 public class ProgramExecutor extends Thread {
 
     private int endedWorkers;
@@ -38,6 +43,15 @@ public class ProgramExecutor extends Thread {
     private volatile boolean errorPresent;
     private boolean changeKey;
     private boolean reduce;
+
+    /**
+     * The ProgramExecutor class constructor creates a new ProgramExecutor.
+     * @param output_id represents the number of the program.
+     * @param programId represents the program id.
+     * @param op_path represents the path of the operations file.
+     * @param addresses represents the list of addresses.
+     * @param hadoopCoordinator represents the hadoop coordinator.
+     */
 
     public ProgramExecutor(String output_id, String programId, String op_path, List<Address> addresses, HadoopCoordinator hadoopCoordinator) {
         this.clientSockets = new ArrayList<>();
@@ -61,59 +75,103 @@ public class ProgramExecutor extends Thread {
         this.reduce = false;
 
     }
-
+    /**
+     * The IsErrorPresent method returns if there is an error in the program.
+     * @return the error present flag.
+     */
     public boolean IsErrorPresent() {
         return errorPresent;
     }
-
+    /**
+     * The setErrorPresent method sets the error present flag.
+     * @param errorPresent represents the error present flag.
+     */
     public void setErrorPresent(boolean errorPresent) {
         this.errorPresent = errorPresent;
     }
-
+    /**
+     * The getKeyManager method returns the key manager.
+     * @return the key manager.
+     */
     public KeyAssignmentManager getKeyManager() {
         return keyManager;
     }
-
+    /**
+     * The getClientSockets method returns the client sockets.
+     * @return the client sockets.
+     */
     public List<Socket> getClientSockets() {
         return clientSockets;
     }
-
+    /**
+     * The getOperations method returns the operations of the program.
+     * @return the operations.
+     */
     public List<MutablePair<String, String>> getOperations() {
         return operations;
     }
-
+    /**
+     * The getNumPartitions method returns the number of partitions (number of addresses of the workers).
+     * @return the number of partitions.
+     */
     public int getNumPartitions() {
         return this.addresses.size();
     }
-
+    /**
+     * The getFileSocketMap method returns the file socket map.
+     * @return the file socket map.
+     */
     public Map<List<String>, Socket> getFileSocketMap() {
         return fileSocketMap;
     }
-
+    /**
+     * The getAddresses method returns the list of addresses of the workers.
+     * @return the list of addresses of the workers.
+     */
     public List<Address> getAddresses() {
         return addresses;
     }
-
+    /**
+     * The getLastReduce method returns the last reduce operation.
+     * @return the last reduce operation.
+     */
     public MutablePair<String, String> getLastReduce() {
         return lastReduce;
     }
-
+    /**
+     * The getProgramId method returns the program id.
+     * @return the program id.
+     */
     public String getProgramId() {
         return programId;
     }
-
+    /**
+     * The getChangeKey method returns the change key flag which indicates if the change key operation is present or not.
+     * @return the change key flag which indicates if the change key operation is present or not.
+     */
     public boolean getChangeKey() {
         return changeKey;
     }
-
+    /**
+     * The getReduce method returns the reduce flag which indicates if the reduce operation is present or not.
+     * @return the reduce flag which indicates if the reduce operation is present or not.
+     */
     public boolean getReduce() {
         return reduce;
     }
-
+    /**
+     * The getFilesSize method returns the size of the files.
+     * @return the size of the files.
+     */
     public int getFilesSize() {
         return files.size();
     }
-
+    /**
+     * The manageFilesPerWorker method returns the files for a specific worker.
+     * @param workerIndex represents the index of the worker.
+     * @param local represents if the path of the files is local or not.
+     * @return the list of files for a specific worker.
+     */
     private List<String> manageFilesPerWorker(int workerIndex, boolean local) {
         int numFilesPerWorker = files.size() / addresses.size();
         int remainingFiles = files.size() % addresses.size();
@@ -133,7 +191,9 @@ public class ProgramExecutor extends Thread {
         }
         return filesPerWorker;
     }
-
+    /**
+     * The initializeConnections method initializes the connections with the workers.
+     */
     private void initializeConnections() {
         logger.info(Thread.currentThread().getName() + ": Initializing connections...");
 
@@ -156,7 +216,13 @@ public class ProgramExecutor extends Thread {
         logger.info(Thread.currentThread().getName() + ": Connections initialized");
 
     }
-
+    /**
+     * The getNewActiveSocket method returns a new active socket.
+     * @param addressesToCheck represents the list of addresses to check.
+     * @param machine represents the machine, if it is not null the machine is used to give more relevance to the sockets of the same machine.
+     * @return the new active socket.
+     * @throws RuntimeException if no workers are available.
+     */
     public Socket getNewActiveSocket(List<Address> addressesToCheck, String machine) {
         logger.info(Thread.currentThread().getName() + ": Search for a new active socket...");
         if (addressesToCheck.isEmpty()) {
@@ -194,8 +260,13 @@ public class ProgramExecutor extends Thread {
             return getNewActiveSocket(addressesToCheck, machine);
         }
     }
-
-    private void initializeHadoop() {
+    /**
+     * The initializeHDFS method initializes the Hadoop file system and uploads the files to HDFS.
+     * If the program has a reduce operation and the change key operation is not present, the files are uploaded to HDFS without merging them.
+     * Otherwise, the files are uploaded to HDFS and merged.
+     * @throws RuntimeException if an error occurs while uploading files to HDFS.
+     */
+    private void initializeHDFS() {
         try {
             if (reduce && !changeKey) {
                 hadoopCoordinator.uploadFiles(localFiles, "/input" + programId + "/");
@@ -221,7 +292,11 @@ public class ProgramExecutor extends Thread {
             throw new RuntimeException(e.getMessage());
         }
     }
-
+    /**
+     * The readOperations method reads the operations from the file.
+     * @return true if the operations are read correctly, false otherwise.
+     * @throws Exception if an error occurs while reading the operations.
+     */
     private boolean readOperations() throws Exception {
 
 
@@ -254,7 +329,10 @@ public class ProgramExecutor extends Thread {
 
         return true;
     }
-
+    /**
+     * The run method executes the program.
+     * It initializes the connections, initializes Hadoop, reads the operations and launches the SocketHandlers.
+     */
     @Override
     public void run() {
 
@@ -282,7 +360,7 @@ public class ProgramExecutor extends Thread {
         logger.info(Thread.currentThread().getName() + " initialized connections");
 
         try {
-            this.initializeHadoop();
+            this.initializeHDFS();
         } catch (Exception e) {
             System.out.println(Thread.currentThread().getName() + ": Error while initializing Hadoop");
             System.out.println(e.getMessage());
@@ -295,7 +373,7 @@ public class ProgramExecutor extends Thread {
             int i = getFileSocketMap().size() - 1;
 
             for (List<String> f : this.getFileSocketMap().keySet()) {
-                executorService.submit(new SocketHandler(this, f, i, CoordinatorPhase.INIT));
+                executorService.submit(new SocketHandler(this, f, i, ProgramPhase.INIT));
                 i--;
             }
             executorService.shutdown();
@@ -305,7 +383,13 @@ public class ProgramExecutor extends Thread {
         }
         logger.info(Thread.currentThread().getName() + " initialized SocketHandlers");
     }
-
+    /**
+     * The manageEnd method manages the end of the program.
+     * If the error is present, the program is aborted.
+     * Otherwise the files are merged and the program is ended.
+     * @param identifier represents the identifier of the worker which has finished.
+     * @throws IOException if an error occurs while managing the end of the program.
+     */
     public synchronized void manageEnd(int identifier) throws IOException {
         if (errorPresent) {
             logger.error(Thread.currentThread().getName() + ": Error present in the program. Aborting...");

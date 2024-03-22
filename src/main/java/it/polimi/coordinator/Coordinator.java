@@ -21,7 +21,7 @@ public class Coordinator {
     /**
      * The main method is used to start the coordinator, read the configurations from the file and start the ProgramExecutor for each program.
      * It reads the HDFS address and the operations file path from the user input.
-     * @param args represents the arguments of the main method.
+     * @param args Command line arguments (not used).
      */
     public static void main(String[] args) {
 

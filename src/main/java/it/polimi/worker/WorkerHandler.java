@@ -139,7 +139,7 @@ public class WorkerHandler extends Thread {
                 Thread.sleep(2000);
                 if (safeDelete) {
                     hadoopWorker.closeFileSystem();
-                    //checkPointManager.deleteCheckpoints(programId);
+                    checkPointManager.deleteCheckpoints(programId);
                 }
             } catch (InterruptedException e) {
                 logger.error(Thread.currentThread().getName() + ": Error while sleeping: " + e.getMessage());

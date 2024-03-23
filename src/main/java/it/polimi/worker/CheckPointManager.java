@@ -64,6 +64,7 @@ public class CheckPointManager {
     }
     /**
      * The getCheckPoint method reads the checkpoint file.
+     * This method is invoked in the first phase when the program does not include a reduce operation unless it also includes a changekey operation.
      * It is called in the first phase before read the corresponding input file.
      * @param programId represents the program id.
      * @param pathString represents the path of the checkpoint file.
@@ -84,6 +85,16 @@ public class CheckPointManager {
             String line;
             while ((line = reader.readLine()) != null) {
                 if (line.startsWith("<Checkpoint")) {
+                    if(!line.endsWith(">")) {
+                        String partial_line;
+                        if((partial_line = reader.readLine())!= null){
+                            line = line + partial_line;
+                        }else{
+                            reader.close();
+                            throw new NumberFormatException("Invalid checkpoint format");
+                        }
+                    }
+
                     String[] parts = line.split("><");
                     if (parts.length != 3) {
                         reader.close();
@@ -95,7 +106,11 @@ public class CheckPointManager {
                         String temp_remainingString;
 
                         if (parts[2].length() > 1) {
-                            temp_remainingString = parts[2].substring(0, parts[2].length() - 1);
+                            if(parts[2].charAt(parts[2].length() - 1) == '>') {
+                                temp_remainingString = parts[2].substring(0, parts[2].length() - 1);
+                            } else {
+                                temp_remainingString = parts[2];
+                            }
                         } else {
                             temp_remainingString = "";
                         }
@@ -166,6 +181,17 @@ public class CheckPointManager {
             String line;
             while ((line = reader.readLine()) != null) {
                 if (line.startsWith("<Checkpoint")) {
+                    if(!line.endsWith(">")) {
+                        String partial_line;
+                        if((partial_line = reader.readLine())!= null){
+                            line = line + partial_line;
+                        }else{
+                            reader.close();
+                            throw new NumberFormatException("Invalid checkpoint format");
+                        }
+                    }
+
+
                     String[] parts = line.split("><");
                     if (parts.length != 4) {
                         reader.close();

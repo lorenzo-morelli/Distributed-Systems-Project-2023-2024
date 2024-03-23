@@ -26,7 +26,7 @@ import java.io.File;
  * @param CHECKPOINT_DIRECTORY represents the directory where the checkpoints are stored.
  * @param logger represents the logger used to log the messages.
  * @param folderLock represents the lock used to synchronize the access to the directory.
- * @param createdFiles represents the set of the created files.
+ * @param filesToDelete represents the set of files to delete at the end of the program.
  * @return the methods to manage the checkpoints.
  * @see CheckpointInfo
  */
@@ -35,7 +35,7 @@ public class CheckPointManager {
     private final String CHECKPOINT_DIRECTORY = "checkpoints-";
     private static final Logger logger = LogManager.getLogger("it.polimi.Worker");
     private static final ReentrantLock folderLock = new ReentrantLock();
-    private final Set<String> createdFiles = new HashSet<>();
+    private final Set<String> filesToDelete = new HashSet<>();
 
     /**
      * The createCheckpoint method creates a new checkpoint file.
@@ -51,7 +51,7 @@ public class CheckPointManager {
 
             Path path = Paths.get(pathString);
             pathString = CHECKPOINT_DIRECTORY + programId + "/" + path.getFileName();
-            createdFiles.add(pathString);
+            filesToDelete.add(pathString);
             BufferedWriter writer = new BufferedWriter(new FileWriter(pathString, true));
             writer.write("<Checkpoint:" + checkPointObj.count() + "><" + checkPointObj.end() + "><" + checkPointObj.remainingString() + ">\n");
             writer.close();
@@ -81,6 +81,7 @@ public class CheckPointManager {
                 logger.info(Thread.currentThread().getName() + ": Checkpoint file " + pathString + " does not exist");
                 return new CheckpointInfo(0, false, "", null);
             }
+            filesToDelete.add(pathString);
             BufferedReader reader = new BufferedReader(new FileReader(pathString));
             String line;
             while ((line = reader.readLine()) != null) {
@@ -94,6 +95,10 @@ public class CheckPointManager {
                             throw new NumberFormatException("Invalid checkpoint format");
                         }
                     }
+                    if(!line.endsWith(">")) {
+                        reader.close();
+                        throw new NumberFormatException("Invalid checkpoint format");
+                    }
 
                     String[] parts = line.split("><");
                     if (parts.length != 3) {
@@ -106,11 +111,7 @@ public class CheckPointManager {
                         String temp_remainingString;
 
                         if (parts[2].length() > 1) {
-                            if(parts[2].charAt(parts[2].length() - 1) == '>') {
-                                temp_remainingString = parts[2].substring(0, parts[2].length() - 1);
-                            } else {
-                                temp_remainingString = parts[2];
-                            }
+                            temp_remainingString = parts[2].substring(0, parts[2].length() - 1);
                         } else {
                             temp_remainingString = "";
                         }
@@ -146,7 +147,7 @@ public class CheckPointManager {
 
             Path path = Paths.get(pathString);
             pathString = CHECKPOINT_DIRECTORY + programId + "/" + path.getFileName();
-            createdFiles.add(pathString);
+            filesToDelete.add(pathString);
             BufferedWriter writer = new BufferedWriter(new FileWriter(pathString, true));
             writer.write("<Checkpoint:" + checkPointObj.count() + "><" + checkPointObj.end() + "><" + checkPointObj.keyValuePair() + "><" + checkPointObj.remainingString() + ">\n");
             writer.close();
@@ -177,6 +178,7 @@ public class CheckPointManager {
                 logger.info(Thread.currentThread().getName() + ": Checkpoint file " + pathString + " does not exist");
                 return new CheckpointInfo(0, false, "", null);
             }
+            filesToDelete.add(pathString);  
             BufferedReader reader = new BufferedReader(new FileReader(pathString));
             String line;
             while ((line = reader.readLine()) != null) {
@@ -190,7 +192,10 @@ public class CheckPointManager {
                             throw new NumberFormatException("Invalid checkpoint format");
                         }
                     }
-
+                    if(!line.endsWith(">")) {
+                        reader.close();
+                        throw new NumberFormatException("Invalid checkpoint format");
+                    }
 
                     String[] parts = line.split("><");
                     if (parts.length != 4) {
@@ -239,7 +244,7 @@ public class CheckPointManager {
 
             Path path = Paths.get(pathString);
             pathString = CHECKPOINT_DIRECTORY + programId + "/" + path.getFileName();
-            createdFiles.add(pathString);
+            filesToDelete.add(pathString);
             BufferedWriter writer = new BufferedWriter(new FileWriter(pathString, true));
             writer.write("<Checkpoint done>\n");
             writer.close();
@@ -265,6 +270,7 @@ public class CheckPointManager {
             logger.info(Thread.currentThread().getName() + ": Checkpoint file " + pathString + " does not exist");
             return false;
         } else {
+            filesToDelete.add(pathString);
             return true;
         }
     }
@@ -296,7 +302,7 @@ public class CheckPointManager {
 
     public void deleteCheckpoints(String programId) {
         try {
-            for (String file : createdFiles) {
+            for (String file : filesToDelete) {
                 Path path = Paths.get(file);
                 Files.deleteIfExists(path);
                 logger.info(Thread.currentThread().getName() + ": Deleted checkpoint file " + file);

@@ -55,7 +55,7 @@ public class CheckPointManager {
             BufferedWriter writer = new BufferedWriter(new FileWriter(pathString, true));
             writer.write("<Checkpoint:" + checkPointObj.count() + "><" + checkPointObj.end() + "><" + checkPointObj.remainingString() + ">\n");
             writer.close();
-            logger.info(Thread.currentThread().getName() + ": Created checkpoint file " + pathString);
+            logger.info(Thread.currentThread().getName() + ": Created checkpoint file " + pathString + " with count " + checkPointObj.count() + ", end " + checkPointObj.end() + " and remaining string " + checkPointObj.remainingString());
         } catch (IOException e) {
             logger.error(Thread.currentThread().getName() + ": Error while creating checkpoint file");
             System.out.println(Thread.currentThread().getName() + ": Error while creating checkpoint file");
@@ -114,7 +114,7 @@ public class CheckPointManager {
         } catch (NumberFormatException e) {
             logger.warn(Thread.currentThread().getName() + ": " + e.getMessage());
         }
-        logger.info(Thread.currentThread().getName() + ": Retrieved checkpoint file " + pathString + " with count " + count + " and end " + end + " and remaining string " + remainingString);
+        logger.info(Thread.currentThread().getName() + ": Retrieved checkpoint file " + pathString + " with count " + count + ", end " + end + " and remaining string " + remainingString);
         return new CheckpointInfo(count, end, remainingString, null);
     }
     /**
@@ -135,7 +135,7 @@ public class CheckPointManager {
             BufferedWriter writer = new BufferedWriter(new FileWriter(pathString, true));
             writer.write("<Checkpoint:" + checkPointObj.count() + "><" + checkPointObj.end() + "><" + checkPointObj.keyValuePair() + "><" + checkPointObj.remainingString() + ">\n");
             writer.close();
-            logger.info(Thread.currentThread().getName() + ": Created checkpoint file " + pathString);
+            logger.info(Thread.currentThread().getName() + ": Created checkpoint file " + pathString + " with count " + checkPointObj.count() + ", end " + checkPointObj.end() + ", remaining string " + checkPointObj.remainingString() + " and keyValuePair " + checkPointObj.keyValuePair());
         } catch (IOException e) {
             logger.error(Thread.currentThread().getName() + ": Error while creating checkpoint file");
             System.out.println(Thread.currentThread().getName() + ": Error while creating checkpoint file");
@@ -197,7 +197,7 @@ public class CheckPointManager {
         } catch (NumberFormatException e) {
             logger.warn(Thread.currentThread().getName() + ": " + e.getMessage());
         }
-        logger.info(Thread.currentThread().getName() + ": Retrieved checkpoint file " + pathString + " with count " + count + " and end " + end + " and remaining string " + remainingString + " and keyValuePair " + keyValuePair);
+        logger.info(Thread.currentThread().getName() + ": Retrieved checkpoint file " + pathString + " with count " + count + ", end " + end + ", remaining string " + remainingString + " and keyValuePair " + keyValuePair);
         return new CheckpointInfo(count, end, remainingString, keyValuePair);
     }
     /**

@@ -139,7 +139,7 @@ public class WorkerHandler extends Thread {
                 Thread.sleep(2000);
                 if (safeDelete) {
                     hadoopWorker.closeFileSystem();
-                    checkPointManager.deleteCheckpoints(programId);
+                    //checkPointManager.deleteCheckpoints(programId);
                 }
             } catch (InterruptedException e) {
                 logger.error(Thread.currentThread().getName() + ": Error while sleeping: " + e.getMessage());
@@ -236,10 +236,10 @@ public class WorkerHandler extends Thread {
      */
     public void processPartitionTask(List<KeyValuePair> result, NormalOperations task, Integer numFile, Integer numPart, Boolean end, String remainingString, boolean writeKeys) throws IOException {
         if ((task.getReduce() && !task.getChangeKey())) {
-            checkPointManager.createCheckpointForReduce(programId, task.getPathFiles().get(numFile), new CheckpointInfo(numPart, end, remainingString, result.getFirst()));
             if (writeKeys) {
                 hadoopWorker.writeKeys(programId, identifier + "_" + numFile + "_" + numPart, result, task.getChangeKey(), task.getReduce());
             }
+            checkPointManager.createCheckpointForReduce(programId, task.getPathFiles().get(numFile), new CheckpointInfo(numPart, end, remainingString, result.getFirst()));
         } else {
             hadoopWorker.writeKeys(programId, identifier + "_" + numFile + "_" + numPart, result, task.getChangeKey(), task.getReduce());
             checkPointManager.createCheckpoint(programId, task.getPathFiles().get(numFile), new CheckpointInfo(numPart, end, remainingString, null));

@@ -223,6 +223,7 @@ public class SocketHandler implements Runnable {
             try {
                 clientSocket = new Socket(socket.getInetAddress().getHostName(), socket.getPort());
                 reconnected = true;
+                System.out.println(Thread.currentThread().getName() + ": Reconnected to the failed worker. Resuming operations...");    
                 logger.info(Thread.currentThread().getName() + ": Reconnected to the failed worker. Resuming operations...");
             } catch (IOException e) {
                 attempts = getAttempts(attempts);
@@ -265,13 +266,14 @@ public class SocketHandler implements Runnable {
             try {
                 List<Address> addresses = new ArrayList<>(programExecutor.getAddresses());
                 addresses.remove(new Address(clientSocket.getInetAddress().getHostName(), clientSocket.getPort()));
-                logger.info(Thread.currentThread().getName() + ": Searching for a new worker, among" + addresses.size() + " available workers..." + addresses);
+                logger.info(Thread.currentThread().getName() + ": Searching for a new worker, among " + addresses.size() + " available workers..." + addresses);
                 if (addresses.isEmpty()) {
                     return false;
                 }
                 clientSocket = programExecutor.getNewActiveSocket(addresses, clientSocket.getInetAddress().getHostName());
                 reconnected = true;
-                logger.info(Thread.currentThread().getName() + ": Reconnected to a new worker" + clientSocket.getInetAddress().getHostName() + ":" + clientSocket.getPort() + ". Resuming operations...");
+                System.out.println(Thread.currentThread().getName() + ": Reconnected to a new worker " + clientSocket.getInetAddress().getHostName() + ":" + clientSocket.getPort() + ". Resuming operations...");
+                logger.info(Thread.currentThread().getName() + ": Reconnected to a new worker " + clientSocket.getInetAddress().getHostName() + ":" + clientSocket.getPort() + ". Resuming operations...");
             } catch (Exception e) {
 
 
@@ -292,14 +294,12 @@ public class SocketHandler implements Runnable {
         programExecutor.getFileSocketMap().put(files, clientSocket);
         SocketHandler newSocketHandler = new SocketHandler(programExecutor, files, identifier, phase);
         if (keyManager.getAssignments().get(this) != null) {
-            System.out.println(Thread.currentThread().getName() + ": Reassigning keys to the new worker...");
-            logger.info(Thread.currentThread().getName() + ": Reassigning keys to the new worker...");
+            System.out.println(Thread.currentThread().getName() + ": Reassigning keys to the worker...");
+            logger.info(Thread.currentThread().getName() + ": Reassigning keys to the worker...");
             MutablePair<Integer, Integer> keys = keyManager.getAssignments().get(this);
             keyManager.getAssignments().remove(this);
             keyManager.getAssignments().put(newSocketHandler, keys);
         }
-        System.out.println(Thread.currentThread().getName() + ": Reconnected to a new worker. Resuming operations...");
-        logger.info(Thread.currentThread().getName() + ": Reconnected to a new worker. Resuming operations...");
         newSocketHandler.run();
     }
 }

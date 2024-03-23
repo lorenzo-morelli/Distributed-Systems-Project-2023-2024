@@ -109,43 +109,40 @@ public class HadoopCoordinator extends HadoopFileManager {
     }
     /**
      * This method merges the files locally.
-     * @param outputId it is the id (number of the program) concatenated to the name of the final csv.
+     * @param outputId it is the id of the output.
      * @param programId it is the id of the program.
-     * @param identifier it is the identifier of the ended worker.
+     * @param isSecondPhase it is a boolean that indicates if the phase 2 is present or not.
      * @throws IOException if it is not possible to merge the files.
      */
-    public synchronized void mergeFiles(String outputId, String programId, int identifier) throws IOException {
-        logger.info(Thread.currentThread().getName() + ": Merging files from HDFS");
-        String hdfsFilePath = "/output" + programId + "/" + identifier;
-        String localMergedFilePath = "result-" + outputId + ".csv";
+    public synchronized void mergeFiles(String outputId, String programId, boolean isSecondPhase) throws IOException {
+        
+        if(isSecondPhase){
+            logger.info(Thread.currentThread().getName() + ": Merging files from HDFS");
+        
+            String localMergedFilePath = "result-" + outputId + ".csv";
+            FileStatus[] foldersStatus = fs.listStatus(new Path("/output" + programId));
+            for (FileStatus folderStatus : foldersStatus) {
+                try (BufferedOutputStream mergedOut = new BufferedOutputStream(new FileOutputStream(localMergedFilePath, true))) {
+                    FileStatus[] fileStatuses = fs.listStatus(new Path(folderStatus.getPath().toString()));
 
-        try (BufferedOutputStream mergedOut = new BufferedOutputStream(new FileOutputStream(localMergedFilePath, true))) {
-            FileStatus[] fileStatuses = fs.listStatus(new Path(hdfsFilePath));
-
-            for (FileStatus fileStatus : fileStatuses) {
-                String fileName = fileStatus.getPath().getName();
-                String hdfsFile = hdfsFilePath + "/" + fileName;
-                downloadAndAppendToMergedFile(hdfsFile, mergedOut);
+                    for (FileStatus fileStatus : fileStatuses) {
+                        String fileName = fileStatus.getPath().toString();
+                        downloadAndAppendToMergedFile(fileName, mergedOut);
+                    }
+                }
             }
-        }
-    }
-    /**
-     * This method merges the files locally.
-     * @param outputId it is the id (number of the program) concatenated to the name of the final csv.
-     * @param programId it is the id of the program.
-     * @throws IOException if it is not possible to merge the files.
-     */
-    public void mergeFiles(String outputId, String programId) throws IOException {
-        logger.info(Thread.currentThread().getName() + ": Merging files from HDFS");
-        String hdfsFilePath = "/output" + programId;
-        String localMergedFilePath = "result-" + outputId + ".csv";
-        try (BufferedOutputStream mergedOut = new BufferedOutputStream(new FileOutputStream(localMergedFilePath, true))) {
-            FileStatus[] fileStatuses = fs.listStatus(new Path(hdfsFilePath));
+        }else{
+            logger.info(Thread.currentThread().getName() + ": Merging files from HDFS");
+            String hdfsFilePath = "/output" + programId;
+            String localMergedFilePath = "result-" + outputId + ".csv";
+            try (BufferedOutputStream mergedOut = new BufferedOutputStream(new FileOutputStream(localMergedFilePath, true))) {
+                FileStatus[] fileStatuses = fs.listStatus(new Path(hdfsFilePath));
 
-            for (FileStatus fileStatus : fileStatuses) {
-                String fileName = fileStatus.getPath().getName();
-                String hdfsFile = hdfsFilePath + "/" + fileName;
-                downloadAndAppendToMergedFile(hdfsFile, mergedOut);
+                for (FileStatus fileStatus : fileStatuses) {
+                    String fileName = fileStatus.getPath().getName();
+                    String hdfsFile = hdfsFilePath + "/" + fileName;
+                    downloadAndAppendToMergedFile(hdfsFile, mergedOut);
+                }
             }
         }
     }

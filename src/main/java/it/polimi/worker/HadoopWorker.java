@@ -104,6 +104,7 @@ public class HadoopWorker extends HadoopFileManager {
 
             partialTuple = processData(combinedData, result);
 
+            count++;
             for (Operator op : operators) {
                 result = op.execute(result);
             }
@@ -115,18 +116,15 @@ public class HadoopWorker extends HadoopFileManager {
                     assert reduce != null;
                     reduceResult = reduce.execute(result).getFirst();
                 }
-                workerHandler.processPartitionTask(List.of(reduceResult), task, i, count, data.end() && partialTuple.toString().isEmpty(), partialTuple.toString(), false);
+                workerHandler.processPartitionTask(List.of(reduceResult), task, i, count, data.end() && partialTuple.toString().isEmpty(), partialTuple.toString(), data.end() && partialTuple.toString().isEmpty());
             } else {
                 workerHandler.processPartitionTask(result, task, i, count, data.end() && partialTuple.toString().isEmpty(), partialTuple.toString(), true);
 
             }
-            logger.info(Thread.currentThread().getName() + ": Data processed of partition: " + count + " of file: " + task.getPathFiles().get(i));
+            logger.info(Thread.currentThread().getName() + ": Data processed of partition: " + String.valueOf(count-1) + " of file: " + task.getPathFiles().get(i));
             result.clear();
-            count++;
         }
-        if (task.getReduce() && !task.getChangeKey()) {
-            workerHandler.processPartitionTask(List.of(reduceResult), task, i, count, true, "", true);
-        }
+        in.close();
     }
     /**
      * The processLine method processes the line of the data.
@@ -227,7 +225,6 @@ public class HadoopWorker extends HadoopFileManager {
     public KeyValuePair readAndComputeReduce(int idx, ReduceOperation reduceMessage, Operator reduce) throws IOException, IllegalArgumentException {
         Integer key = findKey(idx, reduceMessage.getProgramId());
         logger.info(Thread.currentThread().getName() + ": Reading and computing reduce for key: " + key);
-        System.out.println(Thread.currentThread().getName() + ": Reading and computing reduce for key: " + key);
         String path = "/program" + reduceMessage.getProgramId() + "/key" + key;
         List<KeyValuePair> result = new ArrayList<>();
         FileStatus[] fileStatuses = fs.listStatus(new Path(path));
@@ -242,8 +239,7 @@ public class HadoopWorker extends HadoopFileManager {
 
             while ((!(data = readFile(in, count)).data().isEmpty()) || !partialTuple.toString().isEmpty()) {
 
-                System.out.println(Thread.currentThread().getName() + ": Data is ready to be processed of partition: " + count + " of key: " + key);
-
+                logger.info(Thread.currentThread().getName() + ": Data is ready to be processed of partition: " + count + " of file: " + filePath.getName());
                 String combinedData = data.data().isEmpty() ? partialTuple.toString() : partialTuple.toString() + data.data();
 
 

@@ -396,20 +396,11 @@ public class ProgramExecutor extends Thread {
             System.out.println(Thread.currentThread().getName() + ": Error present in the program. Aborting...");
             return;
         }
-        if (changeKey && reduce) {
-            hadoopCoordinator.mergeFiles(outputId, programId, identifier);
-            endedWorkers++;
-            if (endedWorkers == Math.min(addresses.size(), files.size())) {
-                hadoopCoordinator.deleteFiles(programId, changeKey && reduce);
-                hadoopCoordinator.closeFileSystem();
-            }
-        } else {
-            endedWorkers++;
-            if (endedWorkers == Math.min(addresses.size(), files.size())) {
-                hadoopCoordinator.mergeFiles(outputId, programId);
-                hadoopCoordinator.deleteFiles(programId, changeKey && reduce);
-                hadoopCoordinator.closeFileSystem();
-            }
+        endedWorkers++;
+        if (endedWorkers == Math.min(addresses.size(), files.size())) {
+            hadoopCoordinator.mergeFiles(outputId, programId, changeKey && reduce);
+            hadoopCoordinator.deleteFiles(programId, changeKey && reduce);
+            hadoopCoordinator.closeFileSystem();
         }
     }
 

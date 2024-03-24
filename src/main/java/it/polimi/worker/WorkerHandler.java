@@ -3,6 +3,7 @@ package it.polimi.worker;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.net.ConnectException;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
@@ -214,10 +215,16 @@ public class WorkerHandler extends Thread {
 
             }
             return true;
+        
         } catch (IOException e) {
+            if(e instanceof ConnectException){
+                logger.error(Thread.currentThread().getName() + ": Error while connecting to the HDFS: " + e.getMessage());
+                System.out.println(Thread.currentThread().getName() + ": Error while connecting to the HDFS\n" + e.getMessage());
+                System.exit(0);
+            }
             logger.error(Thread.currentThread().getName() + ": Error while processing the task: " + e.getMessage());
             System.out.println(Thread.currentThread().getName() + ": Error while processing the task\n" + e.getMessage());
-        }
+        } 
         return false;
     }
     /**

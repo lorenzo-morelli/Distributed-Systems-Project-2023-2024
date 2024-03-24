@@ -311,6 +311,7 @@ public class ProgramExecutor extends Thread {
 
         if (this.addresses.isEmpty() || this.operations.isEmpty()) {
             logger.info(Thread.currentThread().getName() + ": Operations or num partitions are 0!");
+            System.out.println(Thread.currentThread().getName() + ": Operations or num partitions are 0!");
             return false;
         }
         boolean firstReduce = true;

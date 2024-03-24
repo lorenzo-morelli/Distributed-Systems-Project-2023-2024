@@ -219,7 +219,7 @@ public class ProgramExecutor extends Thread {
     /**
      * The getNewActiveSocket method returns a new active socket.
      * @param addressesToCheck represents the list of addresses to check.
-     * @param machine represents the machine, if it is not null the machine is used to give more relevance to the sockets of the same machine.
+     * @param machine represents the machine, if it is not null the machine is used to give higher priority to the sockets of the same machine.
      * @return the new active socket.
      * @throws RuntimeException if no workers are available.
      */
@@ -238,13 +238,13 @@ public class ProgramExecutor extends Thread {
             if (!machine.equals(a.hostname())) {
                 load.put(a, 0);
             } else {
-                load.put(a, -1);
+                load.put(a, -2);
             }
         }
 
         for (Socket s : clientSockets) {
             Address a = new Address(s.getInetAddress().getHostName(), s.getPort());
-            if (load.containsKey(a) && !a.hostname().equals(machine)) {
+            if (load.containsKey(a)) {
                 load.put(a, load.get(a) + 1);
             }
         }

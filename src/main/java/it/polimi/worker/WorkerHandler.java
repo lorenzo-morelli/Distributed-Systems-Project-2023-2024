@@ -257,9 +257,8 @@ public class WorkerHandler extends Thread {
             for (int idx = reduceMessage.getKeys().getLeft(); idx < reduceMessage.getKeys().getRight(); idx++) {
 
                 if (checkPointManager.readCheckPointReducePhase(reduceMessage.getProgramId(), idx + ".csv")) {
-                    logger.info(Thread.currentThread().getName() + ": File already processed");
+                    logger.info(Thread.currentThread().getName() + ": File " + idx+".csv" + " already processed");
                 } else {
-                    logger.info(Thread.currentThread().getName() + ": File not processed");
                     KeyValuePair result = hadoopWorker.readAndComputeReduce(idx, reduceMessage, reduce);
                     hadoopWorker.writeKeys(programId, String.valueOf(identifier), result);
                     checkPointManager.writeCheckPointReducePhase(programId, idx + ".csv");

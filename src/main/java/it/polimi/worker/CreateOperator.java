@@ -1,7 +1,6 @@
 package it.polimi.worker;
 
 
-import java.util.List;
 import java.util.function.IntUnaryOperator;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -112,7 +111,6 @@ public class CreateOperator {
             case "SUM" -> new ReduceOperator(values -> values.stream().mapToInt(Integer::intValue).sum());
             case "MIN" -> new ReduceOperator(values -> values.stream().min(Integer::compareTo).orElseThrow());
             case "MAX" -> new ReduceOperator(values -> values.stream().max(Integer::compareTo).orElseThrow());
-            case "COUNT" -> new ReduceOperator(List::size);
             default -> throw new IllegalArgumentException("Unknown reduce function: " + functionName);
         };
     }

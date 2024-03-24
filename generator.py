@@ -4,10 +4,10 @@ import json
 import pandas as pd
 
 keys = 0
-PART_GEN_PATH = "files/program3/key"
-RESULT_GEN_PATH = "files/program3/result.csv"
-RESULT_REAL_PATH = "result-3.csv"
-OPERATIONS_PATH = "files/program3/program.json"
+PART_GEN_PATH = "files/program0/key"
+RESULT_GEN_PATH = "files/program0/result.csv"
+RESULT_REAL_PATH = "result-0.csv"
+OPERATIONS_PATH = "files/program0/program.json"
 
 
 def generate_data():
@@ -91,8 +91,12 @@ def reduce_data(data, function):
         result = data.groupby('key')['value'].sum().reset_index()
         result.columns = ['key', 'value']
         return result
-    elif function_name == "PRODUCT":
-        result = data.groupby('key')['value'].prod().reset_index()
+    elif function_name == "MIN":
+        result = data.groupby('key')['value'].min().reset_index()
+        result.columns = ['key', 'value']
+        return result
+    elif function_name == "MAX":
+        result = data.groupby('key')['value'].max().reset_index()
         result.columns = ['key', 'value']
         return result
     else:
@@ -143,7 +147,6 @@ def operations():
 
     merged_data['value'] = merged_data['value'].astype(int)
 
-    # Save the result to a new file
     merged_data.to_csv(RESULT_GEN_PATH, index=False, header=False)
 
 

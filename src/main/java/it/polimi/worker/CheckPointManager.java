@@ -44,8 +44,9 @@ public class CheckPointManager {
      * @param programId represents the program id.
      * @param pathString represents the path of the checkpoint file.
      * @param checkPointObj represents the checkpoint information.
+     * @param forReduce represents whether the checkpoint is for the reduce operation or not.
      */
-    public void createCheckpoint(String programId, String pathString, CheckpointInfo checkPointObj) {
+    public void createCheckpoint(String programId, String pathString, CheckpointInfo checkPointObj, boolean forReduce) {
         createOutputDirectory(CHECKPOINT_DIRECTORY + programId);
         try {
 
@@ -53,7 +54,12 @@ public class CheckPointManager {
             pathString = CHECKPOINT_DIRECTORY + programId + "/" + path.getFileName();
             filesToDelete.add(pathString);
             BufferedWriter writer = new BufferedWriter(new FileWriter(pathString, true));
-            writer.write("<Checkpoint:" + checkPointObj.count() + "><" + checkPointObj.end() + "><" + checkPointObj.remainingString() + ">\n");
+            if(forReduce){
+                writer.write("<Checkpoint:" + checkPointObj.count() + "><" + checkPointObj.end() + "><" + checkPointObj.keyValuePair() + "><" + checkPointObj.remainingString() + ">\n");
+            }
+            else{
+                writer.write("<Checkpoint:" + checkPointObj.count() + "><" + checkPointObj.end() + "><" + checkPointObj.remainingString() + ">\n");
+            }
             writer.close();
             logger.info(Thread.currentThread().getName() + ": Created checkpoint file " + pathString + " with count " + checkPointObj.count() + ", end " + checkPointObj.end() + " and remaining string " + checkPointObj.remainingString());
         } catch (IOException e) {
@@ -68,12 +74,14 @@ public class CheckPointManager {
      * It is called in the first phase before read the corresponding input file.
      * @param programId represents the program id.
      * @param pathString represents the path of the checkpoint file.
+     * @param forReduce represents whether the checkpoint is for the reduce operation or not.
      * @return the checkpoint information.
      */
-    public CheckpointInfo getCheckPoint(String programId, String pathString) {
+    public CheckpointInfo getCheckPoint(String programId, String pathString, boolean forReduce) {
         int count = 0;
         boolean end = false;
         String remainingString = "";
+        KeyValuePair keyValuePair = null;
         try {
             Path path = Paths.get(pathString);
             pathString = CHECKPOINT_DIRECTORY + programId + "/" + path.getFileName();
@@ -101,7 +109,12 @@ public class CheckPointManager {
                     }
 
                     String[] parts = line.split("><");
-                    if (parts.length != 3) {
+                    
+                    if (!forReduce && parts.length != 3) {
+                        reader.close();
+                        throw new NumberFormatException("Invalid checkpoint format");
+                    }
+                    if (forReduce && parts.length != 4) {
                         reader.close();
                         throw new NumberFormatException("Invalid checkpoint format");
                     }
@@ -109,12 +122,22 @@ public class CheckPointManager {
                         int temp_count = Integer.parseInt(parts[0].split(":")[1]);
                         boolean temp_end = Boolean.parseBoolean(parts[1]);
                         String temp_remainingString;
-
-                        if (parts[2].length() > 1) {
-                            temp_remainingString = parts[2].substring(0, parts[2].length() - 1);
-                        } else {
-                            temp_remainingString = "";
-                        }
+                        if (forReduce) {
+                            String[] keyValueString = parts[2].split(",");
+                            keyValuePair = new KeyValuePair(Integer.parseInt(keyValueString[0]), Integer.parseInt(keyValueString[1]));
+                            if (parts[3].length() > 1) {
+                                temp_remainingString = parts[3].substring(0, parts[3].length() - 1);
+                            } else {
+                                temp_remainingString = "";
+                            }
+                            keyValuePair = new KeyValuePair(Integer.parseInt(keyValueString[0]), Integer.parseInt(keyValueString[1]));
+                        } else{
+                            if (parts[2].length() > 1) {
+                                temp_remainingString = parts[2].substring(0, parts[2].length() - 1);
+                            } else {
+                                temp_remainingString = "";
+                            }
+                    }
                         count = temp_count;
                         end = temp_end;
                         remainingString = temp_remainingString;
@@ -131,104 +154,6 @@ public class CheckPointManager {
             logger.warn(Thread.currentThread().getName() + ": " + e.getMessage());
         }
         logger.info(Thread.currentThread().getName() + ": Retrieved checkpoint file " + pathString + " with count " + count + ", end " + end + " and remaining string " + remainingString);
-        return new CheckpointInfo(count, end, remainingString, null);
-    }
-    /**
-      * The createCheckpointForReduce method creates a new checkpoint file.
-      * This method is invoked during the first phase when the program involves a reduce operation and does not include a changekey operation.
-      * It is called upon completion of processing a partition.
-      * @param programId represents the program id.
-      * @param pathString represents the path of the checkpoint file.
-      * @param checkPointObj represents the checkpoint information.
-     */
-    public void createCheckpointForReduce(String programId, String pathString, CheckpointInfo checkPointObj) {
-        createOutputDirectory(CHECKPOINT_DIRECTORY + programId);
-        try {
-
-            Path path = Paths.get(pathString);
-            pathString = CHECKPOINT_DIRECTORY + programId + "/" + path.getFileName();
-            filesToDelete.add(pathString);
-            BufferedWriter writer = new BufferedWriter(new FileWriter(pathString, true));
-            writer.write("<Checkpoint:" + checkPointObj.count() + "><" + checkPointObj.end() + "><" + checkPointObj.keyValuePair() + "><" + checkPointObj.remainingString() + ">\n");
-            writer.close();
-            logger.info(Thread.currentThread().getName() + ": Created checkpoint file " + pathString + " with count " + checkPointObj.count() + ", end " + checkPointObj.end() + ", remaining string " + checkPointObj.remainingString() + " and keyValuePair " + checkPointObj.keyValuePair());
-        } catch (IOException e) {
-            logger.error(Thread.currentThread().getName() + ": Error while creating checkpoint file");
-            System.out.println(Thread.currentThread().getName() + ": Error while creating checkpoint file");
-            System.out.println(e.getMessage());
-        }
-    }
-    /**
-     * The getCheckPointForReduce method reads the checkpoint file.
-     * This method is invoked during the first phase when the program involves a reduce operation and does not include a changekey operation.
-     * It is called in the first phase before read the corresponding input file.
-     * @param programId represents the program id.
-     * @param pathString represents the path of the checkpoint file.
-     * @return the checkpoint information.
-     */
-    public CheckpointInfo getCheckPointForReduce(String programId, String pathString) {
-        int count = 0;
-        boolean end = false;
-        String remainingString = "";
-        KeyValuePair keyValuePair = null;
-        try {
-            Path path = Paths.get(pathString);
-            pathString = CHECKPOINT_DIRECTORY + programId + "/" + path.getFileName();
-            if (!Files.exists(Paths.get(pathString))) {
-                logger.info(Thread.currentThread().getName() + ": Checkpoint file " + pathString + " does not exist");
-                return new CheckpointInfo(0, false, "", null);
-            }
-            filesToDelete.add(pathString);  
-            BufferedReader reader = new BufferedReader(new FileReader(pathString));
-            String line;
-            while ((line = reader.readLine()) != null) {
-                if (line.startsWith("<Checkpoint")) {
-                    if(!line.endsWith(">")) {
-                        String partial_line;
-                        if((partial_line = reader.readLine())!= null){
-                            line = line + partial_line;
-                        }else{
-                            reader.close();
-                            throw new NumberFormatException("Invalid checkpoint format");
-                        }
-                    }
-                    if(!line.endsWith(">")) {
-                        reader.close();
-                        throw new NumberFormatException("Invalid checkpoint format");
-                    }
-
-                    String[] parts = line.split("><");
-                    if (parts.length != 4) {
-                        reader.close();
-                        throw new NumberFormatException("Invalid checkpoint format");
-                    }
-                    try {
-                        int temp_count = Integer.parseInt(parts[0].split(":")[1]);
-                        boolean temp_end = Boolean.parseBoolean(parts[1]);
-                        String temp_remainingString;
-                        String[] keyValueString = parts[2].split(",");
-                        if (parts[3].length() > 1) {
-                            temp_remainingString = parts[3].substring(0, parts[3].length() - 1);
-                        } else {
-                            temp_remainingString = "";
-                        }
-                        count = temp_count;
-                        end = temp_end;
-                        remainingString = temp_remainingString;
-                        keyValuePair = new KeyValuePair(Integer.parseInt(keyValueString[0]), Integer.parseInt(keyValueString[1]));
-                    } catch (NumberFormatException e) {
-                        reader.close();
-                        throw new NumberFormatException("Invalid checkpoint format");
-                    }
-                }
-            }
-            reader.close();
-        } catch (IOException e) {
-            logger.error(Thread.currentThread().getName() + ": Error while reading checkpoint file");
-        } catch (NumberFormatException e) {
-            logger.warn(Thread.currentThread().getName() + ": " + e.getMessage());
-        }
-        logger.info(Thread.currentThread().getName() + ": Retrieved checkpoint file " + pathString + " with count " + count + ", end " + end + ", remaining string " + remainingString + " and keyValuePair " + keyValuePair);
         return new CheckpointInfo(count, end, remainingString, keyValuePair);
     }
     /**

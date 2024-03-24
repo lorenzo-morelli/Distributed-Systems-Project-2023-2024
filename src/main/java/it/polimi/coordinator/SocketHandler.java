@@ -92,8 +92,8 @@ public class SocketHandler implements Runnable {
                                     end();
                                     isProcessing = false;
                                 } else {
-                                    System.out.println(Thread.currentThread().getName() + ": Received the keys to be managed");
-                                    logger.info(Thread.currentThread().getName() + ": Received the keys to be managed");
+                                    System.out.println(Thread.currentThread().getName() + ": Received the message end computation for phase1");
+                                    logger.info(Thread.currentThread().getName() + ": Received the message end computation for phase1");
                                     managePhase2();
                                 }
                             }

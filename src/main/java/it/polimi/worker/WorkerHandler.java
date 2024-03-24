@@ -196,11 +196,9 @@ public class WorkerHandler extends Thread {
         try {
             for (int i = 0; i < task.getPathFiles().size(); i++) {
                 CheckpointInfo checkPointObj;
-                if ((task.getReduce() && !task.getChangeKey())) {
-                    checkPointObj = checkPointManager.getCheckPointForReduce(task.getProgramId(), task.getPathFiles().get(i));
-                } else {
-                    checkPointObj = checkPointManager.getCheckPoint(task.getProgramId(), task.getPathFiles().get(i));
-                }
+               
+                checkPointObj = checkPointManager.getCheckPoint(task.getProgramId(), task.getPathFiles().get(i),task.getReduce() && !task.getChangeKey());
+               
 
                 if (checkPointObj.end()) {
                     logger.info(Thread.currentThread().getName() + ": File already processed");
@@ -239,10 +237,10 @@ public class WorkerHandler extends Thread {
             if (writeKeys) {
                 hadoopWorker.writeKeys(programId, identifier + "_" + numFile + "_" + numPart, result, task.getChangeKey(), task.getReduce());
             }
-            checkPointManager.createCheckpointForReduce(programId, task.getPathFiles().get(numFile), new CheckpointInfo(numPart, end, remainingString, result.getFirst()));
+            checkPointManager.createCheckpoint(programId, task.getPathFiles().get(numFile), new CheckpointInfo(numPart, end, remainingString, result.getFirst()), true);
         } else {
             hadoopWorker.writeKeys(programId, identifier + "_" + numFile + "_" + numPart, result, task.getChangeKey(), task.getReduce());
-            checkPointManager.createCheckpoint(programId, task.getPathFiles().get(numFile), new CheckpointInfo(numPart, end, remainingString, null));
+            checkPointManager.createCheckpoint(programId, task.getPathFiles().get(numFile), new CheckpointInfo(numPart, end, remainingString, null), false);
         }
     }
     /**

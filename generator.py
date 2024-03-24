@@ -4,10 +4,10 @@ import json
 import pandas as pd
 
 keys = 0
-PART_GEN_PATH = "files/program0/key"
-RESULT_GEN_PATH = "files/program0/result.csv"
-RESULT_REAL_PATH = "result-0.csv"
-OPERATIONS_PATH = "files/program0/program.json"
+PART_GEN_PATH = "files/program3/key"
+RESULT_GEN_PATH = "files/program3/result.csv"
+RESULT_REAL_PATH = "result-3.csv"
+OPERATIONS_PATH = "files/program3/program.json"
 
 
 def generate_data():

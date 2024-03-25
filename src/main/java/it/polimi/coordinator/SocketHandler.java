@@ -16,6 +16,7 @@ import it.polimi.common.Address;
 import it.polimi.common.messages.EndComputation;
 import it.polimi.common.messages.ErrorMessage;
 import it.polimi.common.messages.ReduceOperation;
+import it.polimi.common.messages.StopComputation;
 import it.polimi.common.messages.NormalOperations;
 
 /**
@@ -136,6 +137,12 @@ public class SocketHandler implements Runnable {
                                 }
                             }
                         }
+                        if(keyManager.exit()) {
+                            outputStream.writeObject(new StopComputation());
+                            logger.info("No keys to process, exiting...");
+                            isProcessing = false;
+                            break;
+                        }
                         break;
                     default:
                         break;
@@ -172,7 +179,11 @@ public class SocketHandler implements Runnable {
         try {
             keyManager.insertAssignment(this, Math.min(programExecutor.getNumPartitions(), programExecutor.getFilesSize()));
             this.phase = ProgramPhase.FINAL;
-        } catch (Exception e) {
+        }catch (IllegalArgumentException e) {
+            logger.info(Thread.currentThread().getName() + ": " + e.getMessage());
+            this.phase = ProgramPhase.FINAL;
+        }
+        catch (IOException e) {
             System.out.println(Thread.currentThread().getName() + ": Error while splitting the keys" + e.getMessage());
             logger.error(Thread.currentThread().getName() + ": Error while splitting th keys" + e.getMessage());
             System.exit(0);
@@ -287,7 +298,7 @@ public class SocketHandler implements Runnable {
      * The performReconnectedActions method is used to perform the actions after a successful reconnection.
      * It adds the new worker to the list of client sockets and updates the file socket map, 
      * it creates a new SocketHandler for the new worker and reassigns the keys to the new worker and
-     * it resumes the operations with the new worker
+     * it resumes the operations with the new worker.
      */
     private void performReconnectedActions() {
         programExecutor.getClientSockets().add(clientSocket);

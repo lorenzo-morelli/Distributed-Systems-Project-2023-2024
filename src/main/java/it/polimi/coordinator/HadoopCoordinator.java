@@ -104,6 +104,9 @@ public class HadoopCoordinator extends HadoopFileManager {
     public int getKeysSize(String programId) throws IOException {
         logger.info(Thread.currentThread().getName() + ": Getting keys size from HDFS");
         String path = "/program" + programId;
+        if (!fs.exists(new Path(path))) {
+            return 0;
+        }
         FileStatus[] fileStatuses = fs.listStatus(new Path(path));
         return fileStatuses.length;
     }
@@ -116,11 +119,21 @@ public class HadoopCoordinator extends HadoopFileManager {
      */
     public synchronized void mergeFiles(String outputId, String programId, boolean isSecondPhase) throws IOException {
         
+        String hdfsFilePath = "/output" + programId;
+        String localMergedFilePath = "result-" + outputId + ".csv";
+
+        if(!fs.exists(new Path(hdfsFilePath)))
+        {
+            //create an empty file localMergedFilePath
+            new FileOutputStream(localMergedFilePath).close();
+            logger.info("File"+hdfsFilePath+ " doesn't exist!");
+            return;
+        }
         if(isSecondPhase){
             logger.info(Thread.currentThread().getName() + ": Merging files from HDFS");
         
-            String localMergedFilePath = "result-" + outputId + ".csv";
-            FileStatus[] foldersStatus = fs.listStatus(new Path("/output" + programId));
+            
+            FileStatus[] foldersStatus = fs.listStatus(new Path(hdfsFilePath));
             for (FileStatus folderStatus : foldersStatus) {
                 try (BufferedOutputStream mergedOut = new BufferedOutputStream(new FileOutputStream(localMergedFilePath, true))) {
                     FileStatus[] fileStatuses = fs.listStatus(new Path(folderStatus.getPath().toString()));
@@ -133,9 +146,8 @@ public class HadoopCoordinator extends HadoopFileManager {
             }
         }else{
             logger.info(Thread.currentThread().getName() + ": Merging files from HDFS");
-            String hdfsFilePath = "/output" + programId;
-            String localMergedFilePath = "result-" + outputId + ".csv";
             try (BufferedOutputStream mergedOut = new BufferedOutputStream(new FileOutputStream(localMergedFilePath, true))) {
+                
                 FileStatus[] fileStatuses = fs.listStatus(new Path(hdfsFilePath));
 
                 for (FileStatus fileStatus : fileStatuses) {
@@ -152,7 +164,7 @@ public class HadoopCoordinator extends HadoopFileManager {
      * @param mergedOut it is the output stream of the merged file.
      * @throws IOException if it is not possible to download and append the file.
      */
-    private void downloadAndAppendToMergedFile(String hdfsFilePath, OutputStream mergedOut) throws IOException {
+    private void downloadAndAppendToMergedFile(String hdfsFilePath, OutputStream mergedOut){
         logger.info(Thread.currentThread().getName() + ": Downloading file from HDFS: " + hdfsFilePath);
         try (InputStream in = fs.open(new Path(hdfsFilePath))) {
             byte[] buffer = new byte[BUFFER_SIZE];
@@ -161,6 +173,8 @@ public class HadoopCoordinator extends HadoopFileManager {
             while ((bytesRead = in.read(buffer)) > 0) {
                 mergedOut.write(buffer, 0, bytesRead);
             }
+        }catch( IOException e){
+            logger.info("File"+hdfsFilePath+ "doesn't exist!");
         }
         logger.info(Thread.currentThread().getName() + ": File " + hdfsFilePath + " downloaded and appended to merged file successfully.");
     }

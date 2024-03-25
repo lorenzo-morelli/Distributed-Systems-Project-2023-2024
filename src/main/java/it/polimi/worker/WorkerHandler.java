@@ -15,6 +15,7 @@ import it.polimi.common.KeyValuePair;
 import it.polimi.common.messages.EndComputation;
 import it.polimi.common.messages.ErrorMessage;
 import it.polimi.common.messages.ReduceOperation;
+import it.polimi.common.messages.StopComputation;
 import it.polimi.worker.models.CheckpointInfo;
 import it.polimi.worker.models.Operator;
 import it.polimi.common.messages.NormalOperations;
@@ -121,7 +122,13 @@ public class WorkerHandler extends Thread {
                     }
                     break;
 
-                } else {
+                }else if(object instanceof StopComputation){
+                    System.out.println(Thread.currentThread().getName() + ": Received StopComputation message from coordinator");
+                    logger.info(Thread.currentThread().getName() + ": Received StopComputation message from coordinator");
+                    safeDelete = true;
+                    break;
+                }  
+                else {
                     System.out.println(Thread.currentThread().getName() + ": Received unexpected object type");
                     outputStream.writeObject(new ErrorMessage("Received unexpected object type"));
                     logger.error(Thread.currentThread().getName() + ": Received unexpected object type");
@@ -267,8 +274,11 @@ public class WorkerHandler extends Thread {
                     logger.info(Thread.currentThread().getName() + ": File " + idx+".csv" + " already processed");
                 } else {
                     KeyValuePair result = hadoopWorker.readAndComputeReduce(idx, reduceMessage, reduce);
-                    hadoopWorker.writeKeys(programId, String.valueOf(identifier), result);
+                    if(result!= null){
+                        hadoopWorker.writeKeys(programId, String.valueOf(identifier), result);
+                    }
                     checkPointManager.writeCheckPointReducePhase(programId, idx + ".csv");
+                    
                 }
             }
             return true;

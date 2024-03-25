@@ -19,8 +19,8 @@ public class NormalOperations extends Operation {
      * @param programId represents the program id.
      * @param list represents the list of operations.
      * @param pathFiles represents the list of files on hdfs to process.
-     * @param changeKey represents if the changekey operations is present or not.
-     * @param reduce represents if the reduce operation is present or not.
+     * @param changeKey represents if the changekey operations is present or not in the list of operations.
+     * @param reduce represents if the reduce operation is present or not in the list of operations.
      * @param identifier represents the identifier of the worker for a specific program.
      */
     public NormalOperations(String programId, List<MutablePair<String, String>> list, List<String> pathFiles, boolean changeKey, boolean reduce, Integer identifier) {
@@ -46,14 +46,14 @@ public class NormalOperations extends Operation {
     }
     /**
      * The getChangeKey method returns the change key flag.
-     * @return the change key flag to indicate if the change key operation is present or not.
+     * @return the change key flag to indicate if the change key operation is present or not in the list of operations.
      */
     public boolean getChangeKey() {
         return changeKey;
     }
     /**
      * The getReduce method returns the reduce flag.
-     * @return the reduce flag to indicate if the reduce operation is present or not.
+     * @return the reduce flag to indicate if the reduce operation is present or not in the list of operations.
      */
     public boolean getReduce() {
         return reduce;

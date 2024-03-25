@@ -46,18 +46,18 @@ public class ProgramExecutor extends Thread {
 
     /**
      * The ProgramExecutor class constructor creates a new ProgramExecutor.
-     * @param output_id represents the number of the program.
+     * @param outputId represents the number of the program.
      * @param programId represents the program id.
      * @param op_path represents the path of the operations file.
      * @param addresses represents the list of addresses.
-     * @param hadoopCoordinator represents the hadoop coordinator.
+     * @param hadoopCoordinator represents the hadoop coordinator used to manage the Hadoop file system.
      */
 
-    public ProgramExecutor(String output_id, String programId, String op_path, List<Address> addresses, HadoopCoordinator hadoopCoordinator) {
+    public ProgramExecutor(String outputId, String programId, String op_path, List<Address> addresses, HadoopCoordinator hadoopCoordinator) {
         this.clientSockets = new ArrayList<>();
         this.programId = programId;
         this.op_path = op_path;
-        this.outputId = output_id;
+        this.outputId = outputId;
         this.addresses = addresses;
 
 
@@ -65,7 +65,7 @@ public class ProgramExecutor extends Thread {
 
         this.fileSocketMap = new HashMap<>();
         this.lastReduce = new MutablePair<>();
-        this.keyManager = new KeyAssignmentManager(hadoopCoordinator, programId);
+        this.keyManager = new KeyAssignmentManager(hadoopCoordinator, programId, outputId);
 
         this.hadoopCoordinator = hadoopCoordinator;
 
@@ -118,7 +118,7 @@ public class ProgramExecutor extends Thread {
         return this.addresses.size();
     }
     /**
-     * The getFileSocketMap method returns the file socket map.
+     * The getFileSocketMap method returns the file socket map which contains the files and the sockets of the workers.
      * @return the file socket map.
      */
     public Map<List<String>, Socket> getFileSocketMap() {
@@ -146,15 +146,15 @@ public class ProgramExecutor extends Thread {
         return programId;
     }
     /**
-     * The getChangeKey method returns the change key flag which indicates if the change key operation is present or not.
-     * @return the change key flag which indicates if the change key operation is present or not.
+     * The getChangeKey method returns the change key flag which indicates if the change key operation is present or not in the program.
+     * @return the change key flag which indicates if the change key operation is present or not in the program.
      */
     public boolean getChangeKey() {
         return changeKey;
     }
     /**
-     * The getReduce method returns the reduce flag which indicates if the reduce operation is present or not.
-     * @return the reduce flag which indicates if the reduce operation is present or not.
+     * The getReduce method returns the reduce flag which indicates if the reduce operation is present or not in the program.
+     * @return the reduce flag which indicates if the reduce operation is present or not in the program.
      */
     public boolean getReduce() {
         return reduce;

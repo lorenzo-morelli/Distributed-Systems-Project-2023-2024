@@ -50,15 +50,12 @@ public class Worker {
         }
         ServerSocket serverSocket;
         try {
-            // Create a server socket to accept connections
             serverSocket = new ServerSocket(port);
             System.out.println("Server started on port " + port);
             logger.info("Server started on port " + port);
             while (true) {
-                // Wait for a client to connect
                 Socket clientSocket = serverSocket.accept();
                 logger.info("Coordinator opened a connection.");
-                // Handle the connection in a separate thread
                 WorkerHandler workerHandler = new WorkerHandler(clientSocket, new HadoopWorker(address));
                 workerHandler.start();
             }

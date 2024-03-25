@@ -199,8 +199,11 @@ public class CheckPointManager {
             return true;
         }
     }
-
-
+    /**
+     * The createOutputDirectory method creates a new directory.
+     * This method is invoked when the directory does not exist.
+     * @param directory represents the directory to create.
+     */
     private static void createOutputDirectory(String directory) {
         try {
             folderLock.lock();
@@ -224,7 +227,11 @@ public class CheckPointManager {
             folderLock.unlock();
         }
     }
-
+    /**
+     * The deleteCheckpoints method deletes the checkpoint files.
+     * This method is invoked at the end of the program.
+     * @param programId represents the program id.
+     */
     public void deleteCheckpoints(String programId) {
         try {
             for (String file : filesToDelete) {
@@ -238,7 +245,11 @@ public class CheckPointManager {
             System.out.println(Thread.currentThread().getName() + ": Error while deleting checkpoints");
         }
     }
-
+    /**
+     * The deleteEmptyDirectory method deletes the empty directory.
+     * This method is invoked at the end of the program.
+     * @param folder represents the directory to delete.
+     */
     private static void deleteEmptyDirectory(File folder) {
         try {
             folderLock.lock();

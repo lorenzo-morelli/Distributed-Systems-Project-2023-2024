@@ -108,6 +108,7 @@ public class HadoopWorker extends HadoopFileManager {
             for (Operator op : operators) {
                 result = op.execute(result);
             }
+            if(!(result==null || result.isEmpty())){
             if ((task.getReduce() && !task.getChangeKey())) {
                 if (reduceResult == null) {
                     reduceResult = result.getFirst();
@@ -121,8 +122,10 @@ public class HadoopWorker extends HadoopFileManager {
                 workerHandler.processPartitionTask(result, task, i, count, data.end() && partialTuple.toString().isEmpty(), partialTuple.toString(), true);
 
             }
-            logger.info(Thread.currentThread().getName() + ": Data processed of partition: " + String.valueOf(count-1) + " of file: " + task.getPathFiles().get(i));
             result.clear();
+        }
+            logger.info(Thread.currentThread().getName() + ": Data processed of partition: " + String.valueOf(count-1) + " of file: " + task.getPathFiles().get(i));
+            
         }
         in.close();
     }
@@ -249,8 +252,13 @@ public class HadoopWorker extends HadoopFileManager {
             }
         }
         logger.info(Thread.currentThread().getName() + ": Reduce has been computed for key: " + key);
-        return result.getFirst();
-    }
+        if(result.isEmpty()){
+            return null;
+        }
+        else{
+            return result.getFirst();
+        }
+    }   
     /**
      * The findKey method finds the key from the file.
      * It finds the key from the file using the index and the programId.

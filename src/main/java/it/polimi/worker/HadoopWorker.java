@@ -271,7 +271,7 @@ public class HadoopWorker extends HadoopFileManager {
     private Integer findKey(int idx, String programId) throws IOException {
         String path = "/program" + programId;
         FileStatus[] fileStatuses = fs.listStatus(new Path(path));
-        Pattern pattern = Pattern.compile("key(\\d+)");
+        Pattern pattern = Pattern.compile("key(-?\\d+)");
         Matcher matcher = pattern.matcher(fileStatuses[idx].getPath().getName());
 
         if (matcher.find()) {

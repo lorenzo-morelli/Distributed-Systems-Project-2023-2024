@@ -126,7 +126,7 @@ public class HadoopCoordinator extends HadoopFileManager {
         {
             //create an empty file localMergedFilePath
             new FileOutputStream(localMergedFilePath).close();
-            logger.info("File"+hdfsFilePath+ " doesn't exist!");
+            logger.info("File "+hdfsFilePath+ " doesn't exist!");
             return;
         }
         if(isSecondPhase){

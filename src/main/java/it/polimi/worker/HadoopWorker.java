@@ -5,7 +5,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Pattern;
 
-import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.FSDataInputStream;
 import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.FileStatus;
@@ -160,9 +159,7 @@ public class HadoopWorker extends HadoopFileManager {
     public void writeKeys(String programId, String identifier, KeyValuePair result) throws IOException {
         logger.info(Thread.currentThread().getName() + ": Writing keys to HDFS");
         String fileName = "/output" + programId + "/" + identifier + "/key" + result.key() + ".csv";
-        FileSystem fileSystem = initialize();
-        writeResult(List.of(result), fileName, fileSystem);
-        fileSystem.close();
+        writeResult(List.of(result), fileName);
         logger.info(Thread.currentThread().getName() + ": Keys written to HDFS");
     }
     /**
@@ -178,32 +175,29 @@ public class HadoopWorker extends HadoopFileManager {
         if (result.isEmpty()) {
             return;
         }
-        FileSystem fileSystem = initialize();
 
         if (changeKey && reduce) {
             for (KeyValuePair pair : result) {
                 String fileName = "/program" + programId + "/key" + pair.key() + "/" + identifier + ".csv";
-                writeResult(List.of(pair), fileName, fileSystem);
+                writeResult(List.of(pair), fileName);
             }
         } else {
             String fileName = "/output" + programId + "/" + identifier + ".csv";
-            writeResult(result, fileName, fileSystem);
+            writeResult(result, fileName);
         }
-        fileSystem.close();
     }
     /**
      * The writeResult method writes the result to HDFS.
      * It writes the result to HDFS in the specified path.
      * @param data it is the list of KeyValuePair objects to be written.
      * @param path it is the path where the data will be written.
-     * @param fileSystem it is the FileSystem object.
      * @throws IOException if there is an error writing the result.
      */
-    private void writeResult(List<KeyValuePair> data, String path, FileSystem fileSystem) throws IOException {
+    private void writeResult(List<KeyValuePair> data, String path) throws IOException {
 
         logger.info(Thread.currentThread().getName() + ": Writing to HDFS: " + path);
         Path outputPath = new Path(path);
-        FSDataOutputStream outputStream = fileSystem.create(outputPath);
+        FSDataOutputStream outputStream = fs.create(outputPath);
         for (KeyValuePair pair : data) {
             Integer key = pair.key();
             Integer value = pair.value();
@@ -250,6 +244,7 @@ public class HadoopWorker extends HadoopFileManager {
                 count++;
                 result = reduce.execute(result);
             }
+            in.close();
         }
         logger.info(Thread.currentThread().getName() + ": Reduce has been computed for key: " + key);
         if(result.isEmpty()){

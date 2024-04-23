@@ -33,7 +33,8 @@ public class SocketHandler implements Runnable {
     private boolean isProcessing;
     private final String programId;
     private static final Logger logger = LogManager.getLogger("it.polimi.Coordinator");
-
+    public static final int WAIT_TIME = 5000;
+    public static final int MAX_RETRIES = 3;
     /**
      * The constructor creates a new SocketHandler.
      * @param programExecutor represents the program executor.
@@ -160,6 +161,7 @@ public class SocketHandler implements Runnable {
     }
     /**
      * The end method is used to manage the end of the program.
+     * It calls the manageEnd method of the program executor.
      */
     private void end() {
         try {
@@ -230,7 +232,7 @@ public class SocketHandler implements Runnable {
         boolean reconnected = false;
         int attempts = 0;
 
-        while (!reconnected && attempts < 3) {
+        while (!reconnected && attempts < MAX_RETRIES) {
             try {
                 clientSocket = new Socket(socket.getInetAddress().getHostName(), socket.getPort());
                 reconnected = true;
@@ -254,7 +256,7 @@ public class SocketHandler implements Runnable {
         logger.error(Thread.currentThread().getName() + ": Reconnection attempt " + attempts + " failed. Retrying...");
 
         try {
-            Thread.sleep(5000);
+            Thread.sleep(WAIT_TIME);
         } catch (InterruptedException interruptedException) {
             System.out.println(Thread.currentThread().getName() + ": Reconnection attempt interrupted.");
             logger.error(Thread.currentThread().getName() + ": Reconnection attempt interrupted.");
@@ -273,7 +275,7 @@ public class SocketHandler implements Runnable {
 
         logger.info(Thread.currentThread().getName() + ": Attempting to reconnect to another worker...");
 
-        while (!reconnected && attempts < 3) {
+        while (!reconnected && attempts < MAX_RETRIES) {
             try {
                 List<Address> addresses = new ArrayList<>(programExecutor.getAddresses());
                 addresses.remove(new Address(clientSocket.getInetAddress().getHostName(), clientSocket.getPort()));

@@ -157,49 +157,6 @@ public class CheckPointManager {
         return new CheckpointInfo(count, end, remainingString, keyValuePair);
     }
     /**
-     * The writeCheckPointReducePhase method creates a new checkpoint file.
-     * This method is invoked during the reduce phase, i.e., the second phase.
-     * It is called upon completion of processing a key.
-     * @param programId represents the program id.
-     * @param pathString represents the path of the checkpoint file.
-     */
-    public void writeCheckPointReducePhase(String programId, String pathString) {
-        createOutputDirectory(CHECKPOINT_DIRECTORY + programId);
-        try {
-
-            Path path = Paths.get(pathString);
-            pathString = CHECKPOINT_DIRECTORY + programId + "/" + path.getFileName();
-            filesToDelete.add(pathString);
-            BufferedWriter writer = new BufferedWriter(new FileWriter(pathString, true));
-            writer.write("<Checkpoint done>\n");
-            writer.close();
-            logger.info(Thread.currentThread().getName() + ": Created checkpoint file " + pathString);
-        } catch (IOException e) {
-            logger.error(Thread.currentThread().getName() + ": Error while creating checkpoint file");
-            System.out.println(Thread.currentThread().getName() + ": Error while creating checkpoint file");
-            System.out.println(e.getMessage());
-        }
-    }
-    /**
-     * The readCheckPointReducePhase method reads the checkpoint file.
-     * This method is invoked during the reduce phase, i.e., the second phase.
-     * It is called in the second phase before read the files for the corresponding key.
-     * @param programId represents the program id.
-     * @param pathString represents the path of the checkpoint file.
-     * @return true if the checkpoint file exists, false otherwise.
-     */
-    public boolean readCheckPointReducePhase(String programId, String pathString) {
-        Path path = Paths.get(pathString);
-        pathString = CHECKPOINT_DIRECTORY + programId + "/" + path.getFileName();
-        if (!Files.exists(Paths.get(pathString))) {
-            logger.info(Thread.currentThread().getName() + ": Checkpoint file " + pathString + " does not exist");
-            return false;
-        } else {
-            filesToDelete.add(pathString);
-            return true;
-        }
-    }
-    /**
      * The createOutputDirectory method creates a new directory.
      * This method is invoked when the directory does not exist.
      * @param directory represents the directory to create.

@@ -18,6 +18,7 @@ import it.polimi.common.HadoopFileManager;
 import it.polimi.common.KeyValuePair;
 import it.polimi.common.messages.ReduceOperation;
 import it.polimi.worker.operators.ReduceOperator;
+import it.polimi.worker.models.CheckpointInfo;
 import it.polimi.worker.models.Data;
 import it.polimi.worker.models.Operator;
 import it.polimi.common.messages.NormalOperations;
@@ -212,47 +213,58 @@ public class HadoopWorker extends HadoopFileManager {
      * It reads the data from HDFS and computes the reduce operation on the data.
      * It returns the KeyValuePair object after the reduce operation is computed.
      * It is called in the second phase of the program.
+     * It calls also the function to create the checkpoint.
      * @param idx it is the index of the file.
      * @param reduceMessage it is the ReduceOperation object.
      * @param reduce it is the ReduceOperator object.
+     * @param workerHandler it is the WorkerHandler object.
+     * @param checkpointInfo it is the CheckpointInfo object.
      * @return the KeyValuePair object.
      * @throws IOException if there is an error reading the data.
      * @throws IllegalArgumentException if the key file is invalid.
      */
-    public KeyValuePair readAndComputeReduce(int idx, ReduceOperation reduceMessage, Operator reduce) throws IOException, IllegalArgumentException {
+    public KeyValuePair readAndComputeReduce(int idx, ReduceOperation reduceMessage, Operator reduce,WorkerHandler workerHandler, CheckpointInfo checkpointInfo) throws IOException, IllegalArgumentException {
         Integer key = findKey(idx, reduceMessage.getProgramId());
+       
+       
         logger.info(Thread.currentThread().getName() + ": Reading and computing reduce for key: " + key);
         String path = "/program" + reduceMessage.getProgramId() + "/key" + key;
-        List<KeyValuePair> result = new ArrayList<>();
+        List<KeyValuePair> result = checkpointInfo.keyValuePair() == null ? new ArrayList<>() : new ArrayList<>(List.of(checkpointInfo.keyValuePair()));
         FileStatus[] fileStatuses = fs.listStatus(new Path(path));
-        for (FileStatus fileStatus : fileStatuses) {
-            Path filePath = fileStatus.getPath();
+        long totalBytesRead = 0;
+        int startingFile = checkpointInfo.remainingString() == "" ? 0 : Integer.parseInt(checkpointInfo.remainingString());
+        
+        logger.info(Thread.currentThread().getName() + ": Starting file: " + startingFile + " of total files: " + fileStatuses.length + " for key: " + key + " with index: " + idx);
+        
+        for (int i = startingFile;i < fileStatuses.length; i++) {
+            int count = 0;
+
+            Path filePath = fileStatuses[i].getPath();
+
+
             FSDataInputStream in = fs.open(filePath);
 
-
             StringBuilder partialTuple = new StringBuilder();
-            int count = 0;
             Data data;
 
             while ((!(data = readFile(in, count)).data().isEmpty()) || !partialTuple.toString().isEmpty()) {
-
+                
+                totalBytesRead += data.data().length();
                 logger.info(Thread.currentThread().getName() + ": Data is ready to be processed of partition: " + count + " of file: " + filePath.getName());
                 String combinedData = data.data().isEmpty() ? partialTuple.toString() : partialTuple.toString() + data.data();
-
 
                 partialTuple = processData(combinedData, result);
                 count++;
                 result = reduce.execute(result);
             }
             in.close();
+            if(totalBytesRead >  BUFFER_SIZE || fileStatuses.length == i+1){
+                workerHandler.createCheckpoint(result.isEmpty() ? null : result.getFirst(),idx,i,fileStatuses.length == i+1);
+                totalBytesRead = 0;
+            }
         }
         logger.info(Thread.currentThread().getName() + ": Reduce has been computed for key: " + key);
-        if(result.isEmpty()){
-            return null;
-        }
-        else{
-            return result.getFirst();
-        }
+        return result.isEmpty() ? null : result.getFirst();
     }   
     /**
      * The findKey method finds the key from the file.

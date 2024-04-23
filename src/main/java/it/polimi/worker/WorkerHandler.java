@@ -149,6 +149,7 @@ public class WorkerHandler extends Thread {
                     hadoopWorker.closeFileSystem();
                     checkPointManager.deleteCheckpoints(programId);
                 }
+
             } catch (InterruptedException e) {
                 logger.error(Thread.currentThread().getName() + ": Error while sleeping: " + e.getMessage());
                 System.out.println(Thread.currentThread().getName() + ": Error while sleeping: " + e.getMessage());
@@ -260,7 +261,7 @@ public class WorkerHandler extends Thread {
     /**
      * The computeReduceMessage method is used to process the reduce message received from the Coordinator.
      * It reads the input files and processes them using the reduce operator.
-     * It also creates the checkpoints for the reduce message.
+     * It also retrieves the checkpoints for the reduce message.
      * @param reduceMessage it is the reduce message to be processed.
      * @return true if the reduce message was processed successfully, false otherwise.
      */
@@ -268,18 +269,30 @@ public class WorkerHandler extends Thread {
         Operator reduce = handleOperators(List.of(reduceMessage.getReduce())).getFirst();
 
         try {
-            for (int idx = reduceMessage.getKeys().getLeft(); idx < reduceMessage.getKeys().getRight(); idx++) {
+            CheckpointInfo checkPointObj = checkPointManager.getCheckPoint(reduceMessage.getProgramId(), "reduce" + identifier + ".csv",true);
 
-                if (checkPointManager.readCheckPointReducePhase(reduceMessage.getProgramId(), idx + ".csv")) {
-                    logger.info(Thread.currentThread().getName() + ": File " + idx+".csv" + " already processed");
+            int start = checkPointObj.count()>0  ? checkPointObj.count() : reduceMessage.getKeys().getLeft();
+            
+            if(checkPointObj.count() > 0){  
+                logger.info(Thread.currentThread().getName() + ": Files partially processed, resuming from idx: " + start); 
+            }
+            else {
+                logger.info(Thread.currentThread().getName() + ": Files not processed yet");
+            }
+            
+            for (int idx = start; idx < reduceMessage.getKeys().getRight(); idx++) {
+                
+                
+                if (checkPointObj.end()) {
+                    logger.info(Thread.currentThread().getName() + ": File with idx: " + idx + " already processed");
+                    checkPointObj = new CheckpointInfo(0, false, "", null);
                 } else {
-                    KeyValuePair result = hadoopWorker.readAndComputeReduce(idx, reduceMessage, reduce);
+                    KeyValuePair result = hadoopWorker.readAndComputeReduce(idx, reduceMessage, reduce,this, checkPointObj);
                     if(result!= null){
                         hadoopWorker.writeKeys(programId, String.valueOf(identifier), result);
                     }
-                    checkPointManager.writeCheckPointReducePhase(programId, idx + ".csv");
-                    
-                }
+                 }
+                
             }
             return true;
         } catch (IOException e) {
@@ -288,4 +301,16 @@ public class WorkerHandler extends Thread {
         }
         return false;
     }
+    /**
+     * The createCheckpoint method is used to create the checkpoints for a reduce message.
+     * This method is invoked by the HadoopWorker after processing a partition in the second phase.
+     * @param result it is the result of the partition.
+     * @param idx it is the index of the partition processed.
+     * @param numFile it is the number of the last file processed.
+     * @param end it is a boolean value indicating if the partition is the last one.
+     */
+    public void createCheckpoint(KeyValuePair result, Integer idx,Integer numFile, Boolean end) {
+        checkPointManager.createCheckpoint(programId, "reduce" + identifier + ".csv", new CheckpointInfo(idx, end, String.valueOf(numFile), result), true);
+    }
+
 }

@@ -283,7 +283,7 @@ public class SocketHandler implements Runnable {
                 if (addresses.isEmpty()) {
                     return false;
                 }
-                clientSocket = programExecutor.getNewActiveSocket(addresses, clientSocket.getInetAddress().getHostName());
+                clientSocket = Coordinator.getNewActiveSocket(addresses, clientSocket.getInetAddress().getHostName());
                 reconnected = true;
                 System.out.println(Thread.currentThread().getName() + ": Reconnected to a new worker " + clientSocket.getInetAddress().getHostName() + ":" + clientSocket.getPort() + ". Resuming operations...");
                 logger.info(Thread.currentThread().getName() + ": Reconnected to a new worker " + clientSocket.getInetAddress().getHostName() + ":" + clientSocket.getPort() + ". Resuming operations...");

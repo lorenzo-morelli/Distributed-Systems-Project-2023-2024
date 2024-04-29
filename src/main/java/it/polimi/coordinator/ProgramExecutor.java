@@ -4,7 +4,6 @@ import java.io.File;
 import java.io.IOException;
 import java.net.Socket;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -207,7 +206,7 @@ public class ProgramExecutor extends Thread {
                 clientSockets.add(clientSocket);
                 fileSocketMap.put(filesWorker, clientSocket);
             } catch (IOException e) {
-                Socket clientSocket = getNewActiveSocket(new ArrayList<>(addresses), null);
+                Socket clientSocket = Coordinator.getNewActiveSocket(new ArrayList<>(addresses), null);
                 clientSockets.add(clientSocket);
                 fileSocketMap.put(filesWorker, clientSocket);
             }
@@ -215,50 +214,6 @@ public class ProgramExecutor extends Thread {
         }
         logger.info(Thread.currentThread().getName() + ": Connections initialized");
 
-    }
-    /**
-     * The getNewActiveSocket method returns a new active socket.
-     * @param addressesToCheck represents the list of addresses to check.
-     * @param machine represents the machine, if it is not null the machine is used to give higher priority to the sockets of the same machine.
-     * @return the new active socket.
-     * @throws RuntimeException if no workers are available.
-     */
-    public Socket getNewActiveSocket(List<Address> addressesToCheck, String machine) {
-        logger.info(Thread.currentThread().getName() + ": Search for a new active socket...");
-        if (addressesToCheck.isEmpty()) {
-            logger.error(Thread.currentThread().getName() + ": No workers available");
-            throw new RuntimeException("No workers available");
-        }
-
-        machine = (machine == null) ? "" : machine;
-
-        Map<Address, Integer> load = new HashMap<>();
-        Socket result;
-        for (Address a : addressesToCheck) {
-            if (!machine.equals(a.hostname())) {
-                load.put(a, 0);
-            } else {
-                load.put(a, -2);
-            }
-        }
-
-        for (Socket s : clientSockets) {
-            Address a = new Address(s.getInetAddress().getHostName(), s.getPort());
-            if (load.containsKey(a)) {
-                load.put(a, load.get(a) + 1);
-            }
-        }
-        Address finalAddress = Collections.min(load.entrySet(), Map.Entry.comparingByValue()).getKey();
-
-        try {
-            result = new Socket(finalAddress.hostname(), finalAddress.port());
-            logger.info(Thread.currentThread().getName() + ": New active socket found " + finalAddress.hostname() + ":" + finalAddress.port());
-            return result;
-        } catch (Exception e) {
-            logger.warn(Thread.currentThread().getName() + ": Error while creating the new active socket: " + finalAddress.hostname() + ":" + finalAddress.port());
-            addressesToCheck.remove(finalAddress);
-            return getNewActiveSocket(addressesToCheck, machine);
-        }
     }
     /**
      * The initializeHDFS method initializes the Hadoop file system and uploads the files to HDFS.

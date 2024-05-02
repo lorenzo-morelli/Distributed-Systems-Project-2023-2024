@@ -10,6 +10,7 @@ import org.apache.log4j.PropertyConfigurator;
 
 
 import org.apache.log4j.LogManager;
+
 /**
  * This class is responsible for starting the worker server.
  * The worker server listens for connections from the coordinator.
@@ -21,6 +22,7 @@ public class Worker {
 
     /**
      * Main method to start the worker server.
+     *
      * @param args Command line arguments (not used).
      */
     public static void main(String[] args) {

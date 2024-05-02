@@ -10,6 +10,7 @@ import it.polimi.worker.operators.FilterOperator;
 import it.polimi.worker.operators.MapOperator;
 import it.polimi.worker.operators.ReduceOperator;
 import it.polimi.worker.models.Operator;
+
 /**
  * This class is responsible for creating the operators from strings.
  * It uses the factory pattern to create the operators.
@@ -21,6 +22,7 @@ public class CreateOperator {
      * The method parses the function string and creates the corresponding lambda function.
      * The function string is in the format "operation(value)".
      * The method uses a regex pattern to parse the function string.
+     *
      * @param function which is string representing the function.
      * @return the IntUnaryOperator corresponding to the function.
      */
@@ -52,20 +54,24 @@ public class CreateOperator {
             throw new IllegalArgumentException("Invalid function format: " + function);
         }
     }
+
     /**
      * The createMapOperator method creates a MapOperator from a string.
      * This method calls the createIntUnaryOperator method to create the lambda function.
+     *
      * @param functionName which is string representing the function.
      * @return the MapOperator corresponding to the function.
      */
     private static MapOperator createMapOperator(String functionName) {
         return new MapOperator(createIntUnaryOperator(functionName));
     }
+
     /**
      * The createFilterOperator method creates a FilterOperator from a string.
      * The method parses the function string and creates the corresponding lambda function.
      * The function string is in the format "operation(value)".
      * The method uses a regex pattern to parse the function string.
+     *
      * @param functionName which is string representing the function.
      * @return the FilterOperator corresponding to the function.
      */
@@ -89,20 +95,24 @@ public class CreateOperator {
             throw new IllegalArgumentException("Invalid filter function format: " + functionName);
         }
     }
+
     /**
      * The createChangeKeyOperator method creates a ChangeKeyOperator from a string.
      * This method calls the createIntUnaryOperator method to create the lambda function.
+     *
      * @param functionName which is string representing the function.
      * @return the ChangeKeyOperator corresponding to the function.
      */
     private static ChangeKeyOperator createChangeKeyOperator(String functionName) {
         return new ChangeKeyOperator(createIntUnaryOperator(functionName));
     }
+
     /**
      * The createReduceOperator method creates a ReduceOperator from a string.
      * The method parses the function string and creates the corresponding lambda function.
      * The function string is in the format "operation".
      * The method uses a switch statement to create the lambda function based on the function string.
+     *
      * @param functionName which is string representing the function.
      * @return the ReduceOperator corresponding to the function.
      */
@@ -119,6 +129,7 @@ public class CreateOperator {
      * The createOperator method creates an Operator from a string.
      * The method parses the operator and creates the corresponding operator using the factory pattern.
      * The operator is created by parsing the function string and creating the corresponding lambda function.
+     *
      * @param operator which is string representing the operator.
      * @param function which is string representing the function.
      * @return the Operator corresponding to the function.

@@ -26,6 +26,7 @@ public class CoordinatorFileManager {
 
     /**
      * The readOperations method is used to read the operations from the file.
+     *
      * @param file represents the operation file to read.
      * @return a MutablePair containing the list of operations and the list of files to process.
      * @throws Exception if the file is not found or the format is not correct.
@@ -57,8 +58,10 @@ public class CoordinatorFileManager {
         logger.info(Thread.currentThread().getName() + ": Operations file read: " + file.getAbsolutePath());
         return new MutablePair<>(dataFunctions, files);
     }
+
     /**
      * The readConfigurations method is used to read the configurations from the file.
+     *
      * @param file represents the configuration file to read.
      * @return a MutablePair containing the list of programs paths and the list of workers addresses.
      * @throws Exception if the file is not found or the format is not correct.

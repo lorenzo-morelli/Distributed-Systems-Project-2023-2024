@@ -16,16 +16,18 @@ import org.apache.log4j.LogManager;
 
 
 import it.polimi.common.HadoopFileManager;
+
 /**
- * The HadoopCoordinator class is responsible for managing the files on HDFS at coordinator-side. 
+ * The HadoopCoordinator class is responsible for managing the files on HDFS at coordinator-side.
  * It extends the HadoopFileManager class.
  * It contains methods to delete files, upload files, get keys size, merge files locally and upload merged files.
  */
 
 public class HadoopCoordinator extends HadoopFileManager {
-    
+
     /**
-     * HadoopCoordinator class constructor. 
+     * HadoopCoordinator class constructor.
+     *
      * @param address it is the address of the HDFS.
      * @throws IOException if it is not possible to connect to the HDFS.
      */
@@ -33,10 +35,12 @@ public class HadoopCoordinator extends HadoopFileManager {
         super(address, 16384);
         logger = LogManager.getLogger("it.polimi.Coordinator");
     }
+
     /**
      * This method deletes the files from HDFS.
+     *
      * @param programId it is the id of the program.
-     * @param phase2 it is a boolean that indicates if the phase 2 is present or not.
+     * @param phase2    it is a boolean that indicates if the phase 2 is present or not.
      */
     public void deleteFiles(String programId, Boolean phase2) {
         logger.info(Thread.currentThread().getName() + ": Deleting files from HDFS");
@@ -56,9 +60,11 @@ public class HadoopCoordinator extends HadoopFileManager {
             System.out.println(Thread.currentThread().getName() + ": Error deleting files from HDFS : " + e.getMessage());
         }
     }
+
     /**
      * This method uploads the files to HDFS.
-     * @param localFilePath it is the path of the file to upload.
+     *
+     * @param localFilePath       it is the path of the file to upload.
      * @param hdfsDestinationPath it is the path of the destination in HDFS.
      * @throws IOException if it is not possible to upload the file.
      */
@@ -82,9 +88,11 @@ public class HadoopCoordinator extends HadoopFileManager {
         logger.info(Thread.currentThread().getName() + ": File " + finalName + " uploaded to HDFS successfully.");
         System.out.println(Thread.currentThread().getName() + ": File " + finalName + " uploaded to HDFS successfully.");
     }
+
     /**
      * This method uploads the files to HDFS.
-     * @param list it is the list of files to upload.
+     *
+     * @param list                it is the list of files to upload.
      * @param hdfsDestinationPath it is the path of the destination in HDFS.
      * @throws IOException if it is not possible to upload the files.
      */
@@ -95,8 +103,10 @@ public class HadoopCoordinator extends HadoopFileManager {
         }
         logger.info(Thread.currentThread().getName() + ": Files uploaded to HDFS successfully.");
     }
+
     /**
      * This method gets the size of the keys.
+     *
      * @param programId it is the id of the program.
      * @return the size of the keys to be processed.
      * @throws IOException if it is not possible to get the size of the keys.
@@ -110,29 +120,30 @@ public class HadoopCoordinator extends HadoopFileManager {
         FileStatus[] fileStatuses = fs.listStatus(new Path(path));
         return fileStatuses.length;
     }
+
     /**
      * This method merges the files locally.
-     * @param outputId it is the id of the output.
-     * @param programId it is the id of the program.
+     *
+     * @param outputId      it is the id of the output.
+     * @param programId     it is the id of the program.
      * @param isSecondPhase it is a boolean that indicates if the phase 2 is present or not.
      * @throws IOException if it is not possible to merge the files.
      */
     public synchronized void mergeFiles(String outputId, String programId, boolean isSecondPhase) throws IOException {
-        
+
         String hdfsFilePath = "/output" + programId;
         String localMergedFilePath = "result-" + outputId + ".csv";
 
-        if(!fs.exists(new Path(hdfsFilePath)))
-        {
+        if (!fs.exists(new Path(hdfsFilePath))) {
             //create an empty file localMergedFilePath
             new FileOutputStream(localMergedFilePath).close();
-            logger.info("File "+hdfsFilePath+ " doesn't exist!");
+            logger.info("File " + hdfsFilePath + " doesn't exist!");
             return;
         }
-        if(isSecondPhase){
+        if (isSecondPhase) {
             logger.info(Thread.currentThread().getName() + ": Merging files from HDFS");
-        
-            
+
+
             FileStatus[] foldersStatus = fs.listStatus(new Path(hdfsFilePath));
             for (FileStatus folderStatus : foldersStatus) {
                 try (BufferedOutputStream mergedOut = new BufferedOutputStream(new FileOutputStream(localMergedFilePath, true))) {
@@ -144,10 +155,10 @@ public class HadoopCoordinator extends HadoopFileManager {
                     }
                 }
             }
-        }else{
+        } else {
             logger.info(Thread.currentThread().getName() + ": Merging files from HDFS");
             try (BufferedOutputStream mergedOut = new BufferedOutputStream(new FileOutputStream(localMergedFilePath, true))) {
-                
+
                 FileStatus[] fileStatuses = fs.listStatus(new Path(hdfsFilePath));
 
                 for (FileStatus fileStatus : fileStatuses) {
@@ -158,13 +169,14 @@ public class HadoopCoordinator extends HadoopFileManager {
             }
         }
     }
+
     /**
      * This method downloads and appends the file to the final csv.
+     *
      * @param hdfsFilePath it is the path of the file in HDFS.
-     * @param mergedOut it is the output stream of the merged file.
-     * @throws IOException if it is not possible to download and append the file.
+     * @param mergedOut    it is the output stream of the merged file.
      */
-    private void downloadAndAppendToMergedFile(String hdfsFilePath, OutputStream mergedOut){
+    private void downloadAndAppendToMergedFile(String hdfsFilePath, OutputStream mergedOut) {
         logger.info(Thread.currentThread().getName() + ": Downloading file from HDFS: " + hdfsFilePath);
         try (InputStream in = fs.open(new Path(hdfsFilePath))) {
             byte[] buffer = new byte[BUFFER_SIZE];
@@ -173,15 +185,17 @@ public class HadoopCoordinator extends HadoopFileManager {
             while ((bytesRead = in.read(buffer)) > 0) {
                 mergedOut.write(buffer, 0, bytesRead);
             }
-        }catch( IOException e){
-            logger.info("File"+hdfsFilePath+ "doesn't exist!");
+        } catch (IOException e) {
+            logger.info("File" + hdfsFilePath + "doesn't exist!");
         }
         logger.info(Thread.currentThread().getName() + ": File " + hdfsFilePath + " downloaded and appended to merged file successfully.");
     }
+
     /**
      * This method uploads the merged files to HDFS.
-     * @param id it is the id of the program.
-     * @param i it is the number of the task.
+     *
+     * @param id    it is the id of the program.
+     * @param i     it is the number of the task.
      * @param files it is the list of files to upload.
      * @throws IOException if it is not possible to upload the merged files.
      */

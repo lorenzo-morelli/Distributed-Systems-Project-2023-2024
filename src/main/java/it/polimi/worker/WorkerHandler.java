@@ -37,6 +37,7 @@ public class WorkerHandler extends Thread {
 
     /**
      * Constructor for the WorkerHandler class.
+     *
      * @param clientSocket The socket used to communicate with the Coordinator.
      * @param hadoopWorker The HadoopWorker used to read and write files.
      */
@@ -68,71 +69,74 @@ public class WorkerHandler extends Thread {
 
             outputStream = new ObjectOutputStream(clientSocket.getOutputStream());
             inputStream = new ObjectInputStream(clientSocket.getInputStream());
+            label:
             while (true) {
 
                 Object object = inputStream.readObject();
                 System.out.println(Thread.currentThread().getName() + ": Received message from coordinator");
                 logger.info(Thread.currentThread().getName() + ": Received message from coordinator");
-                if (object instanceof NormalOperations task) {
+                switch (object) {
+                    case NormalOperations task:
 
-                    identifier = task.getIdentifier();
-                    programId = task.getProgramId();
-                    Thread.currentThread().setName(clientSocket.getInetAddress().getHostName() + ":" + clientSocket.getLocalPort() + "(" + clientSocket.getPort() + ")" + ":" + task.getProgramId());
-                    System.out.println(Thread.currentThread().getName() + ": Received task from coordinator");
-                    logger.info(Thread.currentThread().getName() + ": Received task from coordinator: " + identifier);
+                        identifier = task.getIdentifier();
+                        programId = task.getProgramId();
+                        Thread.currentThread().setName(clientSocket.getInetAddress().getHostName() + ":" + clientSocket.getLocalPort() + "(" + clientSocket.getPort() + ")" + ":" + task.getProgramId());
+                        System.out.println(Thread.currentThread().getName() + ": Received task from coordinator");
+                        logger.info(Thread.currentThread().getName() + ": Received task from coordinator: " + identifier);
 
 
-                    try {
-                        if (processTask(task)) {
-                            outputStream.writeObject(new EndComputation());
-                            System.out.println(Thread.currentThread().getName() + ": EndComputation message sent to the coordinator");
-                            logger.info(Thread.currentThread().getName() + ": EndComputation message sent to the coordinator");
-                            if (!(task.getChangeKey() && task.getReduce())) {
-                                safeDelete = true;
+                        try {
+                            if (processTask(task)) {
+                                outputStream.writeObject(new EndComputation());
+                                System.out.println(Thread.currentThread().getName() + ": EndComputation message sent to the coordinator");
+                                logger.info(Thread.currentThread().getName() + ": EndComputation message sent to the coordinator");
+                                if (!(task.getChangeKey() && task.getReduce())) {
+                                    safeDelete = true;
+                                    break;
+                                }
+                            } else {
                                 break;
                             }
-                        } else {
+                        } catch (IllegalArgumentException e) {
+                            logger.error(Thread.currentThread().getName() + ": Error while processing the task: " + e.getMessage());
+                            outputStream.writeObject(new ErrorMessage(e.getMessage()));
+                            System.out.println(Thread.currentThread().getName() + ": Error while processing the task\n" + e.getMessage());
                             break;
                         }
-                    } catch (IllegalArgumentException e) {
-                        logger.error(Thread.currentThread().getName() + ": Error while processing the task: " + e.getMessage());
-                        outputStream.writeObject(new ErrorMessage(e.getMessage()));
-                        System.out.println(Thread.currentThread().getName() + ": Error while processing the task\n" + e.getMessage());
+
+
                         break;
-                    }
+                    case ReduceOperation reduceMessage:
+                        identifier = reduceMessage.getIdentifier();
+                        programId = reduceMessage.getProgramId();
 
+                        Thread.currentThread().setName(clientSocket.getInetAddress().getHostName() + ":" + clientSocket.getLocalPort() + "(" + clientSocket.getPort() + ")" + ":" + reduceMessage.getProgramId());
 
-                } else if (object instanceof ReduceOperation reduceMessage) {
-                    identifier = reduceMessage.getIdentifier();
-                    programId = reduceMessage.getProgramId();
+                        System.out.println(Thread.currentThread().getName() + ": Received LastReduce message from coordinator");
+                        logger.info(Thread.currentThread().getName() + ": Received LastReduce message from coordinator, responsible for the keys: " + reduceMessage.getKeys().getLeft() + "-" + reduceMessage.getKeys().getRight());
 
-                    Thread.currentThread().setName(clientSocket.getInetAddress().getHostName() + ":" + clientSocket.getLocalPort() + "(" + clientSocket.getPort() + ")" + ":" + reduceMessage.getProgramId());
-
-                    System.out.println(Thread.currentThread().getName() + ": Received LastReduce message from coordinator");
-                    logger.info(Thread.currentThread().getName() + ": Received LastReduce message from coordinator, responsible for the keys: " + reduceMessage.getKeys().getLeft() + "-" + reduceMessage.getKeys().getRight());
-
-                    try {
-                        if (computeReduceMessage(reduceMessage)) {
-                            outputStream.writeObject(new EndComputation());
-                            safeDelete = true;
+                        try {
+                            if (computeReduceMessage(reduceMessage)) {
+                                outputStream.writeObject(new EndComputation());
+                                safeDelete = true;
+                            }
+                        } catch (IllegalArgumentException e) {
+                            outputStream.writeObject(new ErrorMessage("Error in the reduce phase"));
+                            logger.error(Thread.currentThread().getName() + ": Error in the reduce phase: " + e.getMessage());
                         }
-                    } catch (IllegalArgumentException e) {
-                        outputStream.writeObject(new ErrorMessage("Error in the reduce phase"));
-                        logger.error(Thread.currentThread().getName() + ": Error in the reduce phase: " + e.getMessage());
-                    }
-                    break;
+                        break label;
 
-                }else if(object instanceof StopComputation){
-                    System.out.println(Thread.currentThread().getName() + ": Received StopComputation message from coordinator");
-                    logger.info(Thread.currentThread().getName() + ": Received StopComputation message from coordinator");
-                    safeDelete = true;
-                    break;
-                }  
-                else {
-                    System.out.println(Thread.currentThread().getName() + ": Received unexpected object type");
-                    outputStream.writeObject(new ErrorMessage("Received unexpected object type"));
-                    logger.error(Thread.currentThread().getName() + ": Received unexpected object type");
-                    break;
+                    case StopComputation ignored:
+                        System.out.println(Thread.currentThread().getName() + ": Received StopComputation message from coordinator");
+                        logger.info(Thread.currentThread().getName() + ": Received StopComputation message from coordinator");
+                        safeDelete = true;
+                        break label;
+                    case null:
+                    default:
+                        System.out.println(Thread.currentThread().getName() + ": Received unexpected object type");
+                        outputStream.writeObject(new ErrorMessage("Received unexpected object type"));
+                        logger.error(Thread.currentThread().getName() + ": Received unexpected object type");
+                        break label;
                 }
             }
         } catch (IOException | ClassNotFoundException e) {
@@ -174,6 +178,7 @@ public class WorkerHandler extends Thread {
 
     /**
      * The handleOperators method is used to create the operators from a list of mutable pairs.
+     *
      * @param dataFunctions it is the data functions to be used to create the operators.
      * @return The list of operators created.
      */
@@ -195,6 +200,7 @@ public class WorkerHandler extends Thread {
      * The processTask method is used to process the task received from the Coordinator.
      * It reads the input files and processes them using the operators.
      * It also creates the checkpoints for the task.
+     *
      * @param task it is the task to be processed.
      * @return true if the task was processed successfully, false otherwise.
      */
@@ -205,9 +211,9 @@ public class WorkerHandler extends Thread {
         try {
             for (int i = 0; i < task.getPathFiles().size(); i++) {
                 CheckpointInfo checkPointObj;
-               
-                checkPointObj = checkPointManager.getCheckPoint(task.getProgramId(), task.getPathFiles().get(i),task.getReduce() && !task.getChangeKey());
-               
+
+                checkPointObj = checkPointManager.getCheckPoint(task.getProgramId(), task.getPathFiles().get(i), task.getReduce() && !task.getChangeKey());
+
 
                 if (checkPointObj.end()) {
                     logger.info(Thread.currentThread().getName() + ": File already processed");
@@ -223,28 +229,30 @@ public class WorkerHandler extends Thread {
 
             }
             return true;
-        
+
         } catch (IOException e) {
-            if(e instanceof ConnectException){
+            if (e instanceof ConnectException) {
                 logger.error(Thread.currentThread().getName() + ": Error while connecting to the HDFS: " + e.getMessage());
                 System.out.println(Thread.currentThread().getName() + ": Error while connecting to the HDFS\n" + e.getMessage());
                 System.exit(0);
             }
             logger.error(Thread.currentThread().getName() + ": Error while processing the task: " + e.getMessage());
             System.out.println(Thread.currentThread().getName() + ": Error while processing the task\n" + e.getMessage());
-        } 
+        }
         return false;
     }
+
     /**
      * The processPartitionTask method is used to write the keys and create the checkpoints for a partition.
-     * This method is invoked by the HadoopWorker after processing a partition. 
-     * @param result it is the result of the partition.
-     * @param task it is the task to be processed.
-     * @param numFile it is the number of the file to be processed.
-     * @param numPart it is the number of the partition to be processed.
-     * @param end it is a boolean value indicating if the partition is the last one.
+     * This method is invoked by the HadoopWorker after processing a partition.
+     *
+     * @param result          it is the result of the partition.
+     * @param task            it is the task to be processed.
+     * @param numFile         it is the number of the file to be processed.
+     * @param numPart         it is the number of the partition to be processed.
+     * @param end             it is a boolean value indicating if the partition is the last one.
      * @param remainingString it is the remaining string to be processed.
-     * @param writeKeys it is a boolean value indicating if the keys should be written.
+     * @param writeKeys       it is a boolean value indicating if the keys should be written.
      * @throws IOException if an error occurs while writing the keys or creating the checkpoints.
      */
     public void processPartitionTask(List<KeyValuePair> result, NormalOperations task, Integer numFile, Integer numPart, Boolean end, String remainingString, boolean writeKeys) throws IOException {
@@ -258,10 +266,12 @@ public class WorkerHandler extends Thread {
             checkPointManager.createCheckpoint(programId, task.getPathFiles().get(numFile), new CheckpointInfo(numPart, end, remainingString, null), false);
         }
     }
+
     /**
      * The computeReduceMessage method is used to process the reduce message received from the Coordinator.
      * It reads the input files and processes them using the reduce operator.
      * It also retrieves the checkpoints for the reduce message.
+     *
      * @param reduceMessage it is the reduce message to be processed.
      * @return true if the reduce message was processed successfully, false otherwise.
      */
@@ -269,30 +279,29 @@ public class WorkerHandler extends Thread {
         Operator reduce = handleOperators(List.of(reduceMessage.getReduce())).getFirst();
 
         try {
-            CheckpointInfo checkPointObj = checkPointManager.getCheckPoint(reduceMessage.getProgramId(), "reduce" + identifier + ".csv",true);
+            CheckpointInfo checkPointObj = checkPointManager.getCheckPoint(reduceMessage.getProgramId(), "reduce" + identifier + ".csv", true);
 
-            int start = checkPointObj.count()>0  ? checkPointObj.count() : reduceMessage.getKeys().getLeft();
-            
-            if(checkPointObj.count() > 0){  
-                logger.info(Thread.currentThread().getName() + ": Files partially processed, resuming from idx: " + start); 
-            }
-            else {
+            int start = checkPointObj.count() > 0 ? checkPointObj.count() : reduceMessage.getKeys().getLeft();
+
+            if (checkPointObj.count() > 0) {
+                logger.info(Thread.currentThread().getName() + ": Files partially processed, resuming from idx: " + start);
+            } else {
                 logger.info(Thread.currentThread().getName() + ": Files not processed yet");
             }
-            
+
             for (int idx = start; idx < reduceMessage.getKeys().getRight(); idx++) {
-                
-                
+
+
                 if (checkPointObj.end()) {
                     logger.info(Thread.currentThread().getName() + ": File with idx: " + idx + " already processed");
                     checkPointObj = new CheckpointInfo(0, false, "", null);
                 } else {
-                    KeyValuePair result = hadoopWorker.readAndComputeReduce(idx, reduceMessage, reduce,this, checkPointObj);
-                    if(result!= null){
+                    KeyValuePair result = hadoopWorker.readAndComputeReduce(idx, reduceMessage, reduce, this, checkPointObj);
+                    if (result != null) {
                         hadoopWorker.writeKeys(programId, String.valueOf(identifier), result);
                     }
-                 }
-                
+                }
+
             }
             return true;
         } catch (IOException e) {
@@ -301,15 +310,17 @@ public class WorkerHandler extends Thread {
         }
         return false;
     }
+
     /**
      * The createCheckpoint method is used to create the checkpoints for a reduce message.
      * This method is invoked by the HadoopWorker after processing a partition in the second phase.
-     * @param result it is the result of the partition.
-     * @param idx it is the index of the partition processed.
+     *
+     * @param result  it is the result of the partition.
+     * @param idx     it is the index of the partition processed.
      * @param numFile it is the number of the last file processed.
-     * @param end it is a boolean value indicating if the partition is the last one.
+     * @param end     it is a boolean value indicating if the partition is the last one.
      */
-    public void createCheckpoint(KeyValuePair result, Integer idx,Integer numFile, Boolean end) {
+    public void createCheckpoint(KeyValuePair result, Integer idx, Integer numFile, Boolean end) {
         checkPointManager.createCheckpoint(programId, "reduce" + identifier + ".csv", new CheckpointInfo(idx, end, String.valueOf(numFile), result), true);
     }
 

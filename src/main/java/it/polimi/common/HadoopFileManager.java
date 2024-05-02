@@ -16,9 +16,11 @@ public abstract class HadoopFileManager {
     protected FileSystem fs;
     protected static Logger logger;
     protected final int BUFFER_SIZE;
+
     /**
      * The constructor creates a new HadoopFileManager.
-     * @param address represents the address of hdfs.
+     *
+     * @param address     represents the address of hdfs.
      * @param BUFFER_SIZE represents the buffer size.
      * @throws IOException if the file system cannot be initialized.
      */
@@ -33,8 +35,10 @@ public abstract class HadoopFileManager {
             throw new IOException("Not possible to connect to the HDFS server. Check the address of the server and if it is running!\nCheck also if files exist!\n" + e.getMessage());
         }
     }
+
     /**
      * The initialize method initializes the file system.
+     *
      * @return the file system.
      * @throws IOException if the file system cannot be initialized.
      */
@@ -44,6 +48,7 @@ public abstract class HadoopFileManager {
         conf.set("fs.hdfs.impl", "org.apache.hadoop.hdfs.DistributedFileSystem");
         return FileSystem.newInstance(conf);
     }
+
     /**
      * The closeFileSystem method closes the file system.
      */

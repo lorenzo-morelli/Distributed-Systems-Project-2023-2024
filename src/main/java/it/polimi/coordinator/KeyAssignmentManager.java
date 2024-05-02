@@ -22,11 +22,13 @@ public class KeyAssignmentManager {
     private final HadoopCoordinator hadoopCoordinator;
     private final String programId;
     private final String outputId;
+
     /**
      * KeyAssignmentManager class constructor
+     *
      * @param hadoopCoordinator it is the hadoop coordinator.
-     * @param programId it is the program id.
-     * @param outputId represents the number of the program.
+     * @param programId         it is the program id.
+     * @param outputId          represents the number of the program.
      */
     public KeyAssignmentManager(HadoopCoordinator hadoopCoordinator, String programId, String outputId) {
         assignments = new HashMap<>();
@@ -36,22 +38,28 @@ public class KeyAssignmentManager {
         this.programId = programId;
         this.outputId = outputId;
     }
+
     /**
      * The getAssignments method returns the assignments.
+     *
      * @return the assignments.
      */
     public Map<SocketHandler, MutablePair<Integer, Integer>> getAssignments() {
         return assignments;
     }
+
     /**
      * The canProceed method returns the canProceed flag which indicates if the assignments have been computed.
+     *
      * @return the canProceed flag.
      */
     public Boolean canProceed() {
         return canProceed;
     }
+
     /**
      * The exit method returns the exit flag which indicates if the keys size is 0.
+     *
      * @return the exit flag.
      */
     public Boolean exit() {
@@ -60,22 +68,25 @@ public class KeyAssignmentManager {
 
     /**
      * The insertAssignment method inserts the worker keys.
+     *
      * @param worker represents the worker.
-     * @param num represents the number of workers.
-     * @throws IOException if it is not possible to insert the worker keys or determine the new assignments with load balancing.
+     * @param num    represents the number of workers.
+     * @throws IOException              if it is not possible to insert the worker keys or determine the new assignments with load balancing.
      * @throws IllegalArgumentException if the keys size is 0.
      */
-    public synchronized void insertAssignment(SocketHandler worker, int num) throws IOException, IllegalArgumentException{
+    public synchronized void insertAssignment(SocketHandler worker, int num) throws IOException, IllegalArgumentException {
         logger.info(Thread.currentThread().getName() + ": Inserting worker keys");
         assignments.put(worker, null);
         if (assignments.size() == num) {
             determineNewAssignmentsWithLoadBalancing();
         }
     }
+
     /**
      * The determineNewAssignmentsWithLoadBalancing method determines the new worker assignments with load balancing and sets the canProceed flag to true.
      * It also manages the case in which the results of the computation of the first phase are empty by deleting the files and setting the exit flag to true.
-     * @throws IOException if it is not possible to determine the new worker assignments with load balancing.
+     *
+     * @throws IOException              if it is not possible to determine the new worker assignments with load balancing.
      * @throws IllegalArgumentException if the keys size is 0.
      */
     public void determineNewAssignmentsWithLoadBalancing() throws IOException, IllegalArgumentException {
@@ -85,7 +96,7 @@ public class KeyAssignmentManager {
 
 
         int keysSize = hadoopCoordinator.getKeysSize(programId);
-        if(keysSize == 0) {
+        if (keysSize == 0) {
 
             new FileOutputStream("result-" + outputId + ".csv").close();
             hadoopCoordinator.deleteFiles(programId, true);

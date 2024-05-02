@@ -30,6 +30,7 @@ import it.polimi.common.messages.NormalOperations;
 public class HadoopWorker extends HadoopFileManager {
     /**
      * HadoopWorker class constructor
+     *
      * @param address it is the address of the HDFS.
      * @throws IOException if it is not possible to connect to the HDFS.
      */
@@ -37,11 +38,13 @@ public class HadoopWorker extends HadoopFileManager {
         super(address, 131072);
         logger = LogManager.getLogger("it.polimi.Worker");
     }
+
     /**
      * The processData method processes the data and executes the operators on the data.
      * It splits the data into lines and processes each line.
+     *
      * @param combinedData it is the data to be processed.
-     * @param result it is the list of KeyValuePair where the data will be stored.
+     * @param result       it is the list of KeyValuePair where the data will be stored.
      * @return the partial tuple.
      * @throws IOException if there is an error processing the data.
      */
@@ -63,17 +66,19 @@ public class HadoopWorker extends HadoopFileManager {
         return partialTuple;
 
     }
+
     /**
      * The readInputFile method reads the input file and processes the data.
      * It reads the data from the input file and processes it using the operators.
      * It also calls the WorkerHandler to write the processed data to HDFS.
-     * @param i it is the index of the file.
-     * @param task it is the NormalOperations object.
-     * @param workerHandler it is the WorkerHandler object.
-     * @param operators it is the list of operators.
-     * @param count it is the partition count, used to identify the partition.
+     *
+     * @param i               it is the index of the file.
+     * @param task            it is the NormalOperations object.
+     * @param workerHandler   it is the WorkerHandler object.
+     * @param operators       it is the list of operators.
+     * @param count           it is the partition count, used to identify the partition.
      * @param remainingString it is the remaining string read from the checkpoint, if any.
-     * @param value it is the KeyValuePair object read from the checkpoint, if any.
+     * @param value           it is the KeyValuePair object read from the checkpoint, if any.
      * @throws IOException if there is an error reading the input file.
      */
     public void readInputFile(int i, NormalOperations task, WorkerHandler workerHandler, List<Operator> operators, int count, String remainingString, KeyValuePair value) throws IOException {
@@ -108,31 +113,33 @@ public class HadoopWorker extends HadoopFileManager {
             for (Operator op : operators) {
                 result = op.execute(result);
             }
-            if(!(result==null || result.isEmpty())){
-            if ((task.getReduce() && !task.getChangeKey())) {
-                if (reduceResult == null) {
-                    reduceResult = result.getFirst();
+            if (!(result == null || result.isEmpty())) {
+                if ((task.getReduce() && !task.getChangeKey())) {
+                    if (reduceResult == null) {
+                        reduceResult = result.getFirst();
+                    } else {
+                        result.add(reduceResult);
+                        assert reduce != null;
+                        reduceResult = reduce.execute(result).getFirst();
+                    }
+                    workerHandler.processPartitionTask(List.of(reduceResult), task, i, count, data.end() && partialTuple.toString().isEmpty(), partialTuple.toString(), data.end() && partialTuple.toString().isEmpty());
                 } else {
-                    result.add(reduceResult);
-                    assert reduce != null;
-                    reduceResult = reduce.execute(result).getFirst();
-                }
-                workerHandler.processPartitionTask(List.of(reduceResult), task, i, count, data.end() && partialTuple.toString().isEmpty(), partialTuple.toString(), data.end() && partialTuple.toString().isEmpty());
-            } else {
-                workerHandler.processPartitionTask(result, task, i, count, data.end() && partialTuple.toString().isEmpty(), partialTuple.toString(), true);
+                    workerHandler.processPartitionTask(result, task, i, count, data.end() && partialTuple.toString().isEmpty(), partialTuple.toString(), true);
 
+                }
+                result.clear();
             }
-            result.clear();
-        }
-            logger.info(Thread.currentThread().getName() + ": Data processed of partition: " + String.valueOf(count-1) + " of file: " + task.getPathFiles().get(i));
-            
+            logger.info(Thread.currentThread().getName() + ": Data processed of partition: " + (count - 1) + " of file: " + task.getPathFiles().get(i));
+
         }
         in.close();
     }
+
     /**
      * The processLine method processes the line of the data.
      * It splits the line into key and value and stores it in the result list.
-     * @param line it is the line to be processed.
+     *
+     * @param line   it is the line to be processed.
      * @param result it is the list of KeyValuePair where the data will be stored.
      * @throws IOException if there is an error processing the line.
      */
@@ -148,13 +155,15 @@ public class HadoopWorker extends HadoopFileManager {
             throw new IOException("Invalid line in CSV: " + line);
         }
     }
+
     /**
      * The writeKeys method writes the keys to HDFS.
      * It writes the keys to HDFS in the specified path.
      * This method is called in the reduce phase, i.e., the second phase of the program.
-     * @param programId it is the id of the program.
+     *
+     * @param programId  it is the id of the program.
      * @param identifier it is the identifier of the program.
-     * @param result it is the KeyValuePair object to be written.
+     * @param result     it is the KeyValuePair object to be written.
      * @throws IOException if there is an error writing the keys.
      */
     public void writeKeys(String programId, String identifier, KeyValuePair result) throws IOException {
@@ -163,13 +172,15 @@ public class HadoopWorker extends HadoopFileManager {
         writeResult(List.of(result), fileName);
         logger.info(Thread.currentThread().getName() + ": Keys written to HDFS");
     }
+
     /**
      * The writeKeys method writes the keys to HDFS.
      * It writes the keys to HDFS in the specified path.
      * This method is called in the first phase of the program.
-     * @param programId it is the id of the program.
+     *
+     * @param programId  it is the id of the program.
      * @param identifier it is the identifier of the program.
-     * @param result it is the list of KeyValuePair objects to be written.
+     * @param result     it is the list of KeyValuePair objects to be written.
      * @throws IOException if there is an error writing the keys.
      */
     public void writeKeys(String programId, String identifier, List<KeyValuePair> result, boolean changeKey, boolean reduce) throws IOException {
@@ -187,9 +198,11 @@ public class HadoopWorker extends HadoopFileManager {
             writeResult(result, fileName);
         }
     }
+
     /**
      * The writeResult method writes the result to HDFS.
      * It writes the result to HDFS in the specified path.
+     *
      * @param data it is the list of KeyValuePair objects to be written.
      * @param path it is the path where the data will be written.
      * @throws IOException if there is an error writing the result.
@@ -214,29 +227,30 @@ public class HadoopWorker extends HadoopFileManager {
      * It returns the KeyValuePair object after the reduce operation is computed.
      * It is called in the second phase of the program.
      * It calls also the function to create the checkpoint.
-     * @param idx it is the index of the file.
-     * @param reduceMessage it is the ReduceOperation object.
-     * @param reduce it is the ReduceOperator object.
-     * @param workerHandler it is the WorkerHandler object.
+     *
+     * @param idx            it is the index of the file.
+     * @param reduceMessage  it is the ReduceOperation object.
+     * @param reduce         it is the ReduceOperator object.
+     * @param workerHandler  it is the WorkerHandler object.
      * @param checkpointInfo it is the CheckpointInfo object.
      * @return the KeyValuePair object.
-     * @throws IOException if there is an error reading the data.
+     * @throws IOException              if there is an error reading the data.
      * @throws IllegalArgumentException if the key file is invalid.
      */
-    public KeyValuePair readAndComputeReduce(int idx, ReduceOperation reduceMessage, Operator reduce,WorkerHandler workerHandler, CheckpointInfo checkpointInfo) throws IOException, IllegalArgumentException {
+    public KeyValuePair readAndComputeReduce(int idx, ReduceOperation reduceMessage, Operator reduce, WorkerHandler workerHandler, CheckpointInfo checkpointInfo) throws IOException, IllegalArgumentException {
         Integer key = findKey(idx, reduceMessage.getProgramId());
-       
-       
+
+
         logger.info(Thread.currentThread().getName() + ": Reading and computing reduce for key: " + key);
         String path = "/program" + reduceMessage.getProgramId() + "/key" + key;
         List<KeyValuePair> result = checkpointInfo.keyValuePair() == null ? new ArrayList<>() : new ArrayList<>(List.of(checkpointInfo.keyValuePair()));
         FileStatus[] fileStatuses = fs.listStatus(new Path(path));
         long totalBytesRead = 0;
-        int startingFile = checkpointInfo.remainingString() == "" ? 0 : Integer.parseInt(checkpointInfo.remainingString());
-        
+        int startingFile = checkpointInfo.remainingString().isEmpty() ? 0 : Integer.parseInt(checkpointInfo.remainingString());
+
         logger.info(Thread.currentThread().getName() + ": Starting file: " + startingFile + " of total files: " + fileStatuses.length + " for key: " + key + " with index: " + idx);
-        
-        for (int i = startingFile;i < fileStatuses.length; i++) {
+
+        for (int i = startingFile; i < fileStatuses.length; i++) {
             int count = 0;
 
             Path filePath = fileStatuses[i].getPath();
@@ -248,7 +262,7 @@ public class HadoopWorker extends HadoopFileManager {
             Data data;
 
             while ((!(data = readFile(in, count)).data().isEmpty()) || !partialTuple.toString().isEmpty()) {
-                
+
                 totalBytesRead += data.data().length();
                 logger.info(Thread.currentThread().getName() + ": Data is ready to be processed of partition: " + count + " of file: " + filePath.getName());
                 String combinedData = data.data().isEmpty() ? partialTuple.toString() : partialTuple.toString() + data.data();
@@ -258,19 +272,21 @@ public class HadoopWorker extends HadoopFileManager {
                 result = reduce.execute(result);
             }
             in.close();
-            if(totalBytesRead >  BUFFER_SIZE || fileStatuses.length == i+1){
-                workerHandler.createCheckpoint(result.isEmpty() ? null : result.getFirst(),idx,i,fileStatuses.length == i+1);
+            if (totalBytesRead > BUFFER_SIZE || fileStatuses.length == i + 1) {
+                workerHandler.createCheckpoint(result.isEmpty() ? null : result.getFirst(), idx, i, fileStatuses.length == i + 1);
                 totalBytesRead = 0;
             }
         }
         logger.info(Thread.currentThread().getName() + ": Reduce has been computed for key: " + key);
         return result.isEmpty() ? null : result.getFirst();
-    }   
+    }
+
     /**
      * The findKey method finds the key from the file.
      * It finds the key from the file using the index and the programId.
      * It returns the key from the file.
-     * @param idx it is the index of the file.
+     *
+     * @param idx       it is the index of the file.
      * @param programId it is the id of the program.
      * @return the key from the file.
      * @throws IOException if there is an error finding the key.
@@ -287,11 +303,13 @@ public class HadoopWorker extends HadoopFileManager {
             throw new IllegalArgumentException("Invalid Key file");
         }
     }
+
     /**
      * The readFile method reads the file from HDFS.
      * It reads the file from HDFS and returns the data.
      * It reads the data in chunks of BUFFER_SIZE.
-     * @param in it is the FSDataInputStream object.
+     *
+     * @param in      it is the FSDataInputStream object.
      * @param numPart it is the partition number.
      * @return the Data object.
      * @throws IOException if there is an error reading the file.

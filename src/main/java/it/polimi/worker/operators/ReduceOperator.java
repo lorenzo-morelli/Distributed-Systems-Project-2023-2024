@@ -12,22 +12,25 @@ import it.polimi.worker.models.Operator;
 /**
  * The ReduceOperator class is an operator used to reduce the values of the key-value pairs with the same key.
  * It contains the function that reduces the values.
- * @param reduceFunction represents the function that reduces the values.
- * @return the key-value pairs with the reduced values.
+ *
  * @see Operator
  */
 public class ReduceOperator implements Operator {
     private final Function<List<Integer>, Integer> reduceFunction;
+
     /**
      * The constructor creates a new ReduceOperator.
+     *
      * @param reduceFunction represents the function that reduces the values.
      */
     public ReduceOperator(Function<List<Integer>, Integer> reduceFunction) {
         this.reduceFunction = reduceFunction;
     }
+
     /**
      * The execute method executes the operator.
      * It reduces the values of the key-value pairs with the same key.
+     *
      * @param input represents the input data on which the operator is executed.
      * @return the key-value pairs with the reduced values.
      */

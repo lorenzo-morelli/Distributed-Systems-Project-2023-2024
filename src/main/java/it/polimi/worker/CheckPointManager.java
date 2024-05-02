@@ -20,14 +20,11 @@ import it.polimi.common.KeyValuePair;
 import it.polimi.worker.models.CheckpointInfo;
 
 import java.io.File;
+
 /**
  * The CheckPointManager class is used to manage the checkpoints.
  * It contains the methods to create, read and delete the checkpoints.
- * @param CHECKPOINT_DIRECTORY represents the directory where the checkpoints are stored.
- * @param logger represents the logger used to log the messages.
- * @param folderLock represents the lock used to synchronize the access to the directory.
- * @param filesToDelete represents the set of files to delete at the end of the program.
- * @return the methods to manage the checkpoints.
+ *
  * @see CheckpointInfo
  */
 public class CheckPointManager {
@@ -41,10 +38,11 @@ public class CheckPointManager {
      * The createCheckpoint method creates a new checkpoint file.
      * This method is invoked in the first phase when the program does not include a reduce operation unless it also includes a changekey operation.
      * It is called upon completion of processing a partition.
-     * @param programId represents the program id.
-     * @param pathString represents the path of the checkpoint file.
+     *
+     * @param programId     represents the program id.
+     * @param pathString    represents the path of the checkpoint file.
      * @param checkPointObj represents the checkpoint information.
-     * @param forReduce represents whether the checkpoint is for the reduce operation or not.
+     * @param forReduce     represents whether the checkpoint is for the reduce operation or not.
      */
     public void createCheckpoint(String programId, String pathString, CheckpointInfo checkPointObj, boolean forReduce) {
         createOutputDirectory(CHECKPOINT_DIRECTORY + programId);
@@ -54,10 +52,9 @@ public class CheckPointManager {
             pathString = CHECKPOINT_DIRECTORY + programId + "/" + path.getFileName();
             filesToDelete.add(pathString);
             BufferedWriter writer = new BufferedWriter(new FileWriter(pathString, true));
-            if(forReduce){
+            if (forReduce) {
                 writer.write("<Checkpoint:" + checkPointObj.count() + "><" + checkPointObj.end() + "><" + checkPointObj.keyValuePair() + "><" + checkPointObj.remainingString() + ">\n");
-            }
-            else{
+            } else {
                 writer.write("<Checkpoint:" + checkPointObj.count() + "><" + checkPointObj.end() + "><" + checkPointObj.remainingString() + ">\n");
             }
             writer.close();
@@ -68,13 +65,15 @@ public class CheckPointManager {
             System.out.println(e.getMessage());
         }
     }
+
     /**
      * The getCheckPoint method reads the checkpoint file.
      * This method is invoked in the first phase when the program does not include a reduce operation unless it also includes a changekey operation.
      * It is called in the first phase before read the corresponding input file.
-     * @param programId represents the program id.
+     *
+     * @param programId  represents the program id.
      * @param pathString represents the path of the checkpoint file.
-     * @param forReduce represents whether the checkpoint is for the reduce operation or not.
+     * @param forReduce  represents whether the checkpoint is for the reduce operation or not.
      * @return the checkpoint information.
      */
     public CheckpointInfo getCheckPoint(String programId, String pathString, boolean forReduce) {
@@ -94,22 +93,22 @@ public class CheckPointManager {
             String line;
             while ((line = reader.readLine()) != null) {
                 if (line.startsWith("<Checkpoint")) {
-                    if(!line.endsWith(">")) {
+                    if (!line.endsWith(">")) {
                         String partial_line;
-                        if((partial_line = reader.readLine())!= null){
+                        if ((partial_line = reader.readLine()) != null) {
                             line = line + partial_line;
-                        }else{
+                        } else {
                             reader.close();
                             throw new NumberFormatException("Invalid checkpoint format");
                         }
                     }
-                    if(!line.endsWith(">")) {
+                    if (!line.endsWith(">")) {
                         reader.close();
                         throw new NumberFormatException("Invalid checkpoint format");
                     }
 
                     String[] parts = line.split("><");
-                    
+
                     if (!forReduce && parts.length != 3) {
                         reader.close();
                         throw new NumberFormatException("Invalid checkpoint format");
@@ -131,13 +130,13 @@ public class CheckPointManager {
                                 temp_remainingString = "";
                             }
                             keyValuePair = new KeyValuePair(Integer.parseInt(keyValueString[0]), Integer.parseInt(keyValueString[1]));
-                        } else{
+                        } else {
                             if (parts[2].length() > 1) {
                                 temp_remainingString = parts[2].substring(0, parts[2].length() - 1);
                             } else {
                                 temp_remainingString = "";
                             }
-                    }
+                        }
                         count = temp_count;
                         end = temp_end;
                         remainingString = temp_remainingString;
@@ -156,9 +155,11 @@ public class CheckPointManager {
         logger.info(Thread.currentThread().getName() + ": Retrieved checkpoint file " + pathString + " with count " + count + ", end " + end + " and remaining string " + remainingString);
         return new CheckpointInfo(count, end, remainingString, keyValuePair);
     }
+
     /**
      * The createOutputDirectory method creates a new directory.
      * This method is invoked when the directory does not exist.
+     *
      * @param directory represents the directory to create.
      */
     private static void createOutputDirectory(String directory) {
@@ -184,9 +185,11 @@ public class CheckPointManager {
             folderLock.unlock();
         }
     }
+
     /**
      * The deleteCheckpoints method deletes the checkpoint files.
      * This method is invoked at the end of the program.
+     *
      * @param programId represents the program id.
      */
     public void deleteCheckpoints(String programId) {
@@ -202,9 +205,11 @@ public class CheckPointManager {
             System.out.println(Thread.currentThread().getName() + ": Error while deleting checkpoints");
         }
     }
+
     /**
      * The deleteEmptyDirectory method deletes the empty directory.
      * This method is invoked at the end of the program.
+     *
      * @param folder represents the directory to delete.
      */
     private static void deleteEmptyDirectory(File folder) {

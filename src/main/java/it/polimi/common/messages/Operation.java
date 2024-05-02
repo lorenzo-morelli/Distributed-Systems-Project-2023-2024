@@ -10,24 +10,30 @@ import java.io.Serializable;
 public abstract class Operation implements Serializable {
     private final String programId;
     private final int identifier;
+
     /**
      * The constructor creates a new Operation.
-     * @param programId represents the program id.
+     *
+     * @param programId  represents the program id.
      * @param identifier represents the identifier of the worker for a specific program.
      */
     public Operation(String programId, int identifier) {
         this.programId = programId;
         this.identifier = identifier;
     }
+
     /**
      * The getProgramId method returns the program id.
+     *
      * @return the program id.
      */
     public String getProgramId() {
         return programId;
     }
+
     /**
      * The getIdentifier method returns the identifier of the worker for a specific program.
+     *
      * @return the identifier of the worker for a specific program.
      */
     public int getIdentifier() {

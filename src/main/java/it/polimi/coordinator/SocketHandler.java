@@ -35,12 +35,14 @@ public class SocketHandler implements Runnable {
     private static final Logger logger = LogManager.getLogger("it.polimi.Coordinator");
     public static final int WAIT_TIME = 5000;
     public static final int MAX_RETRIES = 3;
+
     /**
      * The constructor creates a new SocketHandler.
+     *
      * @param programExecutor represents the program executor.
-     * @param files represents the list of files to process.
-     * @param identifier represents the identifier of the worker for a specific program.
-     * @param phase represents the phase of the program.
+     * @param files           represents the list of files to process.
+     * @param identifier      represents the identifier of the worker for a specific program.
+     * @param phase           represents the phase of the program.
      */
     public SocketHandler(ProgramExecutor programExecutor, List<String> files, int identifier, ProgramPhase phase) {
         this.clientSocket = programExecutor.getFileSocketMap().get(files);
@@ -52,6 +54,7 @@ public class SocketHandler implements Runnable {
         this.isProcessing = true;
         this.programId = programExecutor.getProgramId();
     }
+
     /**
      * The run method is used to manage the connection with the worker node.
      * It sends the message to the worker and receives the result.
@@ -138,7 +141,7 @@ public class SocketHandler implements Runnable {
                                 }
                             }
                         }
-                        if(keyManager.exit()) {
+                        if (keyManager.exit()) {
                             outputStream.writeObject(new StopComputation());
                             logger.info("No keys to process, exiting...");
                             isProcessing = false;
@@ -159,13 +162,14 @@ public class SocketHandler implements Runnable {
             handleSocketException();
         }
     }
+
     /**
      * The end method is used to manage the end of the program.
      * It calls the manageEnd method of the program executor.
      */
     private void end() {
         try {
-            programExecutor.manageEnd(identifier);
+            programExecutor.manageEnd();
         } catch (Exception e) {
             System.out.println(Thread.currentThread().getName() + ": Error while managing the end of the program" + e.getMessage());
             logger.error(Thread.currentThread().getName() + ": Error while managing the end of the program" + e.getMessage());
@@ -181,16 +185,16 @@ public class SocketHandler implements Runnable {
         try {
             keyManager.insertAssignment(this, Math.min(programExecutor.getNumPartitions(), programExecutor.getFilesSize()));
             this.phase = ProgramPhase.FINAL;
-        }catch (IllegalArgumentException e) {
+        } catch (IllegalArgumentException e) {
             logger.info(Thread.currentThread().getName() + ": " + e.getMessage());
             this.phase = ProgramPhase.FINAL;
-        }
-        catch (IOException e) {
+        } catch (IOException e) {
             System.out.println(Thread.currentThread().getName() + ": Error while splitting the keys" + e.getMessage());
             logger.error(Thread.currentThread().getName() + ": Error while splitting th keys" + e.getMessage());
             System.exit(0);
         }
     }
+
     /**
      * The handleSocketException method is used to manage the reconnection to the worker in case of failure.
      * It tries to reconnect to the failed worker and, if not possible, it assigns the task to another worker.
@@ -223,8 +227,10 @@ public class SocketHandler implements Runnable {
             }
         }
     }
+
     /**
      * The attemptReconnection method is used to try to reconnect to the failed worker.
+     *
      * @param socket represents the socket of the failed worker.
      * @return true if the reconnection is successful, false otherwise.
      */
@@ -236,7 +242,7 @@ public class SocketHandler implements Runnable {
             try {
                 clientSocket = new Socket(socket.getInetAddress().getHostName(), socket.getPort());
                 reconnected = true;
-                System.out.println(Thread.currentThread().getName() + ": Reconnected to the failed worker. Resuming operations...");    
+                System.out.println(Thread.currentThread().getName() + ": Reconnected to the failed worker. Resuming operations...");
                 logger.info(Thread.currentThread().getName() + ": Reconnected to the failed worker. Resuming operations...");
             } catch (IOException e) {
                 attempts = getAttempts(attempts);
@@ -245,8 +251,10 @@ public class SocketHandler implements Runnable {
 
         return reconnected;
     }
+
     /**
      * The getAttempts method is used to manage the reconnection attempts.
+     *
      * @param attempts represents the number of attempts.
      * @return the number of attempts.
      */
@@ -264,9 +272,11 @@ public class SocketHandler implements Runnable {
         }
         return attempts;
     }
+
     /**
      * The attemptReconnectionFromPool method is used to try to reconnect to another worker.
      * It searches for a new worker among the available workers.
+     *
      * @return true if the reconnection is successful, false otherwise.
      */
     private boolean attemptReconnectionFromPool() {
@@ -296,10 +306,11 @@ public class SocketHandler implements Runnable {
 
         return reconnected;
     }
+
     /**
      * The performReconnectedActions method is used to perform the actions after a successful reconnection.
-     * It adds the new worker to the list of client sockets and updates the file socket map, 
-     * it creates a new SocketHandler for the new worker and reassigns the keys to the new worker and
+     * It adds the new worker to the list of client sockets and updates the file socket map,
+     * it creates a new SocketHandler for the new worker and reassigns the keys to the new worker, and
      * it resumes the operations with the new worker.
      */
     private void performReconnectedActions() {

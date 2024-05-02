@@ -23,9 +23,11 @@ import it.polimi.common.Address;
 public class Coordinator {
     private static final Logger logger = LogManager.getLogger("it.polimi.Coordinator");
     private static final List<ProgramExecutor> executors = new ArrayList<>();
+
     /**
      * The main method is used to start the coordinator, read the configurations from the file and start the ProgramExecutor for each program.
      * It reads the HDFS address and the operations file path from the user input.
+     *
      * @param args Command line arguments (not used).
      */
     public static void main(String[] args) {
@@ -80,12 +82,13 @@ public class Coordinator {
 
     /**
      * The getNewActiveSocket method returns a new active socket.
+     *
      * @param addressesToCheck represents the list of addresses to check.
-     * @param machine represents the machine, if it is not null the machine is used to give higher priority to the sockets of the same machine.
+     * @param machine          represents the machine, if it is not null the machine is used to give higher priority to the sockets of the same machine.
      * @return the new active socket.
      * @throws RuntimeException if no workers are available.
      */
-    public static synchronized Socket getNewActiveSocket(List<Address> addressesToCheck, String machine){
+    public static synchronized Socket getNewActiveSocket(List<Address> addressesToCheck, String machine) {
         logger.info(Thread.currentThread().getName() + ": Search for a new active socket...");
         if (addressesToCheck.isEmpty()) {
             logger.error(Thread.currentThread().getName() + ": No workers available");
@@ -102,9 +105,9 @@ public class Coordinator {
             } else {
                 load.put(a, -2);
             }
-        }   
+        }
         List<Socket> clientSockets = new ArrayList<>();
-        for(ProgramExecutor e : executors){
+        for (ProgramExecutor e : executors) {
             clientSockets.addAll(e.getClientSockets());
         }
         for (Socket s : clientSockets) {
@@ -113,7 +116,7 @@ public class Coordinator {
                 load.put(a, load.get(a) + 1);
             }
         }
-    
+
         Address finalAddress = Collections.min(load.entrySet(), Map.Entry.comparingByValue()).getKey();
         try {
             result = new Socket(finalAddress.hostname(), finalAddress.port());
@@ -125,7 +128,6 @@ public class Coordinator {
             return getNewActiveSocket(addressesToCheck, machine);
         }
     }
-
 
 
 }

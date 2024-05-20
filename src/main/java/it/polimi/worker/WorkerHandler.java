@@ -141,7 +141,7 @@ public class WorkerHandler extends Thread {
             }
         } catch (IOException | ClassNotFoundException e) {
             System.out.println(Thread.currentThread().getName() + ": Coordinator connection lost");
-            logger.error(Thread.currentThread().getName() + ": Coordinator connection lost: " + e.getMessage());
+            logger.warn(Thread.currentThread().getName() + ": Coordinator connection lost");
         } finally {
             System.out.println(Thread.currentThread().getName() + ": Closing connection");
             logger.info(Thread.currentThread().getName() + ": Closing connection");

@@ -1,0 +1,1 @@
+packageSearchIndex = [{"l":"All Packages","u":"allpackages-index.html"},{"l":"it.polimi.common"},{"l":"it.polimi.common.messages"},{"l":"it.polimi.coordinator"},{"l":"it.polimi.worker"},{"l":"it.polimi.worker.models"},{"l":"it.polimi.worker.operators"}];updateSearchResults();

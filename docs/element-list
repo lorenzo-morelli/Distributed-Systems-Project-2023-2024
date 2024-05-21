@@ -1,0 +1,6 @@
+it.polimi.common
+it.polimi.common.messages
+it.polimi.coordinator
+it.polimi.worker
+it.polimi.worker.models
+it.polimi.worker.operators

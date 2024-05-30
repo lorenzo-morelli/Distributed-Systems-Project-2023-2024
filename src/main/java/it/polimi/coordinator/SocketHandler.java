@@ -33,7 +33,7 @@ public class SocketHandler implements Runnable {
     private boolean isProcessing;
     private final String programId;
     private static final Logger logger = LogManager.getLogger("it.polimi.Coordinator");
-    public static final int WAIT_TIME = 1000;
+    public static final int WAIT_TIME = 500;
     public static final int MAX_RETRIES = 3;
 
     /**

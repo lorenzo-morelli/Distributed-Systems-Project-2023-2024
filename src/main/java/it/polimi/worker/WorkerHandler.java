@@ -148,7 +148,7 @@ public class WorkerHandler extends Thread {
 
 
             try {
-                Thread.sleep(2000);
+                Thread.sleep(1000);
                 if (safeDelete) {
                     hadoopWorker.closeFileSystem();
                     checkPointManager.deleteCheckpoints(programId);
